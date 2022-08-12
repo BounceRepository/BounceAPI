@@ -24,6 +24,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Domain.Entity;
+using Bounce_Application.SeriLog;
 
 namespace Bounce.Services.Implementation.Services.Auth
 {
@@ -39,11 +40,12 @@ namespace Bounce.Services.Implementation.Services.Auth
 		private readonly ICryptographyService _cryptographyService ;
 		private readonly IHttpContextAccessor contextAccessor;
 		private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
+		private readonly AdminLogger _adminLogger;
 		public string rootPath { get; set; }
 
 
         public AuthenticationServivce(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration, IHostingEnvironment hostingEnvironment,
-            IEmalService emailService, ICryptographyService cryptographyService, SignInManager<ApplicationUser> signInManager, IHttpContextAccessor contextAccessor)
+            IEmalService emailService, ICryptographyService cryptographyService, SignInManager<ApplicationUser> signInManager, IHttpContextAccessor contextAccessor, AdminLogger adminLogger)
         {
 
             _userManager = userManager;
@@ -55,6 +57,7 @@ namespace Bounce.Services.Implementation.Services.Auth
             _cryptographyService = cryptographyService;
             this.signInManager = signInManager;
             this.contextAccessor = contextAccessor;
+            _adminLogger = adminLogger;
         }
 
 
@@ -63,6 +66,10 @@ namespace Bounce.Services.Implementation.Services.Auth
 		{
 			try
 			{
+			
+
+
+
 				var userExists = await _userManager.FindByNameAsync(registerModel.Username);
 				if (userExists != null)
 					return new Response
@@ -146,7 +153,7 @@ namespace Bounce.Services.Implementation.Services.Auth
 			}
 			catch (Exception ex)
 			{
-
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				//throw ex;
 				return new Response
 				{
@@ -246,6 +253,7 @@ namespace Bounce.Services.Implementation.Services.Auth
 			}
 			catch (Exception ex)
 			{
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 
 				//throw ex;
 				return new Response
@@ -264,6 +272,16 @@ namespace Bounce.Services.Implementation.Services.Auth
 		{
 			try
 			{
+				var emailRequestw = new EmailRequest
+				{
+					To = registerModel?.Email,
+					Body = EmailFormatter.FormatEmaiConfimation("ssssssssssssss", rootPath),
+					Subject = "Email Confirmation"
+				};
+
+				await _EmailService.SendMail(emailRequestw);
+
+
 				var userExists = await _userManager.FindByNameAsync(registerModel.Username);
 				if (userExists != null)
 					return new Response
@@ -342,7 +360,7 @@ namespace Bounce.Services.Implementation.Services.Auth
 			catch (Exception ex)
 			{
 
-				//throw ex;
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				return new Response
 				{
 					StatusCode = StatusCodes.Status500InternalServerError,
@@ -453,6 +471,7 @@ namespace Bounce.Services.Implementation.Services.Auth
 			}
 			catch (Exception ex)
 			{
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				return new Response
 				{
 					StatusCode = StatusCodes.Status500InternalServerError,
@@ -483,6 +502,7 @@ namespace Bounce.Services.Implementation.Services.Auth
 			}
 			catch (Exception ex)
 			{
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				return new Response { StatusCode = StatusCodes.Status500InternalServerError, Error = new ErrorResponse { ErrorMesaage = "Internal server Error occoured" } };
 			}
 
@@ -503,10 +523,22 @@ namespace Bounce.Services.Implementation.Services.Auth
 				if(string.IsNullOrEmpty(token))
 					return new Response { StatusCode = StatusCodes.Status417ExpectationFailed, Message = "we  are not able to process your request now, try again later" };
 
-				return new Response { StatusCode = StatusCodes.Status200OK, Message = "token generated", Data = token };
+
+				var emailRequest = new EmailRequest
+				{
+					To = email,
+					Body = EmailFormatter.FormatTokenEmail(token, rootPath),
+					Subject = "Password Resset"
+				};
+
+				await _EmailService.SendMail(emailRequest);
+
+
+				return new Response { StatusCode = StatusCodes.Status200OK, Message = "token has been sent to your email" };
 			}
 			catch (Exception ex)
             {
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				return new Response { StatusCode = StatusCodes.Status500InternalServerError, Error = new ErrorResponse {ErrorMesaage = "Internal server Error occoured" } };
 			}
 
@@ -519,8 +551,9 @@ namespace Bounce.Services.Implementation.Services.Auth
             {
 				return await _cryptographyService.ValidateTokenAsync(token);
 			}
-			catch
+			catch(Exception ex)
 			{
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				return new Response { StatusCode = StatusCodes.Status500InternalServerError, Error = new ErrorResponse { ErrorMesaage = "Internal server Error occoured" } };
 			}
 
@@ -540,11 +573,13 @@ namespace Bounce.Services.Implementation.Services.Auth
 				if(!result.Succeeded)
 					return new Response { StatusCode = StatusCodes.Status417ExpectationFailed, Message = "Password reset failed" };
 
+
 				return new Response { StatusCode = StatusCodes.Status200OK, Message = "Password reset was successful" };
 
 			}
-			catch
+			catch (Exception ex)
 			{
+				_adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
 				return new Response { StatusCode = StatusCodes.Status500InternalServerError, Error = new ErrorResponse { ErrorMesaage = "Internal server Error occoured" } };
 			}
 

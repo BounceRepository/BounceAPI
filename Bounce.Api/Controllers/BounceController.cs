@@ -68,7 +68,7 @@ namespace Bounce.Api.Controllers
 
                 var respnseValue = Uri.UnescapeDataString(token);
                 if (respnseValue.Contains(" "))
-                    token = respnseValue.Replace(" ", "");
+                    token = respnseValue.Replace(" ", "+");
 
 
                 if ((DateTime.Now - absoluteTime).TotalHours > 1)
@@ -84,7 +84,7 @@ namespace Bounce.Api.Controllers
                     model.Status = ConfrimationStatus.EmailConfirmedlreday;
                     return View(model);
                 }
-                token = "CfDJ8AADAIgM2BxMoVE/94jBvoc2abMG+lx5+TL/emYOgSu0lYe4j/AYNXRKv9AU+t0hCiQb7zmDqTEEGLRUx7dBiJIz0Vk+ZjXykE/GI2h6iJJT8aXbfJ3brqp3uq689urh+AX0K8VVJL0sR55PsILMbT94Ro10yJRetmng+bQGanY53iSDXsWtuwHDp9JzK3b9zA==";
+                //token = "CfDJ8AADAIgM2BxMoVE/94jBvoc2abMG+lx5+TL/emYOgSu0lYe4j/AYNXRKv9AU+t0hCiQb7zmDqTEEGLRUx7dBiJIz0Vk+ZjXykE/GI2h6iJJT8aXbfJ3brqp3uq689urh+AX0K8VVJL0sR55PsILMbT94Ro10yJRetmng+bQGanY53iSDXsWtuwHDp9JzK3b9zA==";
                 IdentityResult result = await _userManager.ConfirmEmailAsync(user, token);
                 
                 if (result.Succeeded)
@@ -92,7 +92,7 @@ namespace Bounce.Api.Controllers
                     var emailRequest = new EmailRequest
                     {
                         To = model.Key,
-                        Body = "Your email has been confirmed, you can now login to our platform",
+                        Body = EmailFormatter.FormatEmailResponse("", rootPath),
                         Subject = "Email Confirmation"
                     };
 
@@ -123,6 +123,12 @@ namespace Bounce.Api.Controllers
                 {
                     model.Status = ConfrimationStatus.InvaidUser;
 
+                    return View(model);
+                }
+
+                if (user.EmailConfirmed)
+                {
+                    model.Status = ConfrimationStatus.EmailConfirmedlreday;
                     return View(model);
                 }
 

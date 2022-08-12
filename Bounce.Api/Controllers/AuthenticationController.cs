@@ -42,8 +42,8 @@ namespace Bounce.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel loginModel) => Response(await registrationServivce.Login(loginModel));
 
-        [HttpPost("ConfirmEmail")]
-        public async Task<IActionResult> EmailConfirmation([FromBody]  ConfirmEmailDto model) =>   Response(await registrationServivce.ConfirmEmail(model));
+        //[HttpPost("ConfirmEmail")]
+        //public async Task<IActionResult> EmailConfirmation([FromBody]  ConfirmEmailDto model) =>   Response(await registrationServivce.ConfirmEmail(model));
 
 
         [HttpPost("RessetPassword")]

@@ -284,6 +284,14 @@ namespace Bounce.Services.Implementation.Cryptography
 
         public async Task<string> GenerateValidationTokenAsync(string email = "NA", string phone = "FA")
         {
+			var tokens = _context.Tokens.Where(x => x.UserEmail == email);
+			if(tokens.Any())
+            {
+				_context.RemoveRange(tokens);
+				await _context.SaveChangesAsync();
+			}
+	
+
 			var token = new Random().Next(0, 10000).ToString("D4");
 			var tokenModel = new TokenModel
 			{
@@ -318,7 +326,7 @@ namespace Bounce.Services.Implementation.Cryptography
 				
 			_context.Tokens.Remove(userToken);
 			await _context.SaveChangesAsync();
-			return new Response { StatusCode = StatusCodes.Status200OK, Message = "Token generated" , Data = new { userEmail = userToken.UserEmail } };
+			return new Response { StatusCode = StatusCodes.Status200OK, Message = "Token token has been validated" , Data = new { userEmail = userToken.UserEmail } };
 
 		}
 

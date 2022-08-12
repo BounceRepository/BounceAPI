@@ -1,6 +1,7 @@
 ﻿using Bounce_Application.DTO;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.SeriLog;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -19,12 +20,14 @@ namespace Bounce.Services.Implementation.Services.Hepler
         private readonly IConfiguration configuration;
         private SmtpConfiguration smtpConfiguration;
         private IHttpContextAccessor contextAccessor;
+        private readonly AdminLogger _adminLogger;
 
-        public EmailService(IConfiguration configuration, IOptions<SmtpConfiguration> smtpConfiguration, IHttpContextAccessor contextAccessor)
+        public EmailService(IConfiguration configuration, IOptions<SmtpConfiguration> smtpConfiguration, IHttpContextAccessor contextAccessor, AdminLogger adminLogger)
         {
             this.configuration = configuration;
             this.smtpConfiguration = smtpConfiguration.Value;
             this.contextAccessor = contextAccessor;
+            _adminLogger = adminLogger;
         }
 
         public async Task SendMail(EmailRequest emailRequest)
@@ -63,8 +66,8 @@ namespace Bounce.Services.Implementation.Services.Hepler
             }
             catch (Exception ex)
             {
-
-                ;
+                _adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
+                
             }
         }
     }
