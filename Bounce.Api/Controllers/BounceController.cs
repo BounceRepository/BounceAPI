@@ -19,6 +19,7 @@ namespace Bounce.Api.Controllers
         private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
         private readonly IEmalService _EmailService;
         private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
+
         public string rootPath { get; set; }
         public BounceController(ICryptographyService cryptographyService, UserManager<ApplicationUser> userManager, AdminLogger adminLogger, IHttpContextAccessor contextAccessor, IEmalService emailService, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
         {
