@@ -1,0 +1,6 @@
+bounceserviceapi-001-site1.atempurl.com
+
+FTP Address:	win5014.site4now.net
+FTP Login ID:	bounceserviceapi-001 
+DNS Servers:	NS1.SITE4NOW.NET NS2.SITE4NOW.NET NS3.SITE4NOW.NET
+IP Address:	205.144.171.14

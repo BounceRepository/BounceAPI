@@ -1,0 +1,184 @@
+﻿@model Bounce_Application.DTO.EmailLinkViewModel
+@{
+    ViewData["Title"] = "ConfirmEmail";
+    Layout = null;
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="This is bounce organisation  SignIn/SignUp page">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Onifade Joshua">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+    <link rel="shortcut icon" href="ico" type="image/x-icon">
+    <title>Bounce SignIn/SignUp page</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+</head>
+
+    
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <svg width="100" height="113" viewBox="0 0 100 113" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.74284 112V94.059H8.32975C9.76503 94.059 10.944 94.3068 11.8667 94.8023C12.8065 95.2807 13.507 95.9385 13.9683 96.7758C14.4297 97.5959 14.6604 98.5101 14.6604 99.5182C14.6604 100.612 14.3699 101.611 13.7889 102.517C13.2251 103.422 12.3366 104.08 11.1234 104.49L14.8398 112H11.0722L7.74026 104.926H5.02348V112H1.74284ZM5.02348 102.517H8.12471C9.21826 102.517 10.0213 102.252 10.5339 101.722C11.0465 101.193 11.3028 100.492 11.3028 99.6207C11.3028 98.7664 11.0465 98.0829 10.5339 97.5703C10.0384 97.0577 9.2268 96.8014 8.09908 96.8014H5.02348V102.517ZM23.0356 112.308C21.7541 112.308 20.6178 112.034 19.6268 111.487C18.6357 110.941 17.8583 110.172 17.2944 109.181C16.7306 108.19 16.4487 107.045 16.4487 105.746C16.4487 104.431 16.722 103.26 17.2688 102.235C17.8327 101.21 18.6016 100.415 19.5755 99.8514C20.5665 99.2704 21.7284 98.98 23.0612 98.98C24.3085 98.98 25.4106 99.2533 26.3675 99.8001C27.3243 100.347 28.0676 101.099 28.5973 102.056C29.144 102.995 29.4174 104.046 29.4174 105.208C29.4174 105.396 29.4089 105.592 29.3918 105.798C29.3918 106.003 29.3833 106.216 29.3662 106.438H19.7037C19.772 107.429 20.1137 108.207 20.7289 108.771C21.3611 109.334 22.1214 109.616 23.0099 109.616C23.6763 109.616 24.2316 109.471 24.6759 109.181C25.1372 108.873 25.479 108.48 25.7011 108.002H29.033C28.7938 108.805 28.3922 109.54 27.8284 110.206C27.2816 110.855 26.5981 111.368 25.778 111.744C24.9749 112.12 24.0608 112.308 23.0356 112.308ZM23.0612 101.645C22.2581 101.645 21.549 101.876 20.9339 102.337C20.3188 102.782 19.9258 103.465 19.7549 104.388H26.0855C26.0343 103.551 25.7267 102.884 25.1629 102.389C24.599 101.893 23.8984 101.645 23.0612 101.645ZM38.4048 112.308C37.1062 112.308 35.9614 112.026 34.9703 111.462C33.9793 110.898 33.1933 110.112 32.6124 109.104C32.0485 108.096 31.7666 106.942 31.7666 105.644C31.7666 104.345 32.0485 103.192 32.6124 102.184C33.1933 101.176 33.9793 100.39 34.9703 99.8257C35.9614 99.2619 37.1062 98.98 38.4048 98.98C40.028 98.98 41.3949 99.4071 42.5056 100.261C43.6162 101.099 44.3253 102.261 44.6328 103.747H41.1728C41.0019 103.132 40.6602 102.654 40.1476 102.312C39.6521 101.953 39.0626 101.774 38.3791 101.774C37.4735 101.774 36.7046 102.115 36.0724 102.799C35.4402 103.482 35.1241 104.431 35.1241 105.644C35.1241 106.857 35.4402 107.805 36.0724 108.489C36.7046 109.172 37.4735 109.514 38.3791 109.514C39.0626 109.514 39.6521 109.343 40.1476 109.001C40.6602 108.66 41.0019 108.173 41.1728 107.54H44.6328C44.3253 108.976 43.6162 110.129 42.5056 111C41.3949 111.872 40.028 112.308 38.4048 112.308ZM53.6446 112.308C52.4144 112.308 51.3037 112.026 50.3127 111.462C49.3388 110.898 48.5613 110.12 47.9804 109.129C47.4165 108.121 47.1346 106.959 47.1346 105.644C47.1346 104.328 47.425 103.175 48.006 102.184C48.5869 101.176 49.3644 100.39 50.3383 99.8257C51.3293 99.2619 52.44 98.98 53.6702 98.98C54.8834 98.98 55.9769 99.2619 56.9509 99.8257C57.9419 100.39 58.7193 101.176 59.2832 102.184C59.8641 103.175 60.1546 104.328 60.1546 105.644C60.1546 106.959 59.8641 108.121 59.2832 109.129C58.7193 110.12 57.9419 110.898 56.9509 111.462C55.9598 112.026 54.8577 112.308 53.6446 112.308ZM53.6446 109.463C54.4989 109.463 55.2422 109.147 55.8744 108.514C56.5066 107.865 56.8227 106.908 56.8227 105.644C56.8227 104.379 56.5066 103.431 55.8744 102.799C55.2422 102.15 54.5075 101.825 53.6702 101.825C52.7988 101.825 52.047 102.15 51.4148 102.799C50.7997 103.431 50.4921 104.379 50.4921 105.644C50.4921 106.908 50.7997 107.865 51.4148 108.514C52.047 109.147 52.7903 109.463 53.6446 109.463ZM65.8965 112L61.2319 99.2875H64.6663L67.8957 108.899L71.125 99.2875H74.5595L69.8692 112H65.8965ZM82.1798 112.308C80.8983 112.308 79.762 112.034 78.771 111.487C77.78 110.941 77.0025 110.172 76.4387 109.181C75.8748 108.19 75.5929 107.045 75.5929 105.746C75.5929 104.431 75.8663 103.26 76.413 102.235C76.9769 101.21 77.7458 100.415 78.7197 99.8514C79.7108 99.2704 80.8727 98.98 82.2054 98.98C83.4527 98.98 84.5548 99.2533 85.5117 99.8001C86.4685 100.347 87.2118 101.099 87.7415 102.056C88.2883 102.995 88.5617 104.046 88.5617 105.208C88.5617 105.396 88.5531 105.592 88.536 105.798C88.536 106.003 88.5275 106.216 88.5104 106.438H78.8479C78.9162 107.429 79.258 108.207 79.8731 108.771C80.5053 109.334 81.2656 109.616 82.1542 109.616C82.8205 109.616 83.3759 109.471 83.8201 109.181C84.2814 108.873 84.6232 108.48 84.8453 108.002H88.1772C87.938 108.805 87.5365 109.54 86.9726 110.206C86.4258 110.855 85.7424 111.368 84.9222 111.744C84.1191 112.12 83.205 112.308 82.1798 112.308ZM82.2054 101.645C81.4023 101.645 80.6932 101.876 80.0781 102.337C79.463 102.782 79.07 103.465 78.8991 104.388H85.2298C85.1785 103.551 84.8709 102.884 84.3071 102.389C83.7432 101.893 83.0427 101.645 82.2054 101.645ZM91.3209 112V99.2875H94.2427L94.5503 101.671C95.0116 100.851 95.6353 100.202 96.4213 99.7232C97.2243 99.2277 98.1641 98.98 99.2406 98.98V102.44H98.3179C97.6002 102.44 96.9595 102.551 96.3956 102.773C95.8318 102.995 95.3875 103.38 95.0629 103.927C94.7553 104.473 94.6015 105.234 94.6015 106.208V112H91.3209Z" fill="#06152B"/>
+                <path d="M49.4665 7.85037L36.8667 1V28.2791L49.4665 32.6829L62.1274 28.2791V1L49.4665 7.85037Z" fill="#3A36DB" stroke="#3A36DB" stroke-width="0.122328"/>
+                <path d="M49.4051 30.2973L5 8.09473V35.5574L49.4051 58.922L95.4615 35.5574V8.09473L49.4051 30.2973Z" fill="#3A36DB" stroke="#3A36DB" stroke-width="0.122328"/>
+                <path d="M50.2019 17.8813L22.25 3.99707V30.1753L50.2019 43.9372L77.1753 29.319V3.99707L50.2019 17.8813Z" fill="#3A36DB" stroke="#3A36DB" stroke-width="0.122328"/>
+            </svg> 
+                
+           
+            <h3>Email Confirmation</h3>
+        </div>
+        <form asp-action="ConfirmEmail" asp-controller="Bounce" method="post">
+
+            @{
+                 if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.EmailConfirmedlreday)
+                {
+                     <p>Your email has been confirmed alreday</p>
+                }
+
+
+                 if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.Confirmed)
+                {
+                     <p>Your email has been verified, kindly go back to the your app and logic</p>
+                }
+
+                 if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.Failed)
+                {
+                     <p>Your email verification has failed, kindly try again</p>
+                  
+                     <div class="form__input-group">
+                        <label class="label" for="">Email Address</label>
+                        <input type="email" class="form__input" asp-for="Key"  autofocus  placeholder="Enter email address" required>
+                    </div>
+                    <button class="form__btn" type="submit">Generate Link</button>
+                }
+
+                 if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.LinkExpired)
+                {
+                    <p>Your email verification link has expired, kindly click the button to generate a new link</p>
+                             <div class="form__input-group">
+                        <label class="label" for="">Email Address</label>
+                        <input type="email" class="form__input" asp-for="Key"  autofocus  placeholder="Enter email address" required>
+                    </div>
+                    <button class="form__btn" type="submit">Generate Link</button>
+                }
+               
+            }
+        </form>
+
+    </div>
+
+
+    <style>
+
+
+                    body {
+                --color-primary: rgb(214, 240, 238);
+                --color-secondary-dark: #007f67;
+                --color-secondary: #3a36db;
+                --color-error: #cc3333;
+                --color-success: #4bb544;
+                --border-radius: 4px;
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                background: var(--color-primary);
+                background-size: cover;
+            }
+            
+            .container {
+                width: 400px;
+                max-width: 400px;
+                margin: 1rem;
+                padding: 2rem;
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+                border-radius: var(--border-radius);
+                background-color: #ffffff;
+            }
+            
+            .container,
+            .form__input,
+            .form__btn {
+                font-weight: 500;
+                font-size: 1rem;
+                font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            }
+            
+            .header {
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+            
+            .form__input-group {
+                margin-bottom: 1rem;
+            }
+            
+            .form__input {
+                display: block;
+                width: 100%;
+                padding: 0.75rem;
+                box-sizing: border-box;
+                border-radius: var(--border-radius);
+                border: 1px solid #dddddd;
+                outline: none;
+                background: #eeeeee;
+                transition: background 0.2s, border-color 0.2s;
+            }
+            
+            .form__input:focus {
+                border-color: var(--color-primary);
+                background-color: #ffffff;
+            }
+            
+            .form__btn {
+                width: 100%;
+                padding: 1rem 1rem;
+                font-weight: 600;
+                font-size: 1.1rem;
+                color: #ffffff;
+                border: none;
+                border-radius: var(--border-radius);
+                outline: none;
+                cursor: pointer;
+                background-color: var(--color-secondary);
+            }
+            
+            .form__btn:active {
+                transform: scale(0.98);
+                background-color: rgb(211, 230, 236);
+                color: black;
+            }
+            
+            .form__input-group .label {
+                margin-bottom: 1rem;
+            }
+
+
+
+
+    </style>
+
+</body>
+
+</html>
+
