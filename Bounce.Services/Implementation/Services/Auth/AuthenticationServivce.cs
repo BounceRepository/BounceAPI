@@ -707,30 +707,46 @@ namespace Bounce.Services.Implementation.Services.Auth
 
         private string GetToken(List<Claim> authClaims)
         {
-            var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
+            //var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(authClaims),
-                Expires = DateTime.Now.AddHours(3),
-                SigningCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-
+            //var tokenHandler = new JwtSecurityTokenHandler();
+            //var tokenDescriptor = new SecurityTokenDescriptor
+            //{
+            //    Subject = new ClaimsIdentity(authClaims),
+            //    Expires = DateTime.Now.AddHours(3),
+            //    SigningCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature)
+            //};
+            //var token = tokenHandler.CreateToken(tokenDescriptor);
+            //var tokenString = tokenHandler.WriteToken(token);
 
 
-            //var token = new JwtSecurityToken(
-            //  issuer: _configuration["JWT:ValidIssuer"],
-            //  audience: _configuration["JWT:ValidAudience"],
-            //  expires: DateTime.Now.AddHours(3),
-            //  claims: authClaims,
-            //  signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature)
-            //  );
 
-            return tokenString;
+
+
+
+            ////var token = new JwtSecurityToken(
+            ////  issuer: _configuration["JWT:ValidIssuer"],
+            ////  audience: _configuration["JWT:ValidAudience"],
+            ////  expires: DateTime.Now.AddHours(3),
+            ////  claims: authClaims,
+            ////  signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature)
+            ////  );
+
+            //return tokenString;
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+            var token = new JwtSecurityToken(
+              issuer: _configuration["JWT:ValidIssuer"],
+              audience: _configuration["JWT:ValidAudience"],
+              expires: DateTime.Now.AddHours(3),
+              claims: authClaims,
+              signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+              );
+
+            return token.ToString();
+
+
         }
     }
 }
