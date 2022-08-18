@@ -60,18 +60,19 @@ builder.Services.AddAuthentication(options =>
 {
 	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-	options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+	//options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters()
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidAudience = configuration["JWT:ValidAudience"],
-        ValidIssuer = configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        //ValidAudience = configuration["JWT:ValidAudience"],
+        //ValidIssuer = configuration["JWT:ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]))
     };
 });
 builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
@@ -119,21 +120,34 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 	
 }
-app.UseSwagger();
-app.UseSwaggerUI();
+
+
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 app.UseRouting();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles();
 
+
+
+app.UseCors(x => x
+.AllowAnyMethod()
+.AllowAnyHeader()
+.SetIsOriginAllowed(origin => true) // allow any origin
+.AllowCredentials()); // allow credentials
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Bounce}/{action=Index}/{id?}");
 });
+
+
 //app.UseStaticFiles(new StaticFileOptions()
 //{
 //    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),

@@ -33,6 +33,8 @@ namespace Bounce_DbOps.EF
 		public DbSet<Subscription> Subscriptions { get; set; }
 		public DbSet<Wallet> Wallets { get; set; }
 		public DbSet<InteractiveSession> InteractiveSessions { get; set; }
+		public DbSet<SerialNumber> SerialNumbers { get; set; }
+		
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

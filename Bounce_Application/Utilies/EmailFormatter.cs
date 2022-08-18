@@ -8,7 +8,7 @@ namespace Bounce_Application.Utilies
 {
     public class EmailFormatter
     {
-        public static string MailPath = "Properties\\Templates";
+        public static string MailPath = "Templates";
         public static string ConfirmationEmail = "EmailConfirmation.html";
         public static string EmailResponse = "EmailResponse.html";
         public static string TokenEmail = "Token.html";

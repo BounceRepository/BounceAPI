@@ -1,11 +1,13 @@
 ﻿using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Patient;
+using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,16 +16,18 @@ using System.Threading.Tasks;
 
 namespace Bounce.Services.Implementation.Services.Patient
 {
-    public class PatientServices : IPatientServices
+    public class PatientServices : BaseServices, IPatientServices
     {
         private readonly BounceDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FileManager _fileManager;
-        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager)
+        private readonly AdminLogger _adminLogger;
+        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger)
         {
             this._context = context;
             _userManager = userManager;
             _fileManager = fileManager;
+            _adminLogger = adminLogger;
         }
         public async Task<Response> UpdateProfileAsync (UpdateProfileDto model)
         {
@@ -56,7 +60,7 @@ namespace Bounce.Services.Implementation.Services.Patient
              
               var record =  _context.Add(profile);
                 var isSaved = await _context.SaveChangesAsync() > 0;
-                if(isSaved)
+                if (isSaved)
                 {
                     var id = record.Member("Id").CurrentValue;
                     user.ProfileId = (long?)id;
@@ -64,33 +68,23 @@ namespace Bounce.Services.Implementation.Services.Patient
                     await _userManager.UpdateAsync(user);
                     return new Response { StatusCode = StatusCodes.Status200OK, Message = "Profile Updated" };
                 }
-                    
+
                 else
-                return new Response
                 {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Data = null,
-                    Error = new ErrorResponse
-                    {
-                        ErrorMesaage = "Sorry we can not complete your request at this time, please try again later"
-                    }
-                };
+                    _adminLogger.LogRequest($"{"Internal server error occured while saving a record}"}{" - "}{JsonConvert.SerializeObject(profile)}{" - "}{DateTime.Now}", true);
+                    return new Response { StatusCode = StatusCodes.Status500InternalServerError, Message = InterErrorMessage };
+                }
+      
 
               
             }
             catch(Exception ex)
             {
-                //throw ex;
-                return new Response
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Data = null,
-                    Error = new ErrorResponse
-                    {
-                        ErrorMesaage = "Internal server error occured"
-                    }
-                };
+               return InternalErrorResponse(ex);
             }
+
+
+
 
         }
     }

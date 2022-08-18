@@ -35,5 +35,6 @@ namespace Bounce_Application.Cryptography.Hash
         #endregion
 
         string CreateClientEncryptionKey();
+        Task<string> GeneratePatientIdAsync();
     }
 }

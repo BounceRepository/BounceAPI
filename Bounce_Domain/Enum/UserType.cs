@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace Bounce_Domain.Enum
 {
-    public enum SessionType
+    public enum UserType
     {
-        Chat, Video,Phone, Office
+        Admin,
+        Therapist,
+        Patient
     }
 }

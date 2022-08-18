@@ -11,6 +11,6 @@ namespace Bounce.DataTransferObject.Helpers.BaseResponse
         public Object Data { get; set; }
         public int StatusCode { get; set; }
         public string Message { get; set; }
-        public ErrorResponse Error { get; set; }
+      
     }
 }

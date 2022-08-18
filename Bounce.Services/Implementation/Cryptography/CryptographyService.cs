@@ -311,6 +311,34 @@ namespace Bounce.Services.Implementation.Cryptography
 		
 		}
 
+		public async Task<string> GeneratePatientIdAsync ()
+        {
+			var prrfix = "BNC";
+			var serialNumber = _context.SerialNumbers.FirstOrDefault();
+			if(serialNumber == null)
+            {
+				var model = new SerialNumber
+				{
+					LastModifiedBy = DateTime.Now.ToString(),
+					DateCreated = DateTime.Now,
+					ConsultationCount = 0,
+					AdminCount = 0,
+					PatientCount = 0,
+					TherapistCount = 0,
+				};
+				await _context.AddAsync(model);
+				await _context.SaveChangesAsync();
+
+			
+				return $"{prrfix}{1.ToString("D4")}";
+            }
+			var index = serialNumber.PatientCount++;
+			serialNumber.PatientCount = index;
+			 _context.Update(serialNumber);
+			await _context.SaveChangesAsync();
+
+			return $"{prrfix}{index.ToString("D4")}";
+		}
 		public async Task<Response> ValidateTokenAsync(string token)
         {
 			var userToken = _context.Tokens.FirstOrDefault(x => x.Token.Contains(token));

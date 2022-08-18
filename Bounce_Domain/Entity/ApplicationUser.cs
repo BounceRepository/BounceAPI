@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Bounce_Domain.Enum;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +17,8 @@ namespace Bounce_Domain.Entity
         //[ForeignKey(nameof(ProfileId))]
         [JsonIgnore]
         public BioData Profile { get; set; }
-       
+        public string? PatientId { get; set; }
+        public UserType Discriminator { get; set; }
+
     }
 }
