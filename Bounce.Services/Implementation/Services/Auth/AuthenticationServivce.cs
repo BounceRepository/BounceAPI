@@ -500,6 +500,7 @@ namespace Bounce.Services.Implementation.Services.Auth
                     }
 
                     var token = GetToken(authClaims);
+                    var roles = string.Join(",", userRoles);
                     //var authToken = JsonConvert.DeserializeObject<TokenViewModel>(token);
 
                     return new Response
@@ -509,6 +510,7 @@ namespace Bounce.Services.Implementation.Services.Auth
                         {
                             UserName = loginUser.UserName,
                             Email = loginUser.Email,
+                            Role = roles,
                             Token = token,
                             UserId = loginUser.Id,
                             EmailConfirmed = isEmailConfrimed
@@ -707,21 +709,6 @@ namespace Bounce.Services.Implementation.Services.Auth
 
         private string GetToken(List<Claim> authClaims)
         {
-            //var authSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]));
-
-            //var tokenHandler = new JwtSecurityTokenHandler();
-            //var tokenDescriptor = new SecurityTokenDescriptor
-            //{
-            //    Subject = new ClaimsIdentity(authClaims),
-            //    Expires = DateTime.Now.AddHours(3),
-            //    SigningCredentials = new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature)
-            //};
-            //var token = tokenHandler.CreateToken(tokenDescriptor);
-            //var tokenString = tokenHandler.WriteToken(token);
-
-
-
-
 
 
             ////var token = new JwtSecurityToken(
@@ -733,7 +720,6 @@ namespace Bounce.Services.Implementation.Services.Auth
             ////  );
 
             //return tokenString;
-
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
             var token = new JwtSecurityToken(
@@ -744,7 +730,7 @@ namespace Bounce.Services.Implementation.Services.Auth
               signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
               );
 
-            return token.ToString();
+            return new JwtSecurityTokenHandler().WriteToken(token);
 
 
         }

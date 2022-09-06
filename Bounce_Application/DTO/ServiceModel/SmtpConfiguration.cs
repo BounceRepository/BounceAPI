@@ -13,5 +13,8 @@ namespace Bounce_Application.DTO.ServiceModel
         public string Password { get; set; }
         public string EmailAddress { get; set; }
         public bool EnableSSl { get; set; }
+        public string sendgridKey { get; set; }
+        public string sendgridSender { get; set; }
+        public string sendgridName { get; set; }
     }
 }

@@ -60,8 +60,8 @@ builder.Services.AddAuthentication(options =>
 {
 	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-	//options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+
+}).AddJwtBearer( "Bearer", options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
@@ -74,8 +74,19 @@ builder.Services.AddAuthentication(options =>
         //ValidIssuer = configuration["JWT:ValidIssuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]))
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+            {
+                context.Response.Headers.Add("Token-Expired", "true");
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
-builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
+//builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
 
 // Add services to the container.
 
@@ -148,11 +159,6 @@ app.UseEndpoints(endpoints =>
 });
 
 
-//app.UseStaticFiles(new StaticFileOptions()
-//{
-//    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),
-//    RequestPath = new PathString("/Resources")
-//});
 
 app.MapControllers();
 
