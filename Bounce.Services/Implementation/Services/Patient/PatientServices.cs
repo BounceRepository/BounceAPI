@@ -34,7 +34,7 @@ namespace Bounce.Services.Implementation.Services.Patient
             try
             {
                 //var userId = long.Parse(model.UserId);
-                var userId = model.UserId;
+                var userId = long.Parse(model.UserId);
                 var user = _userManager.Users.FirstOrDefault(x => x.Id == userId);
                 if (user == null)
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "user does not exist" };
@@ -52,18 +52,21 @@ namespace Bounce.Services.Implementation.Services.Patient
                     Phone = model.Phone,
                     DateCreated = DateTime.Now,
                     DateModified = DateTime.Now,
+                    MeansOfIdentification  = _fileManager.FileUpload(model.MeansOfIdentification),
                     LastModifiedBy = DateTime.Now.ToShortDateString(),
-                    FilePath = _fileManager.FileUpload(model.File)
+                    FilePath = _fileManager.FileUpload(model.ImageFile)
                 };
 
-                
-             
-              var record =  _context.Add(profile);
+
+
+                var record = /*_context.Set<BioData>().Add(profile);*/  await _context.AddAsync(profile);
+
                 var isSaved = await _context.SaveChangesAsync() > 0;
                 if (isSaved)
                 {
                     var id = record.Member("Id").CurrentValue;
-                    user.ProfileId = (long?)id;
+                    //var id = long.Parse(id);
+                    user.ProfileId = (long)(id);
                     user.HasProfile = true;
                     await _userManager.UpdateAsync(user);
                     return new Response { StatusCode = StatusCodes.Status200OK, Message = "Profile Updated" };

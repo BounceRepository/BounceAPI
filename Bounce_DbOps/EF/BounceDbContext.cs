@@ -25,7 +25,6 @@ namespace Bounce_DbOps.EF
         {
 
         }
-		public DbSet<ApplicationUser> Users { get; set; }
 		public DbSet<Error> Errors { get; set; }
 		public DbSet<TokenModel> Tokens { get; set; }
 		public DbSet<BioData> BioDatas { get; set; }
@@ -34,7 +33,11 @@ namespace Bounce_DbOps.EF
 		public DbSet<Wallet> Wallets { get; set; }
 		public DbSet<InteractiveSession> InteractiveSessions { get; set; }
 		public DbSet<SerialNumber> SerialNumbers { get; set; }
-		
+		public DbSet<TherapistHospitalInformation> TherapistHospitalInformations { get; set; }
+		public DbSet<TherapistmedicalRegistration> TherapistmedicalRegistrations { get; set; }
+		public DbSet<BankAccountDetails> BankAccountDetails { get; set; }
+		public DbSet<Article> Articles { get; set; }
+
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

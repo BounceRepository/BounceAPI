@@ -8,6 +8,10 @@
       "sslPort": 44351
     }
   },
+  "logging": {
+    "moduleLoad": false,
+    "justMyCode": false
+  },
   "profiles": {
     "Bounce.Api": {
       "commandName": "Project",
@@ -27,5 +31,6 @@
         "ASPNETCORE_ENVIRONMENT": "Production"
       }
     }
+
   }
 }

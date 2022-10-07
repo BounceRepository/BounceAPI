@@ -486,42 +486,28 @@ namespace Bounce.Services.Implementation.Services.Auth
                         #endregion
                     }
 
-                    var authClaims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, loginUser.UserName),
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                        new Claim("UserId", loginUser.Id.ToString() )
+                  
 
-                    };
-
-                    foreach (var userRole in userRoles)
-                    {
-                        authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                    }
-
-                    var token = GetToken(authClaims);
+                    var token = await GenerateAccessToken(loginUser);
                     var roles = string.Join(",", userRoles);
                     //var authToken = JsonConvert.DeserializeObject<TokenViewModel>(token);
+
 
                     return new Response
                     {
                         StatusCode = StatusCodes.Status200OK,
                         Data = new
                         {
+                            Token = token,
                             UserName = loginUser.UserName,
                             Email = loginUser.Email,
-                            Role = roles,
-                            Token = token,
-                            UserId = loginUser.Id,
-                            EmailConfirmed = isEmailConfrimed
+                            Role = userRoles.FirstOrDefault(),
+                            Phone = loginUser?.PhoneNumber,
+                            HasProfile = loginUser?.HasProfile,
+                            ConfirmedEmail = loginUser?.EmailConfirmed,
+                            UserId = loginUser?.Id
                         },
-                        Message = "Login was successful"
-                        //{
-                        //	UserName = loginUser.UserName,
-
-                        //	Token = /*new JwtSecurityTokenHandler().WriteToken(token)*/ token
-                        //},
-
+                        Message = "Login Sucessful"
                     };
                 }
 
@@ -705,34 +691,37 @@ namespace Bounce.Services.Implementation.Services.Auth
 
         }
 
-
-
-        private string GetToken(List<Claim> authClaims)
+        public async Task<string> GenerateAccessToken(ApplicationUser user)
         {
+            //var user = _context.personalInformations.FirstOrDefault(x => x.ID == userId);
+            //var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            var tokenHandler = new JwtSecurityTokenHandler();// for creatiing token
+            var keyValue = _configuration["JWT:Secret"];
+            var key = Encoding.ASCII.GetBytes(keyValue);
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var claims = new List<Claim>();
+            claims.Add(new Claim("userId", Convert.ToString(user.Id)));
+            //claims.Add(new Claim("applicationUserId", applicationUserId));
+            claims.Add(new Claim("userEmail", user.Email));
+            claims.Add(new Claim("userName", user.UserName));
 
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                //Expires = DateTime.UtcNow.AddDays(30),
+                Expires = DateTime.UtcNow.AddDays(30),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key)
+, SecurityAlgorithms.HmacSha256Signature),
+            };
 
-            ////var token = new JwtSecurityToken(
-            ////  issuer: _configuration["JWT:ValidIssuer"],
-            ////  audience: _configuration["JWT:ValidAudience"],
-            ////  expires: DateTime.Now.AddHours(3),
-            ////  claims: authClaims,
-            ////  signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256Signature)
-            ////  );
-
-            //return tokenString;
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-            var token = new JwtSecurityToken(
-              issuer: _configuration["JWT:ValidIssuer"],
-              audience: _configuration["JWT:ValidAudience"],
-              expires: DateTime.Now.AddHours(3),
-              claims: authClaims,
-              signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-              );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-
-
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
+
+
     }
 }

@@ -12,12 +12,11 @@ namespace Bounce_Domain.Entity
 	{
 		protected BaseEntity()
 		{
+			DateCreated = DateTime.Now;
+			DateModified = DateTime.Now;
 
 		}
-		protected BaseEntity(long id)
-		{
-			Id = id;
-		}
+
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public long Id { get; set; }
 		public DateTime DateCreated { get; set; }
@@ -26,6 +25,6 @@ namespace Bounce_Domain.Entity
 		public string LastModifiedBy { get; set; }
 		public bool IsDeleted { get; set; }
 		[Timestamp]
-		public byte[]	RowVersion { get; set; }
+		public byte[] RowVersion { get; set; }
 	}
 }

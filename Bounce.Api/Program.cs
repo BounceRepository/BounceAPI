@@ -1,16 +1,20 @@
 using Bounce.Services.Implementation.Cryptography;
 using Bounce.Services.Implementation.Jwt;
 using Bounce.Services.Implementation.Services.Admin;
+using Bounce.Services.Implementation.Services.Articles;
 using Bounce.Services.Implementation.Services.Auth;
 using Bounce.Services.Implementation.Services.Hepler;
 using Bounce.Services.Implementation.Services.Patient;
+using Bounce.Services.Implementation.Services.Therapist;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Admin;
+using Bounce_Application.Persistence.Interfaces.Articles;
 using Bounce_Application.Persistence.Interfaces.Auth;
 using Bounce_Application.Persistence.Interfaces.Auth.Jwt;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.Persistence.Interfaces.Patient;
+using Bounce_Application.Persistence.Interfaces.Therapist;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
 using Bounce_Applucation.DTO.Auth;
@@ -42,7 +46,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = true;
 }).AddEntityFrameworkStores<BounceDbContext>()
-	.AddDefaultTokenProviders();
+    .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
@@ -53,8 +57,14 @@ builder.Services.AddScoped<ICryptographyService, CryptographyService>();
 builder.Services.AddScoped<IEmalService, EmailService>();
 builder.Services.AddScoped<IPatientServices, PatientServices>();
 builder.Services.AddScoped<IAdminServices, AdminServices>();
-builder.Services.AddSingleton<AdminLogger>(); 
+builder.Services.AddScoped<IBankAccountDetailServices, BankAccountDetailServices>();
+builder.Services.AddScoped<ITherapistServices, TherapistServices>();
+builder.Services.AddScoped<IArticleServices, ArticleServices>();
+builder.Services.AddScoped<SessionManager>();
+builder.Services.AddSingleton<AdminLogger>();
 builder.Services.AddSingleton<FileManager>();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddSession();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -86,7 +96,7 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
-//builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
+builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
 
 // Add services to the container.
 
@@ -96,6 +106,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
 
 try
 {
@@ -109,11 +120,11 @@ try
         Email = configuration["SuperAdminEmail"]
     };
     //var context = scope.ServiceProvider.GetRequiredService<BounceDbContext>();
-    var superAdminExist =await userManager.FindByNameAsync(superAdminUser.UserName);
-    if(superAdminExist == null)
+    var superAdminExist = await userManager.FindByNameAsync(superAdminUser.UserName);
+    if (superAdminExist == null)
     {
-        if (! await roleManager.RoleExistsAsync(UserRoles.SuperAdministrator))
-	  await roleManager.CreateAsync(new ApplicationRole { Name = UserRoles.SuperAdministrator });
+        if (!await roleManager.RoleExistsAsync(UserRoles.SuperAdministrator))
+            await roleManager.CreateAsync(new ApplicationRole { Name = UserRoles.SuperAdministrator });
 
         var result = await userManager.CreateAsync(superAdminUser, "SuperAdminPassword");
         var role = await userManager.AddToRoleAsync(superAdminUser, UserRoles.SuperAdministrator);
@@ -129,37 +140,28 @@ catch (Exception ex)
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-	
+ 
 }
 
-
-
 app.UseHttpsRedirection();
-
-app.UseStaticFiles();
 app.UseRouting();
-
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
-
-
-
-app.UseCors(x => x
-.AllowAnyMethod()
-.AllowAnyHeader()
-.SetIsOriginAllowed(origin => true) // allow any origin
-.AllowCredentials()); // allow credentials
+app.UseStaticFiles();
+app.UseSession();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Bounce}/{action=Index}/{id?}");
 });
-
-
+//app.UseStaticFiles(new StaticFileOptions()
+//{
+//    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),
+//    RequestPath = new PathString("/Resources")
+//});
 
 app.MapControllers();
-
 app.Run();
