@@ -1,6 +1,9 @@
-﻿using Bounce.DataTransferObject.DTO.Patient;
+﻿using AutoMapper;
+using Bounce.DataTransferObject.DTO.Patient;
+using Bounce.DataTransferObject.DTO.Payment;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Patient;
+using Bounce_Application.Persistence.Interfaces.Payment;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
@@ -18,17 +21,22 @@ namespace Bounce.Services.Implementation.Services.Patient
 {
     public class PatientServices : BaseServices, IPatientServices
     {
-        private readonly BounceDbContext _context;
+
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly FileManager _fileManager;
         private readonly AdminLogger _adminLogger;
-        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger)
+        private readonly IPaymentServices _paymentServices;
+        private readonly IMapper _mapper;
+
+        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger, IPaymentServices paymentServices, IMapper mapper) : base(context)
         {
-            this._context = context;
             _userManager = userManager;
             _fileManager = fileManager;
             _adminLogger = adminLogger;
+            _paymentServices = paymentServices;
+            _mapper = mapper;
         }
+
         public async Task<Response> UpdateProfileAsync (UpdateProfileDto model)
         {
             try
@@ -77,9 +85,7 @@ namespace Bounce.Services.Implementation.Services.Patient
                     _adminLogger.LogRequest($"{"Internal server error occured while saving a record}"}{" - "}{JsonConvert.SerializeObject(profile)}{" - "}{DateTime.Now}", true);
                     return new Response { StatusCode = StatusCodes.Status500InternalServerError, Message = InterErrorMessage };
                 }
-      
-
-              
+                  
             }
             catch(Exception ex)
             {
@@ -89,6 +95,37 @@ namespace Bounce.Services.Implementation.Services.Patient
 
 
 
+        }
+
+        public async Task<Response> BookAppointment(AppointmentDto model)
+        {
+            try
+            {
+                var paymentModel = new PaymentRequestDto
+                {
+                    PaymentType = model.PaymentType,
+                    Amount = model.TotalAMount
+
+                };
+                var response = await _paymentServices.InitailizePaymentAsync(paymentModel);
+                    if (response.StatusCode != 200)
+                    return AuxillaryResponse("Error occured while booking your appointement", response.StatusCode);
+
+                var responseData = (PaymentResonseDto)response.Data;
+                var appointement = _mapper.Map<AppointmentRequest>(model);
+                appointement.TrxRef = responseData.TransactionRef;
+                _context.Add(appointement);
+
+                if (!await SaveAsync())
+                    return FailedSaveResponse();
+                return SuccessResponse(data: new {TrxRef = appointement.TrxRef });
+               
+                
+            }
+            catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
         }
     }
 }

@@ -16,5 +16,9 @@ namespace Bounce_Domain.Entity
         public virtual ApplicationUser User { get; set; }
 
         public double Balance { get; set; }
+        public double ReferalBonus { get; set; }
+        public double AvailableBalance { get; set; }
+        public double Pendingdebit { get; set; }
+
     }
 }

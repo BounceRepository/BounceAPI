@@ -18,9 +18,10 @@ namespace Bounce.Api.Controllers
             _patientServices = patientServices;
         }
 
-        [AllowAnonymous]
-        [HttpPost("UpdateBioData")]
+
+        [HttpPatch("UpdateBioData")]
         public async Task<IActionResult> UdateProfile([FromForm] UpdateProfileDto model) => Response(await _patientServices.UpdateProfileAsync(model));
-        
+
+
     }
 }

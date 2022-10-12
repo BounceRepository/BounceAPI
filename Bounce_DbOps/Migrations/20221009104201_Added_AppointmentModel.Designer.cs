@@ -4,6 +4,7 @@ using Bounce_DbOps.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bounce_DbOps.Migrations
 {
     [DbContext(typeof(BounceDbContext))]
-    partial class BounceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221009104201_Added_AppointmentModel")]
+    partial class Added_AppointmentModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -213,9 +215,6 @@ namespace Bounce_DbOps.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("AvailableTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("Date")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DateCreated")
@@ -997,9 +996,6 @@ namespace Bounce_DbOps.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
-                    b.Property<double>("AvailableBalance")
-                        .HasColumnType("float");
-
                     b.Property<double>("Balance")
                         .HasColumnType("float");
 
@@ -1017,12 +1013,6 @@ namespace Bounce_DbOps.Migrations
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Pendingdebit")
-                        .HasColumnType("float");
-
-                    b.Property<double>("ReferalBonus")
-                        .HasColumnType("float");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()

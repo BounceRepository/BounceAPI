@@ -32,28 +32,26 @@ namespace Bounce.Services.Implementation.Services.Auth
         private readonly IEmalService _EmailService;
         private readonly ICryptographyService _cryptographyService;
         private readonly IHttpContextAccessor contextAccessor;
-        private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
         private readonly AdminLogger _adminLogger;
-        private readonly BounceDbContext _context;
-        public string rootPath { get; set; }
+        private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
 
-
-        public AuthenticationServivce(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration, IHostingEnvironment hostingEnvironment,
-            IEmalService emailService, ICryptographyService cryptographyService, SignInManager<ApplicationUser> signInManager, IHttpContextAccessor contextAccessor, AdminLogger adminLogger, BounceDbContext context)
+        public AuthenticationServivce(BounceDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration, IHostingEnvironment hostingEnvironment, IEmalService emailService, ICryptographyService cryptographyService, IHttpContextAccessor contextAccessor, AdminLogger adminLogger) : base(context)
         {
-
             _userManager = userManager;
+            this.signInManager = signInManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
-            rootPath = _hostingEnvironment.ContentRootPath;
             _EmailService = emailService;
             _cryptographyService = cryptographyService;
-            this.signInManager = signInManager;
             this.contextAccessor = contextAccessor;
             _adminLogger = adminLogger;
-            _context = context;
         }
+
+        public string rootPath { get; set; }
+
+
+    
 
 
 
@@ -536,7 +534,16 @@ namespace Bounce.Services.Implementation.Services.Auth
 
                 IdentityResult result = await _userManager.ConfirmEmailAsync(user, model.Token);
                 if (result.Succeeded)
+                {
+                    var wallet = new Wallet
+                    {
+                        UserId = user.Id
+                    };
+                    _context.Add(wallet);
+                    _context.SaveChanges();
+                    
                     return new Response { StatusCode = StatusCodes.Status200OK, Message = "Email has been successfuly confirmed", };
+                }
                 else
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = String.Join(',', result.Errors.Select(x => x.Description)) };
 

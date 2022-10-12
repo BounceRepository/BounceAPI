@@ -23,17 +23,12 @@ namespace Bounce.Services.Implementation.Services.Admin
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly BounceDbContext _context;
-        private readonly AdminLogger _adminLogger;
 
-        public AdminServices(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, BounceDbContext context, AdminLogger adminLogger)
+        public AdminServices(BounceDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager) : base(context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
-            _context = context;
-            _adminLogger = adminLogger;
         }
-
 
         public async Task<Response> GetUsersAsync(string role)
         {
@@ -89,7 +84,8 @@ namespace Bounce.Services.Implementation.Services.Admin
 
                             }).FirstOrDefault();
 
-                return new Response { StatusCode = StatusCodes.Status200OK, Data = data , Message ="user found"};
+                return SuccessResponse(data: data);
+
             }
             catch (Exception ex)
             {

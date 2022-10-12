@@ -8,9 +8,9 @@ namespace Bounce.DataTransferObject.Helpers.BaseResponse
 {
     public class Response
     {
-        public Object Data { get; set; }
+        public Object? Data { get; set; }
         public int StatusCode { get; set; }
-        public string Message { get; set; }
+        public string? Message { get; set; }
       
     }
 }

@@ -18,6 +18,7 @@ namespace Bounce_DbOps.Mapperr
             CreateMap<BankAccountDetailDto, BankAccountDetails>();
 
             CreateMap<ArticleCreateDto, Article>();
+            CreateMap<AppointmentDto,AppointmentRequest>();
 
 
         }

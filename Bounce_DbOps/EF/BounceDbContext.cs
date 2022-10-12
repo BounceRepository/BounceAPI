@@ -37,8 +37,11 @@ namespace Bounce_DbOps.EF
 		public DbSet<TherapistmedicalRegistration> TherapistmedicalRegistrations { get; set; }
 		public DbSet<BankAccountDetails> BankAccountDetails { get; set; }
 		public DbSet<Article> Articles { get; set; }
-
-
+		public DbSet<PaymentRequest> PaymentRequests { get; set; }
+		public DbSet<Appointment> Appointments { get; set; }
+		public DbSet<Transaction> Transactions { get; set; }
+		public DbSet<AppointmentRequest> AppointmentRequest { get; set; }
+		
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
