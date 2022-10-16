@@ -1,4 +1,5 @@
 
+using Bounce.Api.Filter;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Services.Implementation.Cryptography;
 using Bounce.Services.Implementation.Jwt;
@@ -7,6 +8,7 @@ using Bounce.Services.Implementation.Services.Admin;
 using Bounce.Services.Implementation.Services.Articles;
 using Bounce.Services.Implementation.Services.Auth;
 using Bounce.Services.Implementation.Services.Hepler;
+using Bounce.Services.Implementation.Services.Notification;
 using Bounce.Services.Implementation.Services.Patient;
 using Bounce.Services.Implementation.Services.Payment;
 using Bounce.Services.Implementation.Services.Therapist;
@@ -17,6 +19,7 @@ using Bounce_Application.Persistence.Interfaces.Articles;
 using Bounce_Application.Persistence.Interfaces.Auth;
 using Bounce_Application.Persistence.Interfaces.Auth.Jwt;
 using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
 using Bounce_Application.Persistence.Interfaces.Therapist;
@@ -65,7 +68,8 @@ builder.Services.AddScoped<IAdminServices, AdminServices>();
 builder.Services.AddScoped<IBankAccountDetailServices, BankAccountDetailServices>();
 builder.Services.AddScoped<ITherapistServices, TherapistServices>();
 builder.Services.AddScoped<IArticleServices, ArticleServices>();
-builder.Services.AddScoped<IPaymentServices, PaymentServices>();
+builder.Services.AddScoped<IPaymentServices, PaymentServices>(); 
+builder.Services.AddScoped<INotificationService, NotificationService>(); 
 builder.Services.AddScoped<SessionManager>();
 builder.Services.AddScoped<BaseServices>();
 builder.Services.AddSingleton<AdminLogger>();
@@ -170,6 +174,7 @@ app.UseEndpoints(endpoints =>
 //    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),
 //    RequestPath = new PathString("/Resources")
 //});
+//app.UseMiddleware<EncryptionMiddleware>();
 
 app.MapControllers();
 app.Run();

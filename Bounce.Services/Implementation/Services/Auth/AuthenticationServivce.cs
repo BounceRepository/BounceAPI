@@ -46,6 +46,7 @@ namespace Bounce.Services.Implementation.Services.Auth
             _cryptographyService = cryptographyService;
             this.contextAccessor = contextAccessor;
             _adminLogger = adminLogger;
+            rootPath = _hostingEnvironment.ContentRootPath;
         }
 
         public string rootPath { get; set; }

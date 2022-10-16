@@ -16,7 +16,7 @@ namespace Bounce.Api.Controllers
             this.adminServices = adminServices;
         }
 
-        //[AllowAnonymous]
+
         [HttpGet]
         [Route("GetAllTherapists")]
         public async Task<IActionResult> GetAllTherapist() => Response(await adminServices.GetUsersAsync(UserRoles.Therapist));

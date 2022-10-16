@@ -41,7 +41,8 @@ namespace Bounce_DbOps.EF
 		public DbSet<Appointment> Appointments { get; set; }
 		public DbSet<Transaction> Transactions { get; set; }
 		public DbSet<AppointmentRequest> AppointmentRequest { get; set; }
-		
+		public DbSet<Notifications> Notifications { get; set; }
+
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
