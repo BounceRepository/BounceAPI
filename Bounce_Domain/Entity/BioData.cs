@@ -15,10 +15,14 @@ namespace Bounce_Domain.Entity
         public string Phone { get; set; }
         public string Gender { get; set; }
         public DateTime DateOfBirth { get; set; }
-        public string MeansOfIdentification { get; set; }
-        public string FilePath { get; set; }
+        public string? MeansOfIdentification { get; set; }
+        public string? FilePath { get; set; }
         public bool ActivatePinLock { get; set; }
         public bool BecomeAnonymous { get; set; }
+        public string? PhysicalHealthRate { get; set; }
+        public string? MentalHealthRate { get; set; }
+        public string? EmotionalHealthRate { get; set; }
+        public string? EatingHabit { get; set; }
         public long UserId { get; set; }
         [ForeignKey(nameof(UserId))]
         [JsonIgnore]

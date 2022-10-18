@@ -50,6 +50,8 @@ namespace Bounce.Services.Implementation.Services.Patient
                 //if (user.HasProfile)
                 //    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "profile has been updated for this user" };
 
+                var imagPath = "";
+                var meansOfIdPath = "";
                 var profile = new BioData
                 {
                     UserId = userId,
@@ -60,9 +62,9 @@ namespace Bounce.Services.Implementation.Services.Patient
                     Phone = model.Phone,
                     DateCreated = DateTime.Now,
                     DateModified = DateTime.Now,
-                    MeansOfIdentification  = _fileManager.FileUpload(model.MeansOfIdentification),
+                    MeansOfIdentification = model.MeansOfIdentification != null ? _fileManager.FileUpload(model.MeansOfIdentification) : "",
                     LastModifiedBy = DateTime.Now.ToShortDateString(),
-                    FilePath = _fileManager.FileUpload(model.ImageFile)
+                    FilePath = model.ImageFile != null ? _fileManager.FileUpload(model.ImageFile) : ""
                 };
 
 

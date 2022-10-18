@@ -145,7 +145,7 @@ try
 catch (Exception ex)
 {
 
-    Console.WriteLine(ex.Message);
+    Console.WriteLine("Error from startUp class: " + ex.Message);
 }
 
 // Configure the HTTP request pipeline.

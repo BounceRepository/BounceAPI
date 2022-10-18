@@ -23,14 +23,19 @@ namespace Bounce.DataTransferObject.DTO.Patient
 
         //[Required]
         //public string MeansOfIdentification { get; set; }
-        [Required]
+        //[Required]
         [DataType(DataType.Upload)]
     
         public IFormFile ImageFile { get; set; }
         [Required]
         public string UserId { get; set; }
-        [Required]
+        //[Required]
         [DataType(DataType.Upload)]
         public IFormFile MeansOfIdentification { get; set; }
+
+        public string? PhysicalHealthRate { get; set; }
+        public string? MentalHealthRate { get; set; }
+        public string? EmotionalHealthRate { get; set; }
+        public string? EatingHabit { get; set; }
     }
 }
