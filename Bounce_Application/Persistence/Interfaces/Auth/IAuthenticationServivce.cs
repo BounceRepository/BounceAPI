@@ -22,8 +22,6 @@ namespace Bounce_Application.Persistence.Interfaces.Auth
         Task<Response> ConfirmEmail(ConfirmEmailDto model);
         Task<Response> SendEmailConfrimationLink(string userEmail);
         Task<Response> EmailConfirmationStatus(string userEmail);
-
-
-
+        Task<Response> RegisterSuperAdminUser(RegisterModel registerModel);
     }
 }

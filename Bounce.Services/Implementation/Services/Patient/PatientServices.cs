@@ -6,6 +6,7 @@ using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
+using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Http;
@@ -27,14 +28,21 @@ namespace Bounce.Services.Implementation.Services.Patient
         private readonly AdminLogger _adminLogger;
         private readonly IPaymentServices _paymentServices;
         private readonly IMapper _mapper;
-
-        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger, IPaymentServices paymentServices, IMapper mapper) : base(context)
+        private readonly IHttpContextAccessor contextAccessor;
+        private string root = "";
+        private readonly SessionManager _sessionManager;
+        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger, IPaymentServices paymentServices, IMapper mapper, IHttpContextAccessor contextAccessor, SessionManager sessionManager) : base(context)
         {
             _userManager = userManager;
             _fileManager = fileManager;
             _adminLogger = adminLogger;
             _paymentServices = paymentServices;
             _mapper = mapper;
+            this.contextAccessor = contextAccessor;
+            var scheme = contextAccessor?.HttpContext?.Request.Scheme;
+            var host = contextAccessor?.HttpContext?.Request.Host.Value;
+            root = $"{scheme}://{host}/";
+            _sessionManager = sessionManager;
         }
 
         public async Task<Response> UpdateProfileAsync (UpdateProfileDto model)
@@ -42,7 +50,7 @@ namespace Bounce.Services.Implementation.Services.Patient
             try
             {
                 //var userId = long.Parse(model.UserId);
-                var userId = long.Parse(model.UserId);
+                var userId = _sessionManager.CurrentLogin.Id;
                 var user = _userManager.Users.FirstOrDefault(x => x.Id == userId);
                 if (user == null)
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "user does not exist" };
@@ -69,7 +77,7 @@ namespace Bounce.Services.Implementation.Services.Patient
 
 
 
-                var record = /*_context.Set<BioData>().Add(profile);*/  await _context.AddAsync(profile);
+                var record = await _context.AddAsync(profile);
 
                 var isSaved = await _context.SaveChangesAsync() > 0;
                 if (isSaved)
@@ -123,6 +131,52 @@ namespace Bounce.Services.Implementation.Services.Patient
                 return SuccessResponse(data: new {TrxRef = appointement.TrxRef });
                
                 
+            }
+            catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> GetTherapist()
+        {
+            try
+            {
+
+                var users = await _userManager.GetUsersInRoleAsync(UserRoles.SuperAdministrator);
+
+                var data = (from user in users where user.HasProfile == true
+                            join profile in _context.BioDatas on user.Id equals profile.UserId
+                            join profile2 in _context.TherapistHospitalInformations on user.Id equals profile2.TherapistId
+                            join profile3 in _context.TherapistmedicalRegistrations on user.Id equals profile3.TherapistId
+                           
+                            select new GetTherapistDto
+                            {
+                                Id = user.Id,
+                                Name = $"Dr. {profile.FirstName} {profile.LastName}",
+                                YearsExperience = "10",
+                                Ratings = 12,
+                                About = "lorem",
+                                HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
+                                PhoneNUmber = "08037620380",
+                                PicturePath = profile?.FilePath,
+
+                            }).ToList();
+
+                data.Add(new GetTherapistDto
+                {
+                    Id = 2,
+                    Specialization = "Psychology",
+                    Name = "DR. Ifeanyi Ozougwu PHd",
+                    YearsExperience = "4",
+                    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
+                    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
+                    HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
+                    PhoneNUmber = "08037620380",
+                    PicturePath = root +"Resources/files/" + "usman-yousaf-pTrhfmj2jDA-unsplash.jpg"
+                });
+                return SuccessResponse(data: data);
+
             }
             catch(Exception ex)
             {

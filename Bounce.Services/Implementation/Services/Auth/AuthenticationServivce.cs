@@ -147,6 +147,99 @@ namespace Bounce.Services.Implementation.Services.Auth
             }
         }
 
+        public async Task<Response> RegisterSuperAdminUser(RegisterModel registerModel)
+        {
+            try
+            {
+
+                var userExists = await _userManager.FindByNameAsync(registerModel.Username);
+                if (userExists != null)
+                {
+                    return new Response
+                    {
+                        StatusCode = StatusCodes.Status409Conflict,
+                        Message = "User Already Exist"
+
+                    };
+
+                }
+                   
+                ApplicationUser user = new()
+                {
+                    Email = registerModel.Email,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    UserName = registerModel.Username,
+                    Discriminator = Bounce_Domain.Enum.UserType.Admin,
+                    EmailConfirmed = true,
+                    HasProfile = true
+                };
+                var result = await _userManager.CreateAsync(user, registerModel.Password);
+
+                if (!result.Succeeded)
+                {
+                    string errorMessage = "";
+                    if (result.Errors.Count() > 0)
+                    {
+                        var errors = result.Errors;
+                        foreach (var error in errors)
+                        {
+                            errorMessage += $"{error.Description} \n";
+                        }
+                        return new Response
+                        {
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = errorMessage
+                        };
+                    }
+                    else
+                        return new Response { StatusCode = StatusCodes.Status500InternalServerError, Message = InterErrorMessage };
+
+                }
+
+                if (!await _roleManager.RoleExistsAsync(UserRoles.SuperAdministrator))
+                    await _roleManager.CreateAsync(new ApplicationRole { Name = UserRoles.SuperAdministrator });
+
+                var role = await _userManager.AddToRoleAsync(user, UserRoles.SuperAdministrator);
+
+
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+
+                //var scheme = contextAccessor.HttpContext.Request.Scheme;
+                //var host = contextAccessor.HttpContext.Request.Host.Value;
+
+                //var fileurl = $"{scheme}://{host}/{EmailConfrimationUrl}";
+                //var baseUrl = $"{fileurl}?token={token}&email={email}";
+
+                //var emailRequest = new EmailRequest
+                //{
+                //    To = registerModel?.Email,
+                //    Body = EmailFormatter.FormatEmaiConfimation(baseUrl, rootPath),
+                //    Subject = "Email Confirmation"
+                //};
+
+                //await _EmailService.SendMail(emailRequest);
+
+                return new Response
+                {
+                    StatusCode = StatusCodes.Status200OK,
+                    Data = new RegistrationResponseDto
+                    {
+                        Token = token,
+                        Message = "user created successfully"
+                    }
+                };
+
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+
+            }
+        }
+
         public async Task<Response> RegisterTherapist(RegisterModel registerModel)
         {
             try

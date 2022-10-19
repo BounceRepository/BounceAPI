@@ -11,6 +11,7 @@ namespace Bounce_Application.Persistence.Interfaces.Patient
     public interface IPatientServices 
     {
         Task<Response> BookAppointment(AppointmentDto model);
+        Task<Response> GetTherapist();
         Task<Response> UpdateProfileAsync(UpdateProfileDto model);
     }
 }

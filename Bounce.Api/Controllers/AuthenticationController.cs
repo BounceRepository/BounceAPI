@@ -2,6 +2,8 @@
 using Bounce_Application.DTO;
 using Bounce_Application.DTO.Auth;
 using Bounce_Application.Persistence.Interfaces.Auth;
+using Bounce_Applucation.DTO.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +21,15 @@ namespace Bounce.Api.Controllers
 	        this.registrationServivce = registrationServivce;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.SuperAdministrator)]
         [HttpPost("register/admin")]
         public async Task<IActionResult> RegisterAdmin(RegisterModel registerModel) =>
                  Response(await registrationServivce.RegisterAdminUser(registerModel));
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.SuperAdministrator)]
+        [HttpPost("register/superAdmin")]
+        public async Task<IActionResult> RegisterSuperAdminAdmin(RegisterModel registerModel) =>
+                Response(await registrationServivce.RegisterSuperAdminUser(registerModel));
 
 
         [HttpPost("register/therapist")]

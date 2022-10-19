@@ -128,8 +128,8 @@ try
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
     var superAdminUser = new ApplicationUser
     {
-        UserName = "SuperAdmin",
-        Email = configuration["SuperAdminEmail"]
+        UserName = "Admin",
+        Email = configuration["Devsbounce@gmail.com"]
     };
     //var context = scope.ServiceProvider.GetRequiredService<BounceDbContext>();
     var superAdminExist = await userManager.FindByNameAsync(superAdminUser.UserName);
@@ -138,13 +138,14 @@ try
         if (!await roleManager.RoleExistsAsync(UserRoles.SuperAdministrator))
             await roleManager.CreateAsync(new ApplicationRole { Name = UserRoles.SuperAdministrator });
 
-        var result = await userManager.CreateAsync(superAdminUser, "SuperAdminPassword");
+        var result = await userManager.CreateAsync(superAdminUser, "Admin160@");
         var role = await userManager.AddToRoleAsync(superAdminUser, UserRoles.SuperAdministrator);
+        
     }
 }
 catch (Exception ex)
 {
-
+    throw new ArgumentOutOfRangeException(ex.Message);
     Console.WriteLine("Error from startUp class: " + ex.Message);
 }
 
@@ -161,7 +162,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles();
+//app.UseStaticFiles();
 app.UseSession();
 app.UseEndpoints(endpoints =>
 {

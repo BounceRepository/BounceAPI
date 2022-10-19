@@ -27,8 +27,8 @@ namespace Bounce.DataTransferObject.DTO.Patient
         [DataType(DataType.Upload)]
     
         public IFormFile ImageFile { get; set; }
-        [Required]
-        public string UserId { get; set; }
+        //[Required]
+        //public string UserId { get; set; }
         //[Required]
         [DataType(DataType.Upload)]
         public IFormFile MeansOfIdentification { get; set; }
