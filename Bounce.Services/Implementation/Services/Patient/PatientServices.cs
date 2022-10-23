@@ -9,6 +9,7 @@ using Bounce_Application.Utilies;
 using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
+using Bounce_Domain.Enum;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
@@ -49,18 +50,17 @@ namespace Bounce.Services.Implementation.Services.Patient
         {
             try
             {
-                //var userId = long.Parse(model.UserId);
+
                 var userId = _sessionManager.CurrentLogin.Id;
                 var user = _userManager.Users.FirstOrDefault(x => x.Id == userId);
                 if (user == null)
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "user does not exist" };
 
-                //if (user.HasProfile)
-                //    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "profile has been updated for this user" };
+                if (user.HasProfile)
+                    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "profile has been updated for this user" };
 
-                var imagPath = "";
-                var meansOfIdPath = "";
-                var profile = new BioData
+
+                var profile = new UserProfile
                 {
                     UserId = userId,
                     FirstName = model.FirstName,
@@ -74,8 +74,6 @@ namespace Bounce.Services.Implementation.Services.Patient
                     LastModifiedBy = DateTime.Now.ToShortDateString(),
                     FilePath = model.ImageFile != null ? _fileManager.FileUpload(model.ImageFile) : ""
                 };
-
-
 
                 var record = await _context.AddAsync(profile);
 
@@ -109,32 +107,48 @@ namespace Bounce.Services.Implementation.Services.Patient
 
         public async Task<Response> BookAppointment(AppointmentDto model)
         {
-            try
+            using (var _transaction = await  _context.Database.BeginTransactionAsync())
             {
-                var paymentModel = new PaymentRequestDto
+
+                try
                 {
-                    PaymentType = model.PaymentType,
-                    Amount = model.TotalAMount
+                    var paymentModel = new PaymentRequestDto
+                    {
+                        PaymentType = model.PaymentType,
+                        Amount = model.TotalAMount
 
-                };
-                var response = await _paymentServices.InitailizePaymentAsync(paymentModel);
-                    if (response.StatusCode != 200)
-                    return AuxillaryResponse("Error occured while booking your appointement", response.StatusCode);
+                    };
+                    LogInfo($"{"Started task to initialize payment }"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
 
-                var responseData = (PaymentResonseDto)response.Data;
-                var appointement = _mapper.Map<AppointmentRequest>(model);
-                appointement.TrxRef = responseData.TransactionRef;
-                _context.Add(appointement);
+                    if (!Enum.TryParse<PaymentType>(model.PaymentType.ToLower(), out PaymentType paymentType))
+                        return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "Invalid payment type" };
 
-                if (!await SaveAsync())
-                    return FailedSaveResponse();
-                return SuccessResponse(data: new {TrxRef = appointement.TrxRef });
-               
-                
-            }
-            catch(Exception ex)
-            {
-                return InternalErrorResponse(ex);
+                    var payment = new PaymentRequest
+                    {
+                        PaymentRequestId = DateTime.Now.Ticks.ToString(),
+                        UserId = _sessionManager.CurrentLogin.Id,
+                        PaymentType = paymentType,
+                        Amount = paymentModel.Amount,
+                        PlanId = 1,
+
+                    };
+                    await _context.AddAsync(payment);
+
+                    var appointement = _mapper.Map<AppointmentRequest>(model);
+                    appointement.TrxRef = payment.PaymentRequestId;
+                    _context.Add(appointement);
+
+                   await  _context.SaveChangesAsync();
+                    await _transaction.CommitAsync();
+
+   
+                    return SuccessResponse(data: new { TrxRef = appointement.TrxRef });
+                }
+                catch (Exception ex)
+                {
+                    await _transaction.RollbackAsync();
+                    return InternalErrorResponse(ex);
+                }
             }
         }
 
@@ -146,18 +160,19 @@ namespace Bounce.Services.Implementation.Services.Patient
                 var users = await _userManager.GetUsersInRoleAsync(UserRoles.SuperAdministrator);
 
                 var data = (from user in users where user.HasProfile == true
-                            join profile in _context.BioDatas on user.Id equals profile.UserId
+                            join profile in _context.UserProfile on user.Id equals profile.UserId
                             join profile2 in _context.TherapistHospitalInformations on user.Id equals profile2.TherapistId
                             join profile3 in _context.TherapistmedicalRegistrations on user.Id equals profile3.TherapistId
                            
                             select new GetTherapistDto
                             {
                                 Id = user.Id,
-                                Name = $"Dr. {profile.FirstName} {profile.LastName}",
+                                FirstName = profile.FirstName,
+                                LastName = profile.LastName,
                                 YearsExperience = "10",
                                 Ratings = 12,
                                 About = "lorem",
-                                HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
+                                //HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
                                 PhoneNUmber = "08037620380",
                                 PicturePath = profile?.FilePath,
 
@@ -165,20 +180,66 @@ namespace Bounce.Services.Implementation.Services.Patient
 
                 data.Add(new GetTherapistDto
                 {
-                    Id = 2,
-                    Specialization = "Psychology",
-                    Name = "DR. Ifeanyi Ozougwu PHd",
+                    Id = 6,
+                    Descipline = "Psychology",
+                    FirstName = "Ifeanyi",
+                    LastName =  "Ozougwu",
+                    Ratings = 12,
+                    Specialization =  new List<string> { "Bsc", "LBS" },
                     YearsExperience = "4",
                     About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
                     " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
-                    HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
+                    ListofDays = "5",
+                    StartTime = "9Am",
+                    EndTime = "5pm",
                     PhoneNUmber = "08037620380",
                     PicturePath = root +"Resources/files/" + "usman-yousaf-pTrhfmj2jDA-unsplash.jpg"
+                });
+                data.Add(new GetTherapistDto
+                {
+                    Id = 6,
+                    FirstName = "Chinedu",
+                    LastName = "Eze",
+                    Descipline = "Therapist",
+                    Ratings = 12,
+                    Specialization = new List<string> { "Bsc", "LBS" },
+                    YearsExperience = "4",
+                    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
+                    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
+                    ListofDays = "5",
+                    StartTime = "10Am",
+                    EndTime = "5pm",
+                    PhoneNUmber = "08037623425243",
+                    PicturePath = root + "Resources/files/" + "usman-yousaf-pTrhfmj2jDA-unsplash.jpg"
                 });
                 return SuccessResponse(data: data);
 
             }
             catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response GetAllPlans()
+        {
+            try
+            {
+                var plans = _context.Plan.ToList().Select(x => new
+                GetAllPlansDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Cost = x.Cost,
+                    Therapist = x.TherapistCount,
+                    DailyMeditation = x.DailyMeditationCount,
+                    FreeDaysTrialCount = x.FreeTrialCount,
+                });
+
+                return SuccessResponse(data: plans);
+
+            }
+            catch (Exception ex)
             {
                 return InternalErrorResponse(ex);
             }

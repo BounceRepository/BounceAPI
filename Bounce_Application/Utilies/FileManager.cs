@@ -74,52 +74,46 @@ namespace Bounce_Application.Utilies
         }
         public string FileUpload(IFormFile file, string path = "images")
         {
-            try
-            { 
+            var folderName = "Resources";
+            folderName = $"{folderName}\\{path}";
+            if (!Directory.Exists(folderName))
+                Directory.CreateDirectory(folderName);
 
-                var folderName = "Resources";
-                folderName = $"{folderName}/{path}";
-                if (!Directory.Exists(folderName))
-                    Directory.CreateDirectory(folderName);
-
-                var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
-                if (file.Length > 0)
+            var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+            if (file.Length > 0)
+            {
+                var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+                fileName = DateTime.UtcNow.ToString("yymmssfff") + Regex.Replace(fileName, @"\s", "");
+                var fullPath = Path.Combine(pathToSave, fileName);
+                var dbPath = Path.Combine(folderName, fileName);
+                using (var stream = new FileStream(fullPath, FileMode.Create))
                 {
-                    var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
-                    fileName = DateTime.UtcNow.ToString("yymmssfff") + Regex.Replace(fileName, @"\s", "");
-                    var fullPath = Path.Combine(pathToSave, fileName);
-                    var dbPath = Path.Combine(folderName, fileName);
-                    using (var stream = new FileStream(fullPath, FileMode.Create))
-                    {
-                        file.CopyTo(stream);
-                    }
-                    var uploadParams = new VideoUploadParams()
-                    {
-                        File = new FileDescription(fullPath),
-                        Folder = $"Resources/{path}/",
-                        //Folder = "footballbuzz/stories/", 
-                        Overwrite = false
-                    };
-
-                    Account account = new Account(
-                    "dukd0jnep",
-                     "218328548349527",
-                     "pHHXluwid33h4jA-82-7rzBCMJA");
-                    Cloudinary cloudinary = new Cloudinary(account);
-
-
-                    var uploadResult = cloudinary.UploadLarge(uploadParams);
-                    var uploadedFilePath = uploadResult.SecureUrl.AbsoluteUri;
-                    File.Delete(fullPath);
-
-                    return uploadedFilePath;
+                    file.CopyTo(stream);
                 }
-                else
+
+           
+                var uploadParams = new ImageUploadParams()
                 {
-                    return string.Empty;
-                }
+                    File = new FileDescription(@dbPath),
+                    //Folder = $"Resources/{path}/",
+                    //Folder = "footballbuzz/stories/", 
+                    Overwrite = false
+                };
+
+                Account account = new Account(
+                "dukd0jnep",
+                 "218328548349527",
+                 "pHHXluwid33h4jA-82-7rzBCMJA");
+                Cloudinary cloudinary = new Cloudinary(account);
+
+
+                var uploadResult = cloudinary.Upload(uploadParams);
+                var uploadedFilePath = uploadResult.SecureUrl.AbsoluteUri;
+                File.Delete(fullPath);
+
+                return uploadedFilePath;
             }
-            catch (Exception ex)
+            else
             {
                 return string.Empty;
             }

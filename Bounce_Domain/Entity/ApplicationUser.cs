@@ -14,9 +14,9 @@ namespace Bounce_Domain.Entity
     {
         public bool HasProfile { get; set; }
         public long? ProfileId { get; set; }
-        //[ForeignKey(nameof(ProfileId))]
+        [ForeignKey(nameof(ProfileId))]
         [JsonIgnore]
-        public BioData Profile { get; set; }
+        public UserProfile Profile { get; set; }
         public string? PatientId { get; set; }
         public UserType Discriminator { get; set; }
 

@@ -4,6 +4,7 @@ using Bounce_DbOps.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bounce_DbOps.Migrations
 {
     [DbContext(typeof(BounceDbContext))]
-    partial class BounceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221020154604_add-subscription seedsss")]
+    partial class addsubscriptionseedsss
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,7 +109,6 @@ namespace Bounce_DbOps.Migrations
                         .HasColumnType("bit");
 
                     b.Property<long?>("ProfileId")
-                        .IsRequired()
                         .HasColumnType("bigint");
 
                     b.Property<string>("SecurityStamp")
@@ -129,8 +130,6 @@ namespace Bounce_DbOps.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("ProfileId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -384,6 +383,89 @@ namespace Bounce_DbOps.Migrations
                     b.HasIndex("TherapistId");
 
                     b.ToTable("BankAccountDetails");
+                });
+
+            modelBuilder.Entity("Bounce_Domain.Entity.BioData", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+
+                    b.Property<bool>("ActivatePinLock")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("BecomeAnonymous")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EatingHabit")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmotionalHealthRate")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MeansOfIdentification")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MentalHealthRate")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhysicalHealthRate")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("BioData");
                 });
 
             modelBuilder.Entity("Bounce_Domain.Entity.Error", b =>
@@ -672,8 +754,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 1L,
                             Cost = 50000.0,
                             DailyMeditationCount = 100,
-                            DateCreated = new DateTime(2022, 10, 23, 10, 22, 54, 493, DateTimeKind.Local).AddTicks(8447),
-                            DateModified = new DateTime(2022, 10, 23, 10, 22, 54, 493, DateTimeKind.Local).AddTicks(8457),
+                            DateCreated = new DateTime(2022, 10, 20, 16, 46, 4, 228, DateTimeKind.Local).AddTicks(5016),
+                            DateModified = new DateTime(2022, 10, 20, 16, 46, 4, 228, DateTimeKind.Local).AddTicks(5025),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -686,8 +768,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 2L,
                             Cost = 100000.0,
                             DailyMeditationCount = 200,
-                            DateCreated = new DateTime(2022, 10, 23, 10, 22, 54, 493, DateTimeKind.Local).AddTicks(8481),
-                            DateModified = new DateTime(2022, 10, 23, 10, 22, 54, 493, DateTimeKind.Local).AddTicks(8481),
+                            DateCreated = new DateTime(2022, 10, 20, 16, 46, 4, 228, DateTimeKind.Local).AddTicks(5052),
+                            DateModified = new DateTime(2022, 10, 20, 16, 46, 4, 228, DateTimeKind.Local).AddTicks(5052),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -700,8 +782,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 3L,
                             Cost = 200000.0,
                             DailyMeditationCount = 500,
-                            DateCreated = new DateTime(2022, 10, 23, 10, 22, 54, 493, DateTimeKind.Local).AddTicks(8490),
-                            DateModified = new DateTime(2022, 10, 23, 10, 22, 54, 493, DateTimeKind.Local).AddTicks(8491),
+                            DateCreated = new DateTime(2022, 10, 20, 16, 46, 4, 228, DateTimeKind.Local).AddTicks(5063),
+                            DateModified = new DateTime(2022, 10, 20, 16, 46, 4, 228, DateTimeKind.Local).AddTicks(5064),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1021,87 +1103,6 @@ namespace Bounce_DbOps.Migrations
                     b.ToTable("Transactions");
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.UserProfile", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<bool>("ActivatePinLock")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("BecomeAnonymous")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EatingHabit")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("EmotionalHealthRate")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Feelings")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Gender")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MeansOfIdentification")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MentalHealthRate")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhysicalHealthRate")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserProfile");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.Wallet", b =>
                 {
                     b.Property<long>("Id")
@@ -1256,17 +1257,6 @@ namespace Bounce_DbOps.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.ApplicationUser", b =>
-                {
-                    b.HasOne("Bounce_Domain.Entity.UserProfile", "Profile")
-                        .WithMany()
-                        .HasForeignKey("ProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Profile");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.Appointment", b =>
                 {
                     b.HasOne("Bounce_Domain.Entity.AppointmentRequest", "AppointmentRequest")
@@ -1321,6 +1311,17 @@ namespace Bounce_DbOps.Migrations
                         .IsRequired();
 
                     b.Navigation("Therapist");
+                });
+
+            modelBuilder.Entity("Bounce_Domain.Entity.BioData", b =>
+                {
+                    b.HasOne("Bounce_Domain.Entity.ApplicationUser", "User")
+                        .WithOne("Profile")
+                        .HasForeignKey("Bounce_Domain.Entity.BioData", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Bounce_Domain.Entity.InteractiveSession", b =>
@@ -1424,17 +1425,6 @@ namespace Bounce_DbOps.Migrations
                     b.Navigation("Request");
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.UserProfile", b =>
-                {
-                    b.HasOne("Bounce_Domain.Entity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.Wallet", b =>
                 {
                     b.HasOne("Bounce_Domain.Entity.ApplicationUser", "User")
@@ -1494,6 +1484,12 @@ namespace Bounce_DbOps.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Bounce_Domain.Entity.ApplicationUser", b =>
+                {
+                    b.Navigation("Profile")
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

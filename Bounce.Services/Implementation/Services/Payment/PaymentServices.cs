@@ -44,7 +44,7 @@ namespace Bounce.Services.Implementation.Services.Payment
             {
                 LogInfo($"{"Started task to initialize payment }"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
 
-                if (!Enum.TryParse<PaymentType>(model.PaymentType, out PaymentType paymentType))
+                if (!Enum.TryParse<PaymentType>(model.PaymentType.ToLower(), out PaymentType paymentType))
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "Invalid payment type" };
                
                 var payment = new PaymentRequest

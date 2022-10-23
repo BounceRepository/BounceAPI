@@ -43,19 +43,19 @@ namespace Bounce.Services.Implementation.Services.Admin
                     users = users.Concat(superAdmin).ToList();
                 }
 
-                var data = (from user in users
-                            join profile in _context.BioDatas on user.Id equals profile.UserId
-                            select new AllTherapistDto
-                            {
-                                UserId = user.Id,
-                                FirstName = profile.FirstName,
-                                LastName = profile.LastName,
-                                Email = user.Email,
-                                PicturePath = profile.FilePath
+                //var data = (from user in users
+                //            join profile in _context.BioDatas on user.Id equals profile.UserId
+                //            select new AllTherapistDto
+                //            {
+                //                UserId = user.Id,
+                //                FirstName = profile.FirstName,
+                //                LastName = profile.LastName,
+                //                Email = user.Email,
+                //                PicturePath = profile.FilePath
 
-                            }).ToList();
+                //            }).ToList();
 
-                return new Response { StatusCode = StatusCodes.Status200OK, Data = data };
+                return new Response { StatusCode = StatusCodes.Status200OK, Data = null };
             }
             catch (Exception ex)
             {
@@ -73,7 +73,7 @@ namespace Bounce.Services.Implementation.Services.Admin
                
                 var data = (from user in _userManager.Users
                             where user.Id == Id
-                            join profile in _context.BioDatas on user.Id equals profile.UserId
+                            join profile in _context.UserProfile on user.Id equals profile.UserId
                             select new AllTherapistDto
                             {
                                 UserId = user.Id,

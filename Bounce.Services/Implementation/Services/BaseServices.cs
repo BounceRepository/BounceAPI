@@ -17,6 +17,7 @@ namespace Bounce.Services.Implementation.Services
     {
         public const string InterErrorMessage = "Internal server error occured";
         protected readonly BounceDbContext _context;
+       
 
         public BaseServices(BounceDbContext context)
         {
@@ -95,10 +96,10 @@ namespace Bounce.Services.Implementation.Services
         public void LogRequest(Exception? ex = null, string message = "", bool isError = true, object? model = null)
         {
         
-            if(!isError)
+            if(isError)
             {
                 var prefix = model != null ? $"{JsonConvert.SerializeObject(model)}" : "";
-                message = $"{InterErrorMessage}{" - "}{ex}{" - "}{prefix}{DateTime.Now}";
+                message = $"{InterErrorMessage}{" - "}{ex.Message}{" - "}{prefix}{DateTime.Now}";
             }
 
             Log.Logger = new LoggerConfiguration()

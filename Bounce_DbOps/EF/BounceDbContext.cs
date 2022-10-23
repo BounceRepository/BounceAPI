@@ -27,8 +27,10 @@ namespace Bounce_DbOps.EF
         }
 		public DbSet<Error> Errors { get; set; }
 		public DbSet<TokenModel> Tokens { get; set; }
-		public DbSet<BioData> BioDatas { get; set; }
-		public DbSet<Plan> Plans { get; set; }
+		//public DbSet<BioData> BioData { get; set; }
+
+		public DbSet<UserProfile> UserProfile { get; set; }
+		public DbSet<Plan> Plan { get; set; }
 		public DbSet<Subscription> Subscriptions { get; set; }
 		public DbSet<Wallet> Wallets { get; set; }
 		public DbSet<InteractiveSession> InteractiveSessions { get; set; }
@@ -56,7 +58,18 @@ namespace Bounce_DbOps.EF
 			}
 
 			modelBuilder.ApplyConfiguration(new ErrorCodeConfigration());
-			base.OnModelCreating(modelBuilder);
+
+
+            modelBuilder.Entity<Plan>().HasData(
+            new Plan { Id = 1, Name = "Bronze", FreeTrialCount = 7, DailyMeditationCount = 100, TherapistCount = 100, Cost = 50000 });
+            modelBuilder.Entity<Plan>().HasData(
+            new Plan { Id = 2, Name = "Silver", FreeTrialCount = 7, DailyMeditationCount = 200, TherapistCount = 200, Cost = 100000 });
+            modelBuilder.Entity<Plan>().HasData(
+            new Plan { Id = 3, Name = "Gold", FreeTrialCount = 7, DailyMeditationCount = 500, TherapistCount = 500, Cost = 200000 });
+
+
+
+            base.OnModelCreating(modelBuilder);
 		}
 
         public override int SaveChanges()

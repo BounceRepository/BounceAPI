@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Optimize>False</Optimize>
+    <Optimize>True</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
@@ -75,6 +75,7 @@
   <ItemGroup>
     <Folder Include="ApiLogs\" />
     <Folder Include="Mapper\" />
+    <Folder Include="Resources\images\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>
 

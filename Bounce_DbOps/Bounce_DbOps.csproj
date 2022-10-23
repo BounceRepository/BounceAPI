@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <Compile Remove="EF\ApplicationUser.cs" />
+    <Compile Remove="Migrations\20221018094114_updated_BioData.cs" />
+    <Compile Remove="Migrations\20221018094114_updated_BioData.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
