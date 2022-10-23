@@ -29,7 +29,7 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetAllTherapists")]
         public async Task<IActionResult> GetAllTherapists() => Response(await _patientServices.GetTherapist());
 
-        [AllowAnonymous]
+
         [HttpGet("GetPlans")]
         public async Task<IActionResult> GetAllPlans() => Response( _patientServices.GetAllPlans());
 
@@ -39,6 +39,14 @@ namespace Bounce.Api.Controllers
 
         [HttpPost("ComfirmAppointment")]
         public async Task<IActionResult> ComfirmAppointment([FromQuery] string TxRef) => Response(await _paymentServices.ConfirmAppointment(TxRef));
+
+        [HttpPost("LogUserfeelings")]
+        public IActionResult LogUserFeelings([FromBody] List<string> feelings) => Response( _patientServices.LogUserFeeling(feelings));
+
+        [HttpGet("GetAllFeelings")]
+        public IActionResult Allfellings() => Response(_patientServices.GetAllFeelings());
+        [HttpGet("GetUserFeelings")]
+        public IActionResult UserFeelings() => Response(_patientServices.GetUserFeelings());
 
 
     }

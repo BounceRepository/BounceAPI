@@ -520,8 +520,6 @@ namespace Bounce.Services.Implementation.Services.Auth
 
                 var loginUser = await _userManager.FindByNameAsync(loginModel.Username);
 
-
-
                 if (loginUser == null)
                     loginUser = await _userManager.FindByEmailAsync(loginModel.Username);
 
@@ -532,7 +530,7 @@ namespace Bounce.Services.Implementation.Services.Auth
                         Message = "User does not exist"
                     };
 
-
+       
                 var isPasswordValid = await _userManager.CheckPasswordAsync(loginUser, loginModel.Password);
                 if (isPasswordValid)
                 {

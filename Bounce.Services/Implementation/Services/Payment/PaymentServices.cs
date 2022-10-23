@@ -222,5 +222,33 @@ namespace Bounce.Services.Implementation.Services.Payment
                 return InternalErrorResponse(ex);
             }
         }
+        public async Task<Response> WalletTop(WalletToUpDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var walletModel = new WalletRequest
+                {
+                    RequestType = WalletRequestType.TopUp,
+                    Amount = model.Amount,
+                    Refxn = DateTime.Now.Ticks.ToString(),
+                    UserId = user.Id,
+                    DateCreated = DateTime.Now,
+                    LastModifiedBy = user.Email,
+                    DateModified = DateTime.Now,
+                    Time = DateTime.UtcNow,
+                };
+                _context.Add(walletModel);
+
+                if (!await SaveAsync())
+                    return FailedSaveResponse();
+                return SuccessResponse(data: new { TrxRef = walletModel.Refxn });
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
     }
 }

@@ -14,11 +14,15 @@ namespace Bounce_Domain.Entity
     {
         public bool HasProfile { get; set; }
         public long? ProfileId { get; set; }
-        [ForeignKey(nameof(ProfileId))]
-        [JsonIgnore]
-        public UserProfile Profile { get; set; }
+
+        //public string? RoleName { get; set; }
+        //public string? Feelings { get; set; }
+        //[ForeignKey(nameof(ProfileId))]
+        //[JsonIgnore]
+        //public UserProfile Profile { get; set; }
         public string? PatientId { get; set; }
         public UserType Discriminator { get; set; }
+        
 
     }
 }

@@ -15,5 +15,6 @@ namespace Bounce_Application.Persistence.Interfaces.Payment
         Task<Response> ConfirmAppointment(string trxRef);
         Task<Response> InitailizePaymentAsync(PaymentRequestDto model);
         Task<Response> Requery(string TxRef);
+        Task<Response> WalletTop(WalletToUpDto model);
     }
 }

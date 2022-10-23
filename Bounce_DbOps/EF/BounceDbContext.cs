@@ -1,10 +1,12 @@
 ﻿using Bounce_Application.Persistence.Interfaces;
+using Bounce_Application.Utilies;
 using Bounce_DbOps.EF.Configurations;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +19,9 @@ namespace Bounce_DbOps.EF
     public class BounceDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, long>, IBounceDbContext
     {
         private readonly IHttpContextAccessor httpContextAccessor = new HttpContextAccessor();
-        public BounceDbContext(DbContextOptions<BounceDbContext> options) : base(options)
+		private  IServiceScopeFactory serviceScopeFactory { get; set; }
+
+		public BounceDbContext(DbContextOptions<BounceDbContext> options) : base(options)
         {
 
         }
@@ -33,6 +37,7 @@ namespace Bounce_DbOps.EF
 		public DbSet<Plan> Plan { get; set; }
 		public DbSet<Subscription> Subscriptions { get; set; }
 		public DbSet<Wallet> Wallets { get; set; }
+		public DbSet<WalletRequest> WalletRequests { get; set; }
 		public DbSet<InteractiveSession> InteractiveSessions { get; set; }
 		public DbSet<SerialNumber> SerialNumbers { get; set; }
 		public DbSet<TherapistHospitalInformation> TherapistHospitalInformations { get; set; }
@@ -134,8 +139,18 @@ namespace Bounce_DbOps.EF
 		}
 		private string GetCurrentloggedUser()
 		{
-			var loggedUser = this.httpContextAccessor?.HttpContext?.User?.Identity?.Name;
-			return !string.IsNullOrEmpty(loggedUser) ? loggedUser : "Anonymous";
+
+			//using (var scope = serviceScopeFactory.CreateScope())
+			//{
+			//	var context = scope.ServiceProvider.GetRequiredService<SessionManager>();
+
+			//	var loggedUser = context.CurrentLogin.Email;
+			//	return !string.IsNullOrEmpty(loggedUser) ? loggedUser : "Anonymous";
+
+			//}
+			return "";
+
+		
 		}
     }
 }

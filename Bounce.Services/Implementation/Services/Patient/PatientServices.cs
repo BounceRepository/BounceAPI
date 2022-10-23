@@ -34,7 +34,7 @@ namespace Bounce.Services.Implementation.Services.Patient
         private readonly SessionManager _sessionManager;
         public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger, IPaymentServices paymentServices, IMapper mapper, IHttpContextAccessor contextAccessor, SessionManager sessionManager) : base(context)
         {
-            _userManager = userManager;
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             _fileManager = fileManager;
             _adminLogger = adminLogger;
             _paymentServices = paymentServices;
@@ -51,8 +51,7 @@ namespace Bounce.Services.Implementation.Services.Patient
             try
             {
 
-                var userId = _sessionManager.CurrentLogin.Id;
-                var user = _userManager.Users.FirstOrDefault(x => x.Id == userId);
+                var user = _sessionManager.CurrentLogin;
                 if (user == null)
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "user does not exist" };
 
@@ -62,7 +61,7 @@ namespace Bounce.Services.Implementation.Services.Patient
 
                 var profile = new UserProfile
                 {
-                    UserId = userId,
+                    UserId = user.Id,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     DateOfBirth = model.DateOfBirth,
@@ -76,12 +75,9 @@ namespace Bounce.Services.Implementation.Services.Patient
                 };
 
                 var record = await _context.AddAsync(profile);
-
-                var isSaved = await _context.SaveChangesAsync() > 0;
-                if (isSaved)
+                if (await SaveAsync())
                 {
                     var id = record.Member("Id").CurrentValue;
-                    //var id = long.Parse(id);
                     user.ProfileId = (long)(id);
                     user.HasProfile = true;
                     await _userManager.UpdateAsync(user);
@@ -156,8 +152,25 @@ namespace Bounce.Services.Implementation.Services.Patient
         {
             try
             {
+                //var userst = new List<ApplicationUser>();
+                ////var fdfdfdf = await  _userManager.GetUsersInRoleAsync("Super Administrator").ConfigureAwait(false);
 
-                var users = await _userManager.GetUsersInRoleAsync(UserRoles.SuperAdministrator);
+                ////var users = await _userManager.GetUsersInRoleAsync(UserRoles.Therapist);
+                //using (var sssss = _userManager)
+                //{
+                //    var usersq = sssss.Users;
+                //    foreach (var user in usersq)
+                //    {
+                //        if (await sssss.IsInRoleAsync(user, UserRoles.Therapist))
+                //        {
+                //            userst.Add(user);
+                //        }
+                //    }
+                //};
+
+                var users = _userManager.Users.Where(x=> x.Discriminator == UserType.Therapist).ToList();
+                if (users == null)
+                    return SuccessResponse(data: null);
 
                 var data = (from user in users where user.HasProfile == true
                             join profile in _context.UserProfile on user.Id equals profile.UserId
@@ -174,7 +187,7 @@ namespace Bounce.Services.Implementation.Services.Patient
                                 About = "lorem",
                                 //HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
                                 PhoneNUmber = "08037620380",
-                                PicturePath = profile?.FilePath,
+                                PicturePath = profile.FilePath,
 
                             }).ToList();
 
@@ -216,6 +229,61 @@ namespace Bounce.Services.Implementation.Services.Patient
 
             }
             catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public Response LogUserFeeling(List<string> feelings)
+        {
+            try
+            {
+                if(feelings == null)
+                    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "feelings can not ne null" };
+
+                var user = _sessionManager.CurrentLogin;
+
+                if (!user.HasProfile)
+                    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "profile has not been updated" };
+                var userProfile = _context.UserProfile.FirstOrDefault(x => x.Id == user.ProfileId);
+                userProfile.Feelings = String.Join("|", feelings);
+                _context.Update(userProfile);  
+                _context.Update(user);
+                _context.SaveChanges();
+                return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public Response GetAllFeelings()
+        {
+            try
+            {
+                var fellings = new List<string> { "Sad","Depressed","Nocotogis", "Lonly","Relief", "Guilt", "Angry", "Empty",
+                "Happy","Satisfied","Scared", "Anxios","Disgust","Love","Content"};
+                return SuccessResponse(data: fellings);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public Response GetUserFeelings()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                if (!user.HasProfile)
+                    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "profile has not been updated" };
+                var profile = _context.UserProfile.FirstOrDefault(x => x.UserId == user.Id);
+                var feelings = profile?.Feelings?.Split("|");
+                return SuccessResponse(data: feelings);
+
+            }
+            catch (Exception ex)
             {
                 return InternalErrorResponse(ex);
             }

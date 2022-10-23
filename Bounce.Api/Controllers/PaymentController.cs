@@ -29,8 +29,8 @@ namespace Bounce.Api.Controllers
         [HttpPost("PaymentRequery")]
         public async Task<IActionResult> PaymentRequery([FromQuery] string TxRef) => Response( await _paymentServices.Requery(TxRef));
 
-        //[HttpPost("AppointmentPaymentRequest")]
-        //public async Task<IActionResult> BookAppointment([FromBody] AppointmentDto model) => Response(await _paymentServices.BookAppointment(model));
+        [HttpPost("WalletTop")]
+        public async Task<IActionResult> WalletTop([FromBody] WalletToUpDto model) => Response(await _paymentServices.WalletTop(model));
         //[HttpPost("ComfirmAppointment")]
         //public async Task<IActionResult> ComfirmAppointment([FromQuery] string TxRef) => Response(await _paymentServices.ConfirmAppointment(TxRef));
     }
