@@ -13,6 +13,8 @@ namespace Bounce.Api.Controllers
         {
             _notificationService = notificationService;
         }
+        [HttpPatch("UpdateNotificationToken")]
+        public async Task<IActionResult> Updatetoken([FromQuery] string token) => Response( await _notificationService.UpdateNotificationToken(token));
 
         [HttpGet("GetAllUserNotifications")]
         public IActionResult GetAllNotification() => Response(_notificationService.GetAllNotification());

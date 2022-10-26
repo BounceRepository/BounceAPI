@@ -5,6 +5,10 @@ using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,17 +21,44 @@ namespace Bounce.Services.Implementation.Services.Notification
     {
         private readonly IMapper _mapper;
         private readonly SessionManager _sessionManager;
+        private readonly UserManager<ApplicationUser>  _userManager;
 
-        public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager) : base(context)
+        public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager) : base(context)
         {
             _mapper = mapper;
             _sessionManager = sessionManager;
+            _userManager = userManager;
         }
         public async Task<Response>  PushNotification(PushNotificationDto model)
         {
             try
             {
-               var notification = _mapper.Map<Notifications>(model);
+                var defaultApp = FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
+                });
+                Console.WriteLine(defaultApp.Name);
+
+                var message = new Message()
+                {
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["FirstName"] = "John",
+                        ["LastName"] = "Ifeanyi"
+                    },
+                    Notification = new FirebaseAdmin.Messaging.Notification
+                    {
+                        Title = "Message Title",
+                        Body = "Message Body"
+                    },
+                    Topic = "news"
+                };
+                var messaging = FirebaseMessaging.DefaultInstance;
+                var result = await messaging.SendAsync(message);
+
+
+
+                var notification = _mapper.Map<Notifications>(model);
                await _context.AddAsync(notification);
                 if (!await SaveAsync())
                     return FailedSaveResponse(notification);
@@ -50,6 +81,21 @@ namespace Bounce.Services.Implementation.Services.Notification
                 if (!await SaveAsync())
                     return FailedSaveResponse(notification);
                 return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> UpdateNotificationToken(string notificationToken)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                user.NotificationToken = notificationToken;
+                await _userManager.UpdateAsync(user);
+                return SuccessResponse("token has been updated");
 
             }
             catch (Exception ex)

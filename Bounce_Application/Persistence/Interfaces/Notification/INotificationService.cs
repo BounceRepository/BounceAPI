@@ -14,5 +14,6 @@ namespace Bounce_Application.Persistence.Interfaces.Notification
         Task<Response> PopNotification(long notificationId);
         Task<Response> PushNotification(PushNotificationDto model);
         Task<Response> ReadNotification(long notificationId);
+        Task<Response> UpdateNotificationToken(string notificationToken);
     }
 }

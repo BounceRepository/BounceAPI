@@ -22,7 +22,9 @@ namespace Bounce_Domain.Entity
         //public UserProfile Profile { get; set; }
         public string? PatientId { get; set; }
         public UserType Discriminator { get; set; }
-        
+        public string? NotificationToken { get; set; }
+        public string? DeviceId { get; set; }
+
 
     }
 }
