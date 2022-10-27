@@ -4,6 +4,7 @@ using Bounce_DbOps.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bounce_DbOps.Migrations
 {
     [DbContext(typeof(BounceDbContext))]
-    partial class BounceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221027151042_modified transaction")]
+    partial class modifiedtransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -494,59 +496,6 @@ namespace Bounce_DbOps.Migrations
                     b.ToTable("InteractiveSessions");
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.NotificationModel", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsNewNotication")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NotificationRef")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notification");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.Notifications", b =>
                 {
                     b.Property<long>("Id")
@@ -731,8 +680,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 1L,
                             Cost = 50000.0,
                             DailyMeditationCount = 100,
-                            DateCreated = new DateTime(2022, 10, 27, 17, 49, 41, 223, DateTimeKind.Local).AddTicks(2348),
-                            DateModified = new DateTime(2022, 10, 27, 17, 49, 41, 223, DateTimeKind.Local).AddTicks(2357),
+                            DateCreated = new DateTime(2022, 10, 27, 16, 10, 42, 230, DateTimeKind.Local).AddTicks(8372),
+                            DateModified = new DateTime(2022, 10, 27, 16, 10, 42, 230, DateTimeKind.Local).AddTicks(8382),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -745,8 +694,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 2L,
                             Cost = 100000.0,
                             DailyMeditationCount = 200,
-                            DateCreated = new DateTime(2022, 10, 27, 17, 49, 41, 223, DateTimeKind.Local).AddTicks(2382),
-                            DateModified = new DateTime(2022, 10, 27, 17, 49, 41, 223, DateTimeKind.Local).AddTicks(2382),
+                            DateCreated = new DateTime(2022, 10, 27, 16, 10, 42, 230, DateTimeKind.Local).AddTicks(8402),
+                            DateModified = new DateTime(2022, 10, 27, 16, 10, 42, 230, DateTimeKind.Local).AddTicks(8403),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -759,8 +708,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 3L,
                             Cost = 200000.0,
                             DailyMeditationCount = 500,
-                            DateCreated = new DateTime(2022, 10, 27, 17, 49, 41, 223, DateTimeKind.Local).AddTicks(2392),
-                            DateModified = new DateTime(2022, 10, 27, 17, 49, 41, 223, DateTimeKind.Local).AddTicks(2392),
+                            DateCreated = new DateTime(2022, 10, 27, 16, 10, 42, 230, DateTimeKind.Local).AddTicks(8410),
+                            DateModified = new DateTime(2022, 10, 27, 16, 10, 42, 230, DateTimeKind.Local).AddTicks(8411),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1066,6 +1015,7 @@ namespace Bounce_DbOps.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long?>("RequestId")
+                        .IsRequired()
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("RowVersion")
@@ -1081,12 +1031,20 @@ namespace Bounce_DbOps.Migrations
                         .IsRequired()
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("WalletRequestId")
+                        .IsRequired()
+                        .HasColumnType("bigint");
+
                     b.Property<string>("status")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RequestId");
+
                     b.HasIndex("UserId");
+
+                    b.HasIndex("WalletRequestId");
 
                     b.ToTable("Transactions");
                 });
@@ -1458,17 +1416,6 @@ namespace Bounce_DbOps.Migrations
                     b.Navigation("Therapist");
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.NotificationModel", b =>
-                {
-                    b.HasOne("Bounce_Domain.Entity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.Notifications", b =>
                 {
                     b.HasOne("Bounce_Domain.Entity.ApplicationUser", "User")
@@ -1542,13 +1489,29 @@ namespace Bounce_DbOps.Migrations
 
             modelBuilder.Entity("Bounce_Domain.Entity.Transaction", b =>
                 {
+                    b.HasOne("Bounce_Domain.Entity.PaymentRequest", "Request")
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Bounce_Domain.Entity.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Bounce_Domain.Entity.WalletRequest", "WalletRequest")
+                        .WithMany()
+                        .HasForeignKey("WalletRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Request");
+
                     b.Navigation("User");
+
+                    b.Navigation("WalletRequest");
                 });
 
             modelBuilder.Entity("Bounce_Domain.Entity.UserProfile", b =>

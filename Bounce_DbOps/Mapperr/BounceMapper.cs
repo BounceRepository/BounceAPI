@@ -20,7 +20,7 @@ namespace Bounce_DbOps.Mapperr
 
             CreateMap<ArticleCreateDto, Article>();
             CreateMap<AppointmentDto,AppointmentRequest>(); 
-            CreateMap<PushNotificationDto, Notifications>(); 
+            CreateMap<PushNotificationDto, NotificationModel>(); 
 
 
         }

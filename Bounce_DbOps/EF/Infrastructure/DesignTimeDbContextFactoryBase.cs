@@ -8,7 +8,7 @@ namespace Bounce_DbOps.EF.Infrastructure
 	public abstract class DesignTimeDbContextFactoryBase<TContext> : IDesignTimeDbContextFactory<TContext> where TContext : DbContext
 	{
 		private const string ConnectionStringName = "BounceDatabase";
-		private const string AspNetCoreEnviroment = "ASPMETCORE_ENVIRONMENT";
+		private const string AspNetCoreEnviroment = "ASPNETCORE_ENVIRONMENT";
 		public TContext CreateDbContext(string[] args)
 		{
 			var basePath = Directory.GetCurrentDirectory();
@@ -22,6 +22,7 @@ namespace Bounce_DbOps.EF.Infrastructure
 			var configuration = new ConfigurationBuilder()
 				.SetBasePath(basePath)
 				.AddJsonFile("appsettings.json", true, true)
+				.AddJsonFile("key.json", true, true)
 				.AddJsonFile("appsettings.Local.json", true, true)
 				.AddJsonFile($"appsettings.{environmentName}.json", true, true)
 				.AddEnvironmentVariables()

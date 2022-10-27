@@ -1,8 +1,13 @@
 ﻿using AutoMapper;
 using Bounce.Bounce_Application.Settings;
+using Bounce.DataTransferObject.DTO.Notification;
 using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Payment;
+using Bounce.DataTransferObject.Helpers;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
+using Bounce_Application.DTO;
+using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.Persistence.Interfaces.Payment;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
@@ -10,12 +15,15 @@ using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Bounce_Domain.Enum;
 using Flutterwave.Ravepay.Net;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -29,12 +37,20 @@ namespace Bounce.Services.Implementation.Services.Payment
         private readonly FlutterWaveSetting _flutterWaveSettings;
         private readonly SessionManager _sessionManager;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
+        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IEmalService _EmailService;
+          public string rootPath { get; set; }
 
-        public PaymentServices(BounceDbContext context, IOptions<FlutterWaveSetting> flutterWave, SessionManager sessionManager, IMapper mapper) : base(context)
+        public PaymentServices(BounceDbContext context, IOptions<FlutterWaveSetting> flutterWave, SessionManager sessionManager, IMapper mapper, INotificationService notificationService, IHostingEnvironment hostingEnvironment, IEmalService emailService) : base(context)
         {
             _flutterWaveSettings = flutterWave.Value;
             _sessionManager = sessionManager;
             _mapper = mapper;
+            _notificationService = notificationService;
+            _hostingEnvironment = hostingEnvironment;
+            _EmailService = emailService;
+            rootPath = _hostingEnvironment.ContentRootPath;
         }
 
 
@@ -114,14 +130,46 @@ namespace Bounce.Services.Implementation.Services.Payment
                         chargecode = "00",
                         TxRef = transactionRequest.PaymentRequestId
                     });
-                    //return SuccessResponse(response.Message, 
-                    //new FlutterWavePaymentResponse
-                    //{
-                    //    status = respdata.Status,
-                    //    amount = respdata.Amount,
-                    //    chargecode = respdata.ChargeResponseCode,
-                    //    TxRef = respdata.TxRef
-                    //});
+                    
+                }
+                else
+                {
+                    return AuxillaryResponse("Incomplete transaction", StatusCodes.Status417ExpectationFailed);
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> Requery(string TxRef,double amount)
+        {
+
+            try
+            {
+     
+                var config = new RavePayConfig(_flutterWaveSettings.PublicKey, _flutterWaveSettings.SecreteKey);
+                var trans = new RaveTransaction(config);
+                var response = await trans.XqueryTransactionVeriication(new VerifyTransactoinParams(_flutterWaveSettings.SecreteKey, TxRef));
+                if (response.Status != "success")
+                    return AuxillaryResponse("Error occured while processing your request, try again later", StatusCodes.Status417ExpectationFailed);
+
+                var respdata = response.Data.FirstOrDefault();
+                if (/*respdata?.Status == "successful"*//* && respdata.Amount == amount && respdata.ChargeResponseCode == "00"*/ response.Status == "success")
+                {
+
+                    return SuccessResponse("Success",
+                    new FlutterWavePaymentResponse
+                    {
+                        status = "Success",
+                        amount = (decimal)amount,
+                        chargecode = "00",
+                        TxRef = TxRef
+                    });
+
                 }
                 else
                 {
@@ -231,7 +279,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                 {
                     RequestType = WalletRequestType.TopUp,
                     Amount = model.Amount,
-                    Refxn = DateTime.Now.Ticks.ToString(),
+                    Refxn = "TP"+DateTime.Now.Ticks.ToString(),
                     UserId = user.Id,
                     DateCreated = DateTime.Now,
                     LastModifiedBy = user.Email,
@@ -243,6 +291,160 @@ namespace Bounce.Services.Implementation.Services.Payment
                 if (!await SaveAsync())
                     return FailedSaveResponse();
                 return SuccessResponse(data: new { TrxRef = walletModel.Refxn });
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> ComfirmWalletTop(string TrxRef)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var request = _context.WalletRequests.Where(x=> x.Refxn == TrxRef).FirstOrDefault();
+
+                if (request == null)
+                    return AuxillaryResponse("transaction not found", StatusCodes.Status400BadRequest);
+
+                if (request.IsCompleted == "TRUE")
+                    return AuxillaryResponse("this transaction has been completed", StatusCodes.Status400BadRequest);
+
+                var transactionStatus =  await Requery(TrxRef, request.Amount);
+
+                var transaction = new Transaction
+                {
+                    RequestId = request.Id,
+                    TransactionType = TransactionType.TopUp,
+                    Decription = "Wallet Top Up",
+                    status = "00",
+                    CompletionTime = DateTime.Now,
+                    DateCreated = DateTime.Now,
+                    UserId = user.Id
+
+                };
+                if (transactionStatus.StatusCode != StatusCodes.Status200OK)
+                {
+                    request.IsCompleted = "FALSE";
+                    request.DateModified = DateTime.Now;
+                    transaction.status = "01";
+
+                    _context.Update(request);
+                    _context.Add(transaction);
+                    _context.SaveChanges();
+                    return AuxillaryResponse("Transaction failed,", StatusCodes.Status412PreconditionFailed);
+                }
+                   
+
+                var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
+                wallet.Balance += request.Amount;
+                wallet.LastModifiedBy = user.Email;
+                wallet.DateModified = DateTime.Now;
+                request.IsCompleted = "TRUE";
+                request.DateModified = DateTime.Now;
+
+                var pushNotification = new PushNotificationDto
+                {
+                    Title = "Top-Up",
+                    Topic = "Wallet transaction",
+                    Message = "Your wallet top up was scuccessful",
+                    TrxRef = TrxRef
+
+                };
+                var notification = new NotificationModel
+                {
+                    UserId = user.Id,
+                    Title = pushNotification.Title,
+                    Message = pushNotification.Message,
+                    NotificationRef = TrxRef
+
+                };
+
+                _context.Update(request);
+                _context.Add(transaction);
+                _context.Add(notification);
+                _context.Update(wallet);
+
+                if (!await SaveAsync())
+                    return FailedSaveResponse();         
+
+                var mailBuilder = new StringBuilder();
+
+                mailBuilder.AppendLine("Dear" + " " + user.UserName + "," + "<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"Your wallet to up of {request.Amount} Naira was sunccessful.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine("Regards:<br />");
+ 
+                var emailRequest = new EmailRequest
+                {
+                    To = user.Email,
+                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                    Subject = "Wallet Top up"
+                };
+
+                await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
+                await _notificationService.PushNotification(pushNotification);
+
+                return SuccessResponse("Top confirmation was successful");
+
+             
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> TransactionHistory()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var transactions = _context.Transactions.Where(x => x.UserId == user.Id).ToList();
+
+#pragma warning disable CS8601 // Possible null reference assignment.
+                var query =  (from t in transactions where t.status == AdminStatus.Success
+                              join requet in _context.WalletRequests on t.RequestId equals requet.Id
+                                          join notifcation in _context.Notification on requet.Refxn equals notifcation.NotificationRef
+                                          select new TransactionHistoryDto
+                                          {
+                                              TransactionId = requet.Refxn,
+                                              Amount = Convert.ToDecimal(requet.Amount),
+                                              Message = notifcation.Message,
+                                              Title = notifcation.Title,
+                                              Time = t.CompletionTime.ToString(AdminConstants.FullDate),
+                                              TransactionType = requet.RequestType == WalletRequestType.TopUp ? 
+                                              AdminConstants.WalletTopUp : AdminConstants.WalletPayment
+                                          }).ToList();
+#pragma warning restore CS8601 // Possible null reference assignment.
+
+                return SuccessResponse(data: query);                 
+
+            }
+            catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> GetWalletBallance()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var wallet = await _context.Wallets.FirstOrDefaultAsync(x => x.UserId == user.Id);
+                var data = new
+                {
+                    Balance = wallet.Balance,
+                    AvaialbaleBalance = wallet.Balance + wallet.ReferalBonus,
+                    ReferalBonus = wallet.ReferalBonus
+                };
+
+
+                return SuccessResponse(data: data);
 
             }
             catch (Exception ex)

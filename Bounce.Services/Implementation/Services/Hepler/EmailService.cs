@@ -40,34 +40,41 @@ namespace Bounce.Services.Implementation.Services.Hepler
 
         public async Task SendMail(EmailRequest emailRequest)
         {
-            var key1= Environment.GetEnvironmentVariable("NAME_OF_THE_ENVIRONMENT_VARIABLE_FOR_YOUR_SENDGRID_KEY");
-            var sender = _cryptographyService.Base64Decode(_smtpConfiguration.sendgridSender);
-            var key = _cryptographyService.Base64Decode(_smtpConfiguration.sendgridKey);
-            using var message = new MailMessage();
-            message.From = new MailAddress(sender, _smtpConfiguration.sendgridName);
-
-            message.IsBodyHtml = true;
-            message.To.Add(new MailAddress(emailRequest.To, "Bounce Online"));
-            message.Body = emailRequest.Body;
-
-            message.Subject = emailRequest.Subject;
-            if (emailRequest.Attachments.Count > 0)
+            try
             {
-                foreach (var attachment in emailRequest.Attachments)
+                //var key1 = Environment.GetEnvironmentVariable("NAME_OF_THE_ENVIRONMENT_VARIABLE_FOR_YOUR_SENDGRID_KEY");
+                var sender = _cryptographyService.Base64Decode(_smtpConfiguration.sendgridSender);
+                var key = _cryptographyService.Base64Decode(_smtpConfiguration.sendgridKey);
+                using var message = new MailMessage();
+                message.From = new MailAddress(sender, _smtpConfiguration.sendgridName);
+
+                message.IsBodyHtml = true;
+                message.To.Add(new MailAddress(emailRequest.To, "Bounce Online"));
+                message.Body = emailRequest.Body;
+
+                message.Subject = emailRequest.Subject;
+                if (emailRequest.Attachments.Count > 0)
                 {
-                    string fileName = Path.GetFileName(attachment.FileName);
-                    message.Attachments.Add(new System.Net.Mail.Attachment(attachment.OpenReadStream(), fileName));
+                    foreach (var attachment in emailRequest.Attachments)
+                    {
+                        string fileName = Path.GetFileName(attachment.FileName);
+                        message.Attachments.Add(new System.Net.Mail.Attachment(attachment.OpenReadStream(), fileName));
+                    }
                 }
+
+                using var client = new SmtpClient(host: "smtp.sendgrid.net", port: 587);
+                client.Credentials = new NetworkCredential(
+                    userName: "apikey",
+                    password: key
+                );
+
+
+                await client.SendMailAsync(message);
             }
+            catch(Exception exp)
+            {
 
-            using var client = new SmtpClient(host: "smtp.sendgrid.net", port: 587);
-            client.Credentials = new NetworkCredential(
-                userName: "apikey",
-                password: key
-            );
-
-
-            await client.SendMailAsync(message);
+            }
         }
 
     }

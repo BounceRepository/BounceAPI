@@ -9,6 +9,7 @@ namespace Bounce.Api.Controllers
     public class NotificationController : BaseController
     {
         private readonly INotificationService _notificationService;
+
         public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService) : base(httpContext)
         {
             _notificationService = notificationService;

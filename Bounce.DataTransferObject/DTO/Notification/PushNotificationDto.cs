@@ -9,12 +9,12 @@ namespace Bounce.DataTransferObject.DTO.Notification
 {
     public class PushNotificationDto
     {
-        [Required]
-        public long UserId { get; set; }
-        [Required]
+       
+       
         public string Message { get; set; }
-        [Required]
         public string Title { get; set; }
+        public string Topic { get; set; }
+        public string TrxRef { get; set; }
 
     }
 }

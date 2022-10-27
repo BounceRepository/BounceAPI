@@ -3,6 +3,7 @@ using Bounce_Application.DTO;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
+using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +20,10 @@ namespace Bounce.Api.Controllers
         private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
         private readonly IEmalService _EmailService;
         private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
+        protected readonly BounceDbContext _context;
 
         public string rootPath { get; set; }
-        public BounceController(ICryptographyService cryptographyService, UserManager<ApplicationUser> userManager, AdminLogger adminLogger, IHttpContextAccessor contextAccessor, IEmalService emailService, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
+        public BounceController(ICryptographyService cryptographyService, UserManager<ApplicationUser> userManager, AdminLogger adminLogger, IHttpContextAccessor contextAccessor, IEmalService emailService, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment, BounceDbContext context)
         {
             _cryptographyService = cryptographyService;
             _userManager = userManager;
@@ -30,6 +32,7 @@ namespace Bounce.Api.Controllers
             _EmailService = emailService;
             _hostingEnvironment = hostingEnvironment;
             rootPath = _hostingEnvironment.ContentRootPath;
+            _context = context;
         }
 
         //public IActionResult ConfirmEmail()
@@ -89,6 +92,16 @@ namespace Bounce.Api.Controllers
                 
                 if (result.Succeeded)
                 {
+                    var wallet = new Wallet
+                    {
+                        UserId = user.Id,
+                        Balance = 0,
+                        AvailableBalance = 0,
+                        ReferalBonus = 0,
+                        DateCreated = DateTime.Now
+                    };
+                    _context.Add(wallet);
+                    _context.SaveChanges();
                     var emailRequest = new EmailRequest
                     {
                         To = model.Key,

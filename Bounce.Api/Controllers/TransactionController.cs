@@ -8,14 +8,15 @@ using System.Net.Http.Headers;
 
 namespace Bounce.Api.Controllers
 {
-    [Route("api/[controller]")]
+   
     [ApiController]
-    public class PaymentController : BaseController
+    [Route("api/transaction")]
+    public class TransactionController : BaseController
     {
         private readonly IPaymentServices _paymentServices;
 
 
-        public PaymentController(IHttpContextAccessor httpContext, IPaymentServices paymentServices) : base(httpContext)
+        public TransactionController(IHttpContextAccessor httpContext, IPaymentServices paymentServices) : base(httpContext)
         {
 
             _paymentServices = paymentServices;
@@ -31,8 +32,13 @@ namespace Bounce.Api.Controllers
 
         [HttpPost("WalletTop")]
         public async Task<IActionResult> WalletTop([FromBody] WalletToUpDto model) => Response(await _paymentServices.WalletTop(model));
-        //[HttpPost("ComfirmAppointment")]
-        //public async Task<IActionResult> ComfirmAppointment([FromQuery] string TxRef) => Response(await _paymentServices.ConfirmAppointment(TxRef));
+        [HttpPost("ComfirmTopUp")]
+        public async Task<IActionResult> ComfirmTopUp([FromQuery] string TxRef) => Response(await _paymentServices.ComfirmWalletTop(TxRef));
+
+        [HttpGet("WalletTransactionHistory")]
+        public async Task<IActionResult> TopUpHistory() => Response(await _paymentServices.TransactionHistory());
+        [HttpGet("GetWalletBalance")]
+        public async Task<IActionResult> WalletBallance() => Response(await _paymentServices.GetWalletBallance());
     }
 }
 

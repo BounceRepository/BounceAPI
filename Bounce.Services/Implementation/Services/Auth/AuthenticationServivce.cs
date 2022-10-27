@@ -34,7 +34,7 @@ namespace Bounce.Services.Implementation.Services.Auth
         private readonly IHttpContextAccessor contextAccessor;
         private readonly AdminLogger _adminLogger;
         private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
-
+        public string rootPath { get; set; }
         public AuthenticationServivce(BounceDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration, IHostingEnvironment hostingEnvironment, IEmalService emailService, ICryptographyService cryptographyService, IHttpContextAccessor contextAccessor, AdminLogger adminLogger) : base(context)
         {
             _userManager = userManager;
@@ -49,7 +49,7 @@ namespace Bounce.Services.Implementation.Services.Auth
             rootPath = _hostingEnvironment.ContentRootPath;
         }
 
-        public string rootPath { get; set; }
+       
 
 
     
@@ -534,13 +534,32 @@ namespace Bounce.Services.Implementation.Services.Auth
                 var isPasswordValid = await _userManager.CheckPasswordAsync(loginUser, loginModel.Password);
                 if (isPasswordValid)
                 {
+                    var existingWallet = _context.Wallets.FirstOrDefault(x => x.UserId == loginUser.Id);
+                    if (existingWallet == null)
+                    {
+                        var wallet = new Wallet
+                        {
+                            UserId = loginUser.Id,
+                            Balance = 0,
+                            AvailableBalance = 0,
+                            ReferalBonus = 0,
+                            DateCreated = DateTime.Now
+                        };
+                        _context.Add(wallet);
+                        _context.SaveChanges();
+                    }
+
+
                     var userRoles = await _userManager.GetRolesAsync(loginUser);
                     var isEmailConfrimed = await _userManager.IsEmailConfirmedAsync(loginUser);
 
                     #region
                     if (!isEmailConfrimed && !userRoles.Contains("Super Administrator"))
                     {
-                        if(userRoles.Contains(UserRoles.Therapist))
+                      
+
+
+                        if (userRoles.Contains(UserRoles.Therapist))
                         {
                             var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(loginUser);
                             var time = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
