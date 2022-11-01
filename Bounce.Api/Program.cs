@@ -170,6 +170,11 @@ app.UseEndpoints(endpoints =>
         name: "default",
         pattern: "{controller=Bounce}/{action=Index}/{id?}");
 });
+
+app.UseCors(x =>
+x.AllowAnyMethod()
+.AllowAnyMethod()
+.AllowAnyHeader());
 //app.UseStaticFiles(new StaticFileOptions()
 //{
 //    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Payment;
+using Bounce.DataTransferObject.Helpers;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
@@ -12,6 +13,7 @@ using Bounce_Domain.Entity;
 using Bounce_Domain.Enum;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -103,6 +105,7 @@ namespace Bounce.Services.Implementation.Services.Patient
 
         public async Task<Response> BookAppointment(AppointmentDto model)
         {
+            var user = _sessionManager.CurrentLogin;
             using (var _transaction = await  _context.Database.BeginTransactionAsync())
             {
 
@@ -127,11 +130,14 @@ namespace Bounce.Services.Implementation.Services.Patient
                         Amount = paymentModel.Amount,
                         PlanId = 1,
 
+
                     };
                     await _context.AddAsync(payment);
-
+         
                     var appointement = _mapper.Map<AppointmentRequest>(model);
                     appointement.TrxRef = payment.PaymentRequestId;
+                    appointement.PatientId = user.Id;
+                    appointement.AgeRange = "";
                     _context.Add(appointement);
 
                    await  _context.SaveChangesAsync();
@@ -305,6 +311,34 @@ namespace Bounce.Services.Implementation.Services.Patient
                 });
 
                 return SuccessResponse(data: plans);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> UpcomingAppointment()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+
+                var query = await (from r in _context.AppointmentRequest
+                                   where r.PatientId == user.Id
+                                   join a in _context.Appointments on r.Id equals a.AppointmentRequestId
+                                   where a.Status == AppointStatus.UpComming
+                                   join t in _context.Users on r.TherapistId equals t.Id
+                                   select new
+                                   {
+                                       Time = r.AvailableTime.ToString(AdminConstants.FullTime),
+                                       Date = r.AvailableTime.ToString(AdminConstants.FullDate),
+                                       TherapistName = "Sahana V",
+                                       Discipline = "Msc in clinical Psychology",
+                                       Therapist = t.Email
+                                   }).ToListAsync();
+
+                return SuccessResponse(data: query);
 
             }
             catch (Exception ex)

@@ -18,12 +18,13 @@ namespace Bounce_DbOps.EF
 {
     public class BounceDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, long>, IBounceDbContext
     {
-        private readonly IHttpContextAccessor httpContextAccessor = new HttpContextAccessor();
+		private readonly IHttpContextAccessor httpContextAccessor;
 		private  IServiceScopeFactory serviceScopeFactory { get; set; }
 
-		public BounceDbContext(DbContextOptions<BounceDbContext> options) : base(options)
+        public BounceDbContext(DbContextOptions<BounceDbContext> options, IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor) : base(options)
         {
-
+            this.serviceScopeFactory = serviceScopeFactory;
+            this.httpContextAccessor = httpContextAccessor;
         }
         public BounceDbContext()
         {
@@ -78,8 +79,38 @@ namespace Bounce_DbOps.EF
             base.OnModelCreating(modelBuilder);
 		}
 
-        public override int SaveChanges()
+        public  async Task<int> SaveChangesAsync()
         {
+			try
+			{
+				PerformEntityAudit();
+				return await base.SaveChangesAsync(acceptAllChangesOnSuccess: true);
+			}
+			catch (DbUpdateConcurrencyException dbEx)
+			{
+				foreach (var error in dbEx.Entries)
+				{
+					var proposedValues = error.CurrentValues;
+					var databasesValues = error.GetDatabaseValues();
+
+					foreach (var property in proposedValues.Properties)
+					{
+						var proposedValue = proposedValues[property];
+						var database = databasesValues[property];
+
+						proposedValues[property] = proposedValue;
+					}
+
+					error.OriginalValues.SetValues(databasesValues);
+				}
+			}
+		  PerformEntityAudit();
+		  return await base.SaveChangesAsync(acceptAllChangesOnSuccess: true);
+        }
+
+
+		public  override int SaveChanges()
+		{
 			try
 			{
 				PerformEntityAudit();
@@ -103,9 +134,10 @@ namespace Bounce_DbOps.EF
 					error.OriginalValues.SetValues(databasesValues);
 				}
 			}
-		  PerformEntityAudit();
-		  return base.SaveChanges();
-        }
+			PerformEntityAudit();
+			return base.SaveChanges();
+		}
+
 
 		private void PerformEntityAudit()
 		{
@@ -132,6 +164,7 @@ namespace Bounce_DbOps.EF
 						entity.Entity.DateModified = DateTime.UtcNow;
 						entity.Entity.IsDeleted = true;
 						entity.Entity.IsActive = false;
+						entity.Entity.LastModifiedBy = GetCurrentloggedUser();
 						break;
 					default:
 						break;
@@ -141,15 +174,15 @@ namespace Bounce_DbOps.EF
 		private string GetCurrentloggedUser()
 		{
 
-			//using (var scope = serviceScopeFactory.CreateScope())
-			//{
-			//	var context = scope.ServiceProvider.GetRequiredService<SessionManager>();
+            using (var scope = serviceScopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<SessionManager>();
+                var loggedUser = context.CurrentLogin?.Email;
 
-			//	var loggedUser = context.CurrentLogin.Email;
-			//	return !string.IsNullOrEmpty(loggedUser) ? loggedUser : "Anonymous";
+                return !string.IsNullOrEmpty(loggedUser) ? loggedUser : "Anonymous";
 
-			//}
-			return "";
+            }
+        
 
 		
 		}

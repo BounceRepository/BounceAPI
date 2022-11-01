@@ -8,7 +8,9 @@ namespace Bounce.DataTransferObject.Helpers
 {
     public  static class AdminConstants
     {
-        public static string FullDate = "ddd, dd MMM yyyy H:mm tt";
+        public static string FullDateTime = "ddd, dd MMM yyyy H:mm tt";
+        public static string FullDate = "ddd, dd MMM yyyy";
+        public static string FullTime = "H:mm tt";
         public static string WalletTopUp = "TOPUP";
         public static string WalletPayment = "PAYMENT";
 

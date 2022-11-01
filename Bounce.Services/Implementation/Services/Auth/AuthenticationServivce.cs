@@ -252,13 +252,15 @@ namespace Bounce.Services.Implementation.Services.Auth
                         Data = null,
                         Message = "User Already Exist"
                     };
+                var therapistId = await _cryptographyService.GeneratePatientIdAsync("BNT");
                 ApplicationUser user = new()
                 {
                     Email = registerModel.Email,
                     SecurityStamp = Guid.NewGuid().ToString(),
                     UserName = registerModel.Username,
-                    Discriminator = Bounce_Domain.Enum.UserType.Therapist
-                };
+                    Discriminator = Bounce_Domain.Enum.UserType.Therapist,
+                    PatientId = therapistId
+            };
                 var result = await _userManager.CreateAsync(user, registerModel.Password);
 
                 if (!result.Succeeded)
@@ -522,6 +524,9 @@ namespace Bounce.Services.Implementation.Services.Auth
 
                 if (loginUser == null)
                     loginUser = await _userManager.FindByEmailAsync(loginModel.Username);
+
+                if (loginUser == null)
+                    loginUser =  _userManager.Users.FirstOrDefault(x=> x.PatientId == loginModel.Password);
 
                 if (loginUser == null)
                     return new Response

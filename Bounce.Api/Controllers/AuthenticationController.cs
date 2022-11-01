@@ -26,7 +26,7 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> RegisterAdmin(RegisterModel registerModel) =>
                  Response(await registrationServivce.RegisterAdminUser(registerModel));
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.SuperAdministrator)]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.SuperAdministrator)]
         [HttpPost("register/superAdmin")]
         public async Task<IActionResult> RegisterSuperAdminAdmin(RegisterModel registerModel) =>
                 Response(await registrationServivce.RegisterSuperAdminUser(registerModel));

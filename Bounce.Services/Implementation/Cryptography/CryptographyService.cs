@@ -311,9 +311,9 @@ namespace Bounce.Services.Implementation.Cryptography
 		
 		}
 
-		public async Task<string> GeneratePatientIdAsync ()
+	
+		public async Task<string> GeneratePatientIdAsync ( string prrfix = "BNP")
         {
-			var prrfix = "BNC";
 			var serialNumber = _context.SerialNumbers.FirstOrDefault();
 			if(serialNumber == null)
             {
@@ -332,8 +332,18 @@ namespace Bounce.Services.Implementation.Cryptography
 			
 				return $"{prrfix}{1.ToString("D4")}";
             }
-			var index = serialNumber.PatientCount++;
-			serialNumber.PatientCount = index;
+			long index = default;
+			if(prrfix == "BNP")
+            {
+				index = serialNumber.PatientCount++;
+				serialNumber.PatientCount =+ 1;
+			}
+            else
+            {
+				index = serialNumber.TherapistCount++;
+				serialNumber.PatientCount = index;
+			}
+			
 			 _context.Update(serialNumber);
 			await _context.SaveChangesAsync();
 

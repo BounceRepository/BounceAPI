@@ -42,7 +42,6 @@ namespace Bounce.Api.Controllers
                 return 0;
             var userId = claimIdentity.FindFirst("UserId") != null ? Convert.ToInt64(claimIdentity?.FindFirst("UserId").Value.ToString()) : 0;
 
-            httpContext.HttpContext.Session.SetString("UserId", userId.ToString());
             return userId;
         }
 

@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace Bounce_DbOps.EF
 {
-	public class BounceDbContextFactory : DesignTimeDbContextFactoryBase<BounceDbContext>
-	{
-		protected override BounceDbContext CreateNewInstance(DbContextOptions<BounceDbContext> options)
-		{
-			return new BounceDbContext(options);
-		}
-	}
+	//public class BounceDbContextFactory : DesignTimeDbContextFactoryBase<BounceDbContext>
+	//{
+	//	protected override BounceDbContext CreateNewInstance(DbContextOptions<BounceDbContext> options)
+	//	{
+	//		return new BounceDbContext(options);
+	//	}
+	//}
 }

@@ -8,6 +8,6 @@ namespace Bounce_Domain.Enum
 {
     public enum PaymentType
     {
-        bank,card,deposit, cash
+        bank,card,deposit, cash, wallet
     }
 }

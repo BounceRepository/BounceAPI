@@ -232,8 +232,11 @@ namespace Bounce.Services.Implementation.Services.Payment
                     try
                     {
                         var appointmentRequest = _context.AppointmentRequest.FirstOrDefault(x => x.TrxRef == trxRef);
-                        var existingAppointment = _context.Appointments.Any(x => x.AppointmentRequestId == appointmentRequest.Id);
-                        return AuxillaryResponse("Appoinment has alreday been booked", StatusCodes.Status200OK);
+                        var existingAppointment = _context.Appointments.FirstOrDefault(x => x.AppointmentRequestId == appointmentRequest.Id);
+                      if(existingAppointment != null)
+                       {
+                            return AuxillaryResponse("Appoinment has alreday been booked", StatusCodes.Status200OK);
+                       }
 
                         var appointment = new Appointment
                         {
@@ -242,18 +245,22 @@ namespace Bounce.Services.Implementation.Services.Payment
                             SessionType = SessionType.Chat,
                             Status = AppointStatus.UpComming,
                         };
-                        _context.Add(appointment);
+                     
               
                         var transaction = new Transaction
                         {
                             RequestId = paymentRequest.Id,
                             TransactionType = TransactionType.Other,
-                            Decription = "Session Booking"
+                            Decription = "Session Booking",
+                            UserId = _sessionManager.CurrentLogin.Id
                         };
+                        _context.Appointments.Add(appointment);
                         _context.Add(transaction);
 
                         if (!await SaveAsync())
                             return FailedSaveResponse();
+
+                       await  _dbTransaction.CommitAsync();
                         return SuccessResponse("Session booking was successful");
 
                     }
@@ -270,6 +277,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                 return InternalErrorResponse(ex);
             }
         }
+       
         public async Task<Response> WalletTop(WalletToUpDto model)
         {
             try
@@ -405,6 +413,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                 var user = _sessionManager.CurrentLogin;
                 var transactions = _context.Transactions.Where(x => x.UserId == user.Id).ToList();
 
+              
 #pragma warning disable CS8601 // Possible null reference assignment.
                 var query =  (from t in transactions where t.status == AdminStatus.Success
                               join requet in _context.WalletRequests on t.RequestId equals requet.Id
@@ -415,7 +424,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                                               Amount = Convert.ToDecimal(requet.Amount),
                                               Message = notifcation.Message,
                                               Title = notifcation.Title,
-                                              Time = t.CompletionTime.ToString(AdminConstants.FullDate),
+                                              Time = t.CompletionTime.ToString(AdminConstants.FullDateTime),
                                               TransactionType = requet.RequestType == WalletRequestType.TopUp ? 
                                               AdminConstants.WalletTopUp : AdminConstants.WalletPayment
                                           }).ToList();
