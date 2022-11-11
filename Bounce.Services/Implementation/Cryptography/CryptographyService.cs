@@ -284,6 +284,14 @@ namespace Bounce.Services.Implementation.Cryptography
 
         public async Task<string> GenerateValidationTokenAsync(string email = "NA", string phone = "FA")
         {
+			var tokens = _context.Tokens.Where(x => x.UserEmail == email);
+			if(tokens.Any())
+            {
+				_context.RemoveRange(tokens);
+				await _context.SaveChangesAsync();
+			}
+	
+
 			var token = new Random().Next(0, 10000).ToString("D4");
 			var tokenModel = new TokenModel
 			{
@@ -303,6 +311,44 @@ namespace Bounce.Services.Implementation.Cryptography
 		
 		}
 
+	
+		public async Task<string> GeneratePatientIdAsync ( string prrfix = "BNP")
+        {
+			var serialNumber = _context.SerialNumbers.FirstOrDefault();
+			if(serialNumber == null)
+            {
+				var model = new SerialNumber
+				{
+					LastModifiedBy = DateTime.Now.ToString(),
+					DateCreated = DateTime.Now,
+					ConsultationCount = 0,
+					AdminCount = 0,
+					PatientCount = 0,
+					TherapistCount = 0,
+				};
+				await _context.AddAsync(model);
+				await _context.SaveChangesAsync();
+
+			
+				return $"{prrfix}{1.ToString("D4")}";
+            }
+			long index = default;
+			if(prrfix == "BNP")
+            {
+				index = serialNumber.PatientCount++;
+				serialNumber.PatientCount =+ 1;
+			}
+            else
+            {
+				index = serialNumber.TherapistCount++;
+				serialNumber.PatientCount = index;
+			}
+			
+			 _context.Update(serialNumber);
+			await _context.SaveChangesAsync();
+
+			return $"{prrfix}{index.ToString("D4")}";
+		}
 		public async Task<Response> ValidateTokenAsync(string token)
         {
 			var userToken = _context.Tokens.FirstOrDefault(x => x.Token.Contains(token));
@@ -318,7 +364,7 @@ namespace Bounce.Services.Implementation.Cryptography
 				
 			_context.Tokens.Remove(userToken);
 			await _context.SaveChangesAsync();
-			return new Response { StatusCode = StatusCodes.Status200OK, Message = "Token generated" , Data = new { userEmail = userToken.UserEmail } };
+			return new Response { StatusCode = StatusCodes.Status200OK, Message = "Token token has been validated" , Data = new { userEmail = userToken.UserEmail } };
 
 		}
 

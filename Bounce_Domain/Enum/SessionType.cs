@@ -8,6 +8,6 @@ namespace Bounce_Domain.Enum
 {
     public enum SessionType
     {
-        Chat, Video,Phone
+        Chat, Video,Phone, Office
     }
 }

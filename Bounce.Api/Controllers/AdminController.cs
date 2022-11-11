@@ -16,12 +16,14 @@ namespace Bounce.Api.Controllers
             this.adminServices = adminServices;
         }
 
-        [AllowAnonymous]
-        [HttpGet("GetAllTherapists")]
+
+        [HttpGet]
+        [Route("GetAllTherapists")]
         public async Task<IActionResult> GetAllTherapist() => Response(await adminServices.GetUsersAsync(UserRoles.Therapist));
 
         [AllowAnonymous]
         [HttpGet("GetAllAdminUsers")]
+
         public async Task<IActionResult> GetAllAdmin() => Response(await adminServices.GetUsersAsync(UserRoles.Administrator));
 
         [AllowAnonymous]

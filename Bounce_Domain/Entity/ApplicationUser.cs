@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Bounce_Domain.Enum;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -13,9 +14,17 @@ namespace Bounce_Domain.Entity
     {
         public bool HasProfile { get; set; }
         public long? ProfileId { get; set; }
+
+        //public string? RoleName { get; set; }
+        //public string? Feelings { get; set; }
         //[ForeignKey(nameof(ProfileId))]
-        [JsonIgnore]
-        public BioData Profile { get; set; }
-       
+        //[JsonIgnore]
+        //public UserProfile Profile { get; set; }
+        public string? PatientId { get; set; }
+        public UserType Discriminator { get; set; }
+        public string? NotificationToken { get; set; }
+        public string? DeviceId { get; set; }
+
+
     }
 }

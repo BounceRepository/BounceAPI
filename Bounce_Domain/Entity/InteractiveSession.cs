@@ -1,6 +1,7 @@
 ﻿using Bounce_Domain.Enum;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Bounce_Domain.Entity
 {
+    
     public class InteractiveSession : BaseEntity
     {
         public long PatientId { get; set; }

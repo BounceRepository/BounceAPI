@@ -1,10 +1,12 @@
 ﻿using Bounce_Application.Persistence.Interfaces;
+using Bounce_Application.Utilies;
 using Bounce_DbOps.EF.Configurations;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,23 +18,39 @@ namespace Bounce_DbOps.EF
 {
     public class BounceDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, long>, IBounceDbContext
     {
-        private readonly IHttpContextAccessor httpContextAccessor = new HttpContextAccessor();
-        public BounceDbContext(DbContextOptions<BounceDbContext> options) : base(options)
-        {
+		private readonly IHttpContextAccessor httpContextAccessor;
+		private  IServiceScopeFactory serviceScopeFactory { get; set; }
 
+        public BounceDbContext(DbContextOptions<BounceDbContext> options, IServiceScopeFactory serviceScopeFactory, IHttpContextAccessor httpContextAccessor) : base(options)
+        {
+            this.serviceScopeFactory = serviceScopeFactory;
+            this.httpContextAccessor = httpContextAccessor;
         }
         public BounceDbContext()
         {
 
         }
-		public DbSet<ApplicationUser> Users { get; set; }
 		public DbSet<Error> Errors { get; set; }
 		public DbSet<TokenModel> Tokens { get; set; }
-		public DbSet<BioData> BioDatas { get; set; }
-		public DbSet<Plan> Plans { get; set; }
+		//public DbSet<BioData> BioData { get; set; }
+
+		public DbSet<UserProfile> UserProfile { get; set; }
+		public DbSet<Plan> Plan { get; set; }
 		public DbSet<Subscription> Subscriptions { get; set; }
 		public DbSet<Wallet> Wallets { get; set; }
+		public DbSet<WalletRequest> WalletRequests { get; set; }
 		public DbSet<InteractiveSession> InteractiveSessions { get; set; }
+		public DbSet<SerialNumber> SerialNumbers { get; set; }
+		public DbSet<TherapistHospitalInformation> TherapistHospitalInformations { get; set; }
+		public DbSet<TherapistmedicalRegistration> TherapistmedicalRegistrations { get; set; }
+		public DbSet<BankAccountDetails> BankAccountDetails { get; set; }
+		public DbSet<Article> Articles { get; set; }
+		public DbSet<PaymentRequest> PaymentRequests { get; set; }
+		public DbSet<Appointment> Appointments { get; set; }
+		public DbSet<Transaction> Transactions { get; set; }
+		public DbSet<AppointmentRequest> AppointmentRequest { get; set; }
+		public DbSet<NotificationModel> Notification { get; set; }
+		//public DbSet<Notifications> Notifications { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,11 +65,52 @@ namespace Bounce_DbOps.EF
 			}
 
 			modelBuilder.ApplyConfiguration(new ErrorCodeConfigration());
-			base.OnModelCreating(modelBuilder);
+
+
+            modelBuilder.Entity<Plan>().HasData(
+            new Plan { Id = 1, Name = "Bronze", FreeTrialCount = 7, DailyMeditationCount = 100, TherapistCount = 100, Cost = 50000 });
+            modelBuilder.Entity<Plan>().HasData(
+            new Plan { Id = 2, Name = "Silver", FreeTrialCount = 7, DailyMeditationCount = 200, TherapistCount = 200, Cost = 100000 });
+            modelBuilder.Entity<Plan>().HasData(
+            new Plan { Id = 3, Name = "Gold", FreeTrialCount = 7, DailyMeditationCount = 500, TherapistCount = 500, Cost = 200000 });
+
+
+
+            base.OnModelCreating(modelBuilder);
 		}
 
-        public override int SaveChanges()
+        public  async Task<int> SaveChangesAsync()
         {
+			try
+			{
+				PerformEntityAudit();
+				return await base.SaveChangesAsync(acceptAllChangesOnSuccess: true);
+			}
+			catch (DbUpdateConcurrencyException dbEx)
+			{
+				foreach (var error in dbEx.Entries)
+				{
+					var proposedValues = error.CurrentValues;
+					var databasesValues = error.GetDatabaseValues();
+
+					foreach (var property in proposedValues.Properties)
+					{
+						var proposedValue = proposedValues[property];
+						var database = databasesValues[property];
+
+						proposedValues[property] = proposedValue;
+					}
+
+					error.OriginalValues.SetValues(databasesValues);
+				}
+			}
+		  PerformEntityAudit();
+		  return await base.SaveChangesAsync(acceptAllChangesOnSuccess: true);
+        }
+
+
+		public  override int SaveChanges()
+		{
 			try
 			{
 				PerformEntityAudit();
@@ -75,9 +134,10 @@ namespace Bounce_DbOps.EF
 					error.OriginalValues.SetValues(databasesValues);
 				}
 			}
-		  PerformEntityAudit();
-		  return base.SaveChanges();
-        }
+			PerformEntityAudit();
+			return base.SaveChanges();
+		}
+
 
 		private void PerformEntityAudit()
 		{
@@ -104,6 +164,7 @@ namespace Bounce_DbOps.EF
 						entity.Entity.DateModified = DateTime.UtcNow;
 						entity.Entity.IsDeleted = true;
 						entity.Entity.IsActive = false;
+						entity.Entity.LastModifiedBy = GetCurrentloggedUser();
 						break;
 					default:
 						break;
@@ -112,8 +173,18 @@ namespace Bounce_DbOps.EF
 		}
 		private string GetCurrentloggedUser()
 		{
-			var loggedUser = this.httpContextAccessor?.HttpContext?.User?.Identity?.Name;
-			return !string.IsNullOrEmpty(loggedUser) ? loggedUser : "Anonymous";
+
+            using (var scope = serviceScopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<SessionManager>();
+                var loggedUser = context.CurrentLogin?.Email;
+
+                return !string.IsNullOrEmpty(loggedUser) ? loggedUser : "Anonymous";
+
+            }
+        
+
+		
 		}
     }
 }

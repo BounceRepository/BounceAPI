@@ -3,6 +3,7 @@ using Bounce_Application.DTO;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
+using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +20,10 @@ namespace Bounce.Api.Controllers
         private static string EmailConfrimationUrl = "Bounce/ConfirmEmail";
         private readonly IEmalService _EmailService;
         private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
+        protected readonly BounceDbContext _context;
 
         public string rootPath { get; set; }
-        public BounceController(ICryptographyService cryptographyService, UserManager<ApplicationUser> userManager, AdminLogger adminLogger, IHttpContextAccessor contextAccessor, IEmalService emailService, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
+        public BounceController(ICryptographyService cryptographyService, UserManager<ApplicationUser> userManager, AdminLogger adminLogger, IHttpContextAccessor contextAccessor, IEmalService emailService, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment, BounceDbContext context)
         {
             _cryptographyService = cryptographyService;
             _userManager = userManager;
@@ -30,6 +32,7 @@ namespace Bounce.Api.Controllers
             _EmailService = emailService;
             _hostingEnvironment = hostingEnvironment;
             rootPath = _hostingEnvironment.ContentRootPath;
+            _context = context;
         }
 
         //public IActionResult ConfirmEmail()
@@ -68,7 +71,7 @@ namespace Bounce.Api.Controllers
 
                 var respnseValue = Uri.UnescapeDataString(token);
                 if (respnseValue.Contains(" "))
-                    token = respnseValue.Replace(" ", "");
+                    token = respnseValue.Replace(" ", "+");
 
 
                 if ((DateTime.Now - absoluteTime).TotalHours > 1)
@@ -84,15 +87,25 @@ namespace Bounce.Api.Controllers
                     model.Status = ConfrimationStatus.EmailConfirmedlreday;
                     return View(model);
                 }
-                token = "CfDJ8AADAIgM2BxMoVE/94jBvoc2abMG+lx5+TL/emYOgSu0lYe4j/AYNXRKv9AU+t0hCiQb7zmDqTEEGLRUx7dBiJIz0Vk+ZjXykE/GI2h6iJJT8aXbfJ3brqp3uq689urh+AX0K8VVJL0sR55PsILMbT94Ro10yJRetmng+bQGanY53iSDXsWtuwHDp9JzK3b9zA==";
+                //token = "CfDJ8AADAIgM2BxMoVE/94jBvoc2abMG+lx5+TL/emYOgSu0lYe4j/AYNXRKv9AU+t0hCiQb7zmDqTEEGLRUx7dBiJIz0Vk+ZjXykE/GI2h6iJJT8aXbfJ3brqp3uq689urh+AX0K8VVJL0sR55PsILMbT94Ro10yJRetmng+bQGanY53iSDXsWtuwHDp9JzK3b9zA==";
                 IdentityResult result = await _userManager.ConfirmEmailAsync(user, token);
                 
                 if (result.Succeeded)
                 {
+                    var wallet = new Wallet
+                    {
+                        UserId = user.Id,
+                        Balance = 0,
+                        AvailableBalance = 0,
+                        ReferalBonus = 0,
+                        DateCreated = DateTime.Now
+                    };
+                    _context.Add(wallet);
+                    _context.SaveChanges();
                     var emailRequest = new EmailRequest
                     {
                         To = model.Key,
-                        Body = "Your email has been confirmed, you can now login to our platform",
+                        Body = EmailFormatter.FormatEmailResponse("", rootPath),
                         Subject = "Email Confirmation"
                     };
 
@@ -123,6 +136,12 @@ namespace Bounce.Api.Controllers
                 {
                     model.Status = ConfrimationStatus.InvaidUser;
 
+                    return View(model);
+                }
+
+                if (user.EmailConfirmed)
+                {
+                    model.Status = ConfrimationStatus.EmailConfirmedlreday;
                     return View(model);
                 }
 

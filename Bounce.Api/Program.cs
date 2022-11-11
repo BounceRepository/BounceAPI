@@ -1,32 +1,49 @@
+
+using Bounce.Api.Filter;
+using Bounce.Bounce_Application.Settings;
+using Bounce.Job;
 using Bounce.Services.Implementation.Cryptography;
 using Bounce.Services.Implementation.Jwt;
+using Bounce.Services.Implementation.Services;
 using Bounce.Services.Implementation.Services.Admin;
+using Bounce.Services.Implementation.Services.Articles;
 using Bounce.Services.Implementation.Services.Auth;
 using Bounce.Services.Implementation.Services.Hepler;
+using Bounce.Services.Implementation.Services.Notification;
 using Bounce.Services.Implementation.Services.Patient;
+using Bounce.Services.Implementation.Services.Payment;
+using Bounce.Services.Implementation.Services.Therapist;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Admin;
+using Bounce_Application.Persistence.Interfaces.Articles;
 using Bounce_Application.Persistence.Interfaces.Auth;
 using Bounce_Application.Persistence.Interfaces.Auth.Jwt;
 using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.Persistence.Interfaces.Patient;
+using Bounce_Application.Persistence.Interfaces.Payment;
+using Bounce_Application.Persistence.Interfaces.Therapist;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
 using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var configuration = builder.Configuration;
+var flutterSettindSection = configuration.GetSection("FlutterWaveSetting");
+
 
 
 
@@ -42,7 +59,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = true;
 }).AddEntityFrameworkStores<BounceDbContext>()
-	.AddDefaultTokenProviders();
+    .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
@@ -53,28 +70,62 @@ builder.Services.AddScoped<ICryptographyService, CryptographyService>();
 builder.Services.AddScoped<IEmalService, EmailService>();
 builder.Services.AddScoped<IPatientServices, PatientServices>();
 builder.Services.AddScoped<IAdminServices, AdminServices>();
-builder.Services.AddSingleton<AdminLogger>(); 
+builder.Services.AddScoped<IBankAccountDetailServices, BankAccountDetailServices>();
+builder.Services.AddScoped<ITherapistServices, TherapistServices>();
+builder.Services.AddScoped<IArticleServices, ArticleServices>();
+builder.Services.AddScoped<IPaymentServices, PaymentServices>(); 
+builder.Services.AddScoped<INotificationService, NotificationService>(); 
+builder.Services.AddScoped<IJobScheduler, JobScheduler>(); 
+builder.Services.AddScoped<SessionManager>();
+builder.Services.AddScoped<BaseServices>();
+builder.Services.AddSingleton<AdminLogger>();
 builder.Services.AddSingleton<FileManager>();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
+builder.Services.AddSession();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Bounce", Version = "v1" });
+});
+builder.Services.AddHangfire(x =>
+{
+    x.UseSqlServerStorage(configuration.GetConnectionString("BounceDatabase"));
+});
+builder.Services.AddHangfireServer();
 
 builder.Services.AddAuthentication(options =>
 {
 	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-	options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
+
+}).AddJwtBearer( "Bearer", options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters()
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidAudience = configuration["JWT:ValidAudience"],
-        ValidIssuer = configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        //ValidAudience = configuration["JWT:ValidAudience"],
+        //ValidIssuer = configuration["JWT:ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["JWT:Secret"]))
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+            {
+                context.Response.Headers.Add("Token-Expired", "true");
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
+
 
 // Add services to the container.
 
@@ -84,61 +135,75 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+using var scope = app.Services.CreateScope();
+
 
 try
 {
-    using var scope = app.Services.CreateScope();
+   
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+    //private readonly IJobScheduler _jobScheduler;
+  
     var superAdminUser = new ApplicationUser
     {
-        UserName = "SuperAdmin",
-        Email = configuration["SuperAdminEmail"]
+        UserName = "Admin",
+        Email = configuration["Devsbounce@gmail.com"]
     };
     //var context = scope.ServiceProvider.GetRequiredService<BounceDbContext>();
-    var superAdminExist =await userManager.FindByNameAsync(superAdminUser.UserName);
-    if(superAdminExist == null)
+    var superAdminExist = await userManager.FindByNameAsync(superAdminUser.UserName);
+    if (superAdminExist == null)
     {
-        if (! await roleManager.RoleExistsAsync(UserRoles.SuperAdministrator))
-	  await roleManager.CreateAsync(new ApplicationRole { Name = UserRoles.SuperAdministrator });
+        if (!await roleManager.RoleExistsAsync(UserRoles.SuperAdministrator))
+            await roleManager.CreateAsync(new ApplicationRole { Name = UserRoles.SuperAdministrator });
 
-        var result = await userManager.CreateAsync(superAdminUser, "SuperAdminPassword");
+        var result = await userManager.CreateAsync(superAdminUser, "Admin160@");
         var role = await userManager.AddToRoleAsync(superAdminUser, UserRoles.SuperAdministrator);
+        
     }
 }
 catch (Exception ex)
 {
-
-    Console.WriteLine(ex.Message);
+    throw new ArgumentOutOfRangeException(ex.Message);
+    Console.WriteLine("Error from startUp class: " + ex.Message);
 }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-	app.UseSwagger();
-	app.UseSwaggerUI();
+ 
 }
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseSwagger();
+app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles();
-
+//app.UseStaticFiles();
+app.UseSession();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Bounce}/{action=Index}/{id?}");
+
+    endpoints.MapHangfireDashboard();
 });
+app.UseHangfireDashboard();
+app.UseCors(x =>
+x.AllowAnyMethod()
+.AllowAnyMethod()
+.AllowAnyHeader());
 //app.UseStaticFiles(new StaticFileOptions()
 //{
 //    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),
 //    RequestPath = new PathString("/Resources")
 //});
-
+//app.UseMiddleware<EncryptionMiddleware>();
 app.MapControllers();
-
+var _jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
+app.AddCronJob(_jobScheduler);
 app.Run();

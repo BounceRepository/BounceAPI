@@ -9,7 +9,10 @@ namespace Bounce_Domain.Entity
     public class Plan : BaseEntity
     {
         public string Name { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
+        public int DailyMeditationCount { get; set; }
+        public int FreeTrialCount { get; set; }
+        public int TherapistCount { get; set; }
         public int Duration { get; set; }
         public double Cost { get; set; }
       

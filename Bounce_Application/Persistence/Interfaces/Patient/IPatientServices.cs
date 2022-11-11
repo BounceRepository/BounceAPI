@@ -10,6 +10,13 @@ namespace Bounce_Application.Persistence.Interfaces.Patient
 {
     public interface IPatientServices 
     {
+        Task<Response> BookAppointment(AppointmentDto model);
+        Response GetAllFeelings();
+        Response GetAllPlans();
+        Task<Response> GetTherapist();
+        Response GetUserFeelings();
+        Response LogUserFeeling(List<string> feelings);
+        Task<Response> UpcomingAppointment();
         Task<Response> UpdateProfileAsync(UpdateProfileDto model);
     }
 }

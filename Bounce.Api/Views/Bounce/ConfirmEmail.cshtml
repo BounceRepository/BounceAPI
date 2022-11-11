@@ -44,10 +44,14 @@
                 
            
             <h3>Email Confirmation</h3>
-        </div>
-        <form asp-action="ConfirmEmail" asp-controller="Bounce" method="post">
+             <form asp-action="ConfirmEmail" asp-controller="Bounce" method="post">
 
             @{
+                  if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.InvaidUser)
+                {
+                     <p class="text-danger">User does not exist</p>
+                }
+
                  if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.EmailConfirmedlreday)
                 {
                      <p>Your email has been confirmed alreday</p>
@@ -56,7 +60,7 @@
 
                  if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.Confirmed)
                 {
-                     <p>Your email has been verified, kindly go back to the your app and logic</p>
+                     <p>Your email has been verified, kindly proceed to login</p>
                 }
 
                  if(Model.Status == Bounce_Application.DTO.ConfrimationStatus.Failed)
@@ -82,6 +86,8 @@
                
             }
         </form>
+        </div>
+       
 
     </div>
 

@@ -8,6 +8,10 @@
       "sslPort": 44351
     }
   },
+  "logging": {
+    "moduleLoad": false,
+    "justMyCode": false
+  },
   "profiles": {
     "Bounce.Api": {
       "commandName": "Project",
@@ -16,7 +20,7 @@
       "launchUrl": "swagger",
       "applicationUrl": "https://localhost:7156;http://localhost:5156",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Production"
       }
     },
     "IIS Express": {
@@ -24,8 +28,9 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Production"
       }
     }
+
   }
 }

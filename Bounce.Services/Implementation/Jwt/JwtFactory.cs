@@ -3,6 +3,7 @@ using Bounce_Application.DTO.Jwt;
 using Bounce_Application.DTO.Jwt.Constant;
 using Bounce_Application.Persistence.Interfaces.Auth.Jwt;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;

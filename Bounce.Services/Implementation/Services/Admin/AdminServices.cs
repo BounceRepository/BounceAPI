@@ -1,10 +1,12 @@
-﻿using Bounce.DataTransferObject.DTO.Therapist;
+﻿using Bounce.DataTransferObject.DTO.Admin;
+using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Admin;
 using Bounce_Application.SeriLog;
 using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
+using Bounce_Domain.Enum;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -17,21 +19,16 @@ using System.Threading.Tasks;
 
 namespace Bounce.Services.Implementation.Services.Admin
 {
-    public class AdminServices : IAdminServices
+    public class AdminServices : BaseServices, IAdminServices
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly BounceDbContext _context;
-        private readonly AdminLogger _adminLogger;
 
-        public AdminServices(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, BounceDbContext context, AdminLogger adminLogger)
+        public AdminServices(BounceDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager) : base(context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
-            _context = context;
-            _adminLogger = adminLogger;
         }
-
 
         public async Task<Response> GetUsersAsync(string role)
         {
@@ -46,32 +43,23 @@ namespace Bounce.Services.Implementation.Services.Admin
                     users = users.Concat(superAdmin).ToList();
                 }
 
-                var data = (from user in users
-                            join profile in _context.BioDatas on user.Id equals profile.UserId
-                            select new AllTherapistDto
-                            {
-                                UserId = user.Id,
-                                FirstName = profile.FirstName,
-                                LastName = profile.LastName,
-                                Email = user.Email,
-                                PicturePath = profile.FilePath
+                //var data = (from user in users
+                //            join profile in _context.BioDatas on user.Id equals profile.UserId
+                //            select new AllTherapistDto
+                //            {
+                //                UserId = user.Id,
+                //                FirstName = profile.FirstName,
+                //                LastName = profile.LastName,
+                //                Email = user.Email,
+                //                PicturePath = profile.FilePath
 
-                            }).ToList();
+                //            }).ToList();
 
-                return new Response { StatusCode = StatusCodes.Status200OK, Data = data };
+                return new Response { StatusCode = StatusCodes.Status200OK, Data = null };
             }
             catch (Exception ex)
             {
-                _adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
-                return new Response
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Data = null,
-                    Error = new ErrorResponse
-                    {
-                        ErrorMesaage = "Internal server error occured"
-                    }
-                };
+                return InternalErrorResponse(ex);
             }
 
         }
@@ -85,7 +73,7 @@ namespace Bounce.Services.Implementation.Services.Admin
                
                 var data = (from user in _userManager.Users
                             where user.Id == Id
-                            join profile in _context.BioDatas on user.Id equals profile.UserId
+                            join profile in _context.UserProfile on user.Id equals profile.UserId
                             select new AllTherapistDto
                             {
                                 UserId = user.Id,
@@ -96,22 +84,55 @@ namespace Bounce.Services.Implementation.Services.Admin
 
                             }).FirstOrDefault();
 
-                return new Response { StatusCode = StatusCodes.Status200OK, Data = data , Message ="user found"};
+                return SuccessResponse(data: data);
+
             }
             catch (Exception ex)
             {
-                _adminLogger.LogRequest($"{"Internal server error occured}"}{" - "}{ex}{" - "}{DateTime.Now}", true);
-                return new Response
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Data = null,
-                    Error = new ErrorResponse
-                    {
-                        ErrorMesaage = "Internal server error occured"
-                    }
-                };
+                return InternalErrorResponse(ex);
             }
 
         }
+
+
+        //public async Task<Response> DashBoardStatistics()
+        //{
+
+        //    try
+        //    {   var userRecords = _userManager.Users.ToList();
+        //        var therapists = userRecords.Where(x => x.Discriminator == UserType.Therapist);
+        //        var patients = userRecords.Where(x => x.Discriminator == UserType.Patient);
+        //        var consultaions = _context.InteractiveSessions.Where(x=> !x.IsDeleted).ToList();
+             
+
+        //        var dashboard = new DashBoardStatisticsDto
+        //        {
+        //            Patients = patients.Count(),
+        //            Therapist = therapists.Count(),
+        //            AllConsultaions = consultaions.Count(),
+        //        }
+        //        var therapists = userRecords.Where(x => x.Discriminator == UserType.Therapist);
+        //        var data = (from user in _userManager.Users
+        //                    where user.Id == Id
+        //                    join profile in _context.BioDatas on user.Id equals profile.UserId
+        //                    select new AllTherapistDto
+        //                    {
+        //                        UserId = user.Id,
+        //                        FirstName = profile.FirstName,
+        //                        LastName = profile.LastName,
+        //                        Email = user.Email,
+        //                        PicturePath = profile.FilePath
+
+        //                    }).FirstOrDefault();
+
+        //        return new Response { StatusCode = StatusCodes.Status200OK, Data = data, Message = "user found" };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return InternalErrorResponse(ex);
+        //    }
+
+        //}
+
     }
 }
