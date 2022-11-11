@@ -64,12 +64,12 @@ namespace Bounce.Services.Implementation.Services.Notification
                         Body = model.Message,
                         
                     },
-                    //Token = user.NotificationToken,
-                    Topic = Regex.Replace(model.Topic, @"\s", "")
+                    Token = user.NotificationToken,
+                    //Topic = Regex.Replace(model.Topic, @"\s", "")
                 };
                 var messaging = FirebaseMessaging.DefaultInstance;
                 var result = await messaging.SendAsync(message);
-
+                defaultApp.Delete();
                 return SuccessResponse();
 
             }

@@ -1,6 +1,7 @@
 
 using Bounce.Api.Filter;
 using Bounce.Bounce_Application.Settings;
+using Bounce.Job;
 using Bounce.Services.Implementation.Cryptography;
 using Bounce.Services.Implementation.Jwt;
 using Bounce.Services.Implementation.Services;
@@ -28,11 +29,13 @@ using Bounce_Application.Utilies;
 using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
 
@@ -40,6 +43,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 var configuration = builder.Configuration;
 var flutterSettindSection = configuration.GetSection("FlutterWaveSetting");
+
+
 
 
 
@@ -70,6 +75,7 @@ builder.Services.AddScoped<ITherapistServices, TherapistServices>();
 builder.Services.AddScoped<IArticleServices, ArticleServices>();
 builder.Services.AddScoped<IPaymentServices, PaymentServices>(); 
 builder.Services.AddScoped<INotificationService, NotificationService>(); 
+builder.Services.AddScoped<IJobScheduler, JobScheduler>(); 
 builder.Services.AddScoped<SessionManager>();
 builder.Services.AddScoped<BaseServices>();
 builder.Services.AddSingleton<AdminLogger>();
@@ -77,6 +83,16 @@ builder.Services.AddSingleton<FileManager>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
 builder.Services.AddSession();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Bounce", Version = "v1" });
+});
+builder.Services.AddHangfire(x =>
+{
+    x.UseSqlServerStorage(configuration.GetConnectionString("BounceDatabase"));
+});
+builder.Services.AddHangfireServer();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -110,6 +126,7 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
 
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -118,14 +135,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+using var scope = app.Services.CreateScope();
 
 
 try
 {
-    using var scope = app.Services.CreateScope();
+   
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+    //private readonly IJobScheduler _jobScheduler;
+  
     var superAdminUser = new ApplicationUser
     {
         UserName = "Admin",
@@ -169,8 +189,10 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Bounce}/{action=Index}/{id?}");
-});
 
+    endpoints.MapHangfireDashboard();
+});
+app.UseHangfireDashboard();
 app.UseCors(x =>
 x.AllowAnyMethod()
 .AllowAnyMethod()
@@ -181,6 +203,7 @@ x.AllowAnyMethod()
 //    RequestPath = new PathString("/Resources")
 //});
 //app.UseMiddleware<EncryptionMiddleware>();
-
 app.MapControllers();
+var _jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
+app.AddCronJob(_jobScheduler);
 app.Run();

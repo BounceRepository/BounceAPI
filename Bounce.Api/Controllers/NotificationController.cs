@@ -1,4 +1,5 @@
-﻿using Bounce_Application.Persistence.Interfaces.Notification;
+﻿using Bounce.DataTransferObject.DTO.Notification;
+using Bounce_Application.Persistence.Interfaces.Notification;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +15,9 @@ namespace Bounce.Api.Controllers
         {
             _notificationService = notificationService;
         }
+
+        [HttpPost("PushNotification")]
+        public async Task<IActionResult> PushNotification([FromBody] PushNotificationDto model) => Response(await _notificationService.PushNotification(model));
         [HttpPatch("UpdateNotificationToken")]
         public async Task<IActionResult> Updatetoken([FromQuery] string token) => Response( await _notificationService.UpdateNotificationToken(token));
 
@@ -25,9 +29,10 @@ namespace Bounce.Api.Controllers
 
         [HttpDelete("DeleteNotification")]
         public async Task<IActionResult> PopNotification([FromQuery] long notificationid) => Response( await _notificationService.PopNotification(notificationid));
+
     }
 
 
-  
+
 
 }
