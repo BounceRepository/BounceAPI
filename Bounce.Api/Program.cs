@@ -30,8 +30,10 @@ using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Hangfire;
+using MessagePack;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -43,9 +45,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 var configuration = builder.Configuration;
 var flutterSettindSection = configuration.GetSection("FlutterWaveSetting");
-
-
-
 
 
 builder.Services.AddDbContext<BounceDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("BounceDatabase")));
@@ -61,28 +60,21 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 }).AddEntityFrameworkStores<BounceDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddMvc().AddXmlSerializerFormatters();
-builder.Services.Configure<SmtpConfiguration>(configuration.GetSection("SmtpConfiguration"));
-builder.Services.AddScoped<IAuthenticationServivce, AuthenticationServivce>();
-builder.Services.AddScoped<IJwtFactory, JwtFactory>();
-builder.Services.AddScoped<ICryptographyService, CryptographyService>();
-builder.Services.AddScoped<IEmalService, EmailService>();
-builder.Services.AddScoped<IPatientServices, PatientServices>();
-builder.Services.AddScoped<IAdminServices, AdminServices>();
-builder.Services.AddScoped<IBankAccountDetailServices, BankAccountDetailServices>();
-builder.Services.AddScoped<ITherapistServices, TherapistServices>();
-builder.Services.AddScoped<IArticleServices, ArticleServices>();
-builder.Services.AddScoped<IPaymentServices, PaymentServices>(); 
-builder.Services.AddScoped<INotificationService, NotificationService>(); 
-builder.Services.AddScoped<IJobScheduler, JobScheduler>(); 
-builder.Services.AddScoped<SessionManager>();
-builder.Services.AddScoped<BaseServices>();
-builder.Services.AddSingleton<AdminLogger>();
-builder.Services.AddSingleton<FileManager>();
+
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
 builder.Services.AddSession();
+builder.Services.AddSignalR().AddMessagePackProtocol();
+builder.Services.AddSignalR()
+    .AddMessagePackProtocol(options =>
+    {
+        options.SerializerOptions = MessagePackSerializerOptions.Standard
+            //.WithResolver(new CustomResolver())
+            .WithSecurity(MessagePackSecurity.UntrustedData);
+    });
+
+builder.ApplicationServices();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -96,10 +88,10 @@ builder.Services.AddHangfireServer();
 
 builder.Services.AddAuthentication(options =>
 {
-	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 
-}).AddJwtBearer( "Bearer", options =>
+}).AddJwtBearer("Bearer", options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
@@ -134,8 +126,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddMvc().AddXmlSerializerFormatters();
+builder.Services.Configure<SmtpConfiguration>(configuration.GetSection("SmtpConfiguration"));
+
 var app = builder.Build();
 using var scope = app.Services.CreateScope();
+
 
 
 try
@@ -144,8 +142,7 @@ try
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
-    //private readonly IJobScheduler _jobScheduler;
-  
+    //private readonly IJobScheduler _jobScheduler
     var superAdminUser = new ApplicationUser
     {
         UserName = "Admin",
@@ -192,7 +189,19 @@ app.UseEndpoints(endpoints =>
 
     endpoints.MapHangfireDashboard();
 });
-app.UseHangfireDashboard();
+
+
+
+var options = new BackgroundJobServerOptions
+{
+    ServerName = String.Format(
+        "{0}.{1}",
+        Environment.MachineName,
+        Guid.NewGuid().ToString())
+};
+
+var server = new BackgroundJobServer(options);
+app.UseHangfireServer(options);
 app.UseCors(x =>
 x.AllowAnyMethod()
 .AllowAnyMethod()

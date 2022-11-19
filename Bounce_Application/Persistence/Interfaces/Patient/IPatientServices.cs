@@ -13,6 +13,7 @@ namespace Bounce_Application.Persistence.Interfaces.Patient
         Task<Response> BookAppointment(AppointmentDto model);
         Response GetAllFeelings();
         Response GetAllPlans();
+        Response GetMessages();
         Task<Response> GetTherapist();
         Response GetUserFeelings();
         Response LogUserFeeling(List<string> feelings);

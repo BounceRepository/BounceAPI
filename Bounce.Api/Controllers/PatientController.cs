@@ -30,10 +30,11 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> GetAllTherapists() => Response(await _patientServices.GetTherapist());
 
 
+        [AllowAnonymous]
         [HttpGet("GetPlans")]
-        public async Task<IActionResult> GetAllPlans() => Response( _patientServices.GetAllPlans());
+        public IActionResult GetAllPlans() => Response( _patientServices.GetAllPlans());
 
-
+  
         [HttpPost("BookAppointment")]
         public async Task<IActionResult> Appointment([FromBody] AppointmentDto model) => Response(await _patientServices.BookAppointment(model));
 

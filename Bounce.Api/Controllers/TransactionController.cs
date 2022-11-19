@@ -2,6 +2,7 @@
 using Bounce.DataTransferObject.DTO.Payment;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
@@ -39,6 +40,16 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> TopUpHistory() => Response(await _paymentServices.TransactionHistory());
         [HttpGet("GetWalletBalance")]
         public async Task<IActionResult> WalletBallance() => Response(await _paymentServices.GetWalletBallance());
+        //[AllowAnonymous]
+
+
+        //[HttpGet("ConfirmTransaction")]
+        //public async Task<IActionResult> TransactionComfirmation([FromQuery] string q )
+        //{
+
+        //    return Ok(q);
+        //    //=> Response(await _paymentServices.GetWalletBallance());
+        //}
     }
 }
 

@@ -23,6 +23,9 @@ namespace Bounce_Domain.Entity
 		public DateTime DateModified { get; set; }
 		public bool IsActive { get; set; }
 		public string? LastModifiedBy { get; set; }
+		//public string Helper { get; set; }
+		public DateTimeOffset? CreatedTimeOffset { get; set; }
+		public DateTimeOffset? ModifiedTimeOffset { get; set; }
 		public bool IsDeleted { get; set; }
 		[Timestamp]
 		public byte[] RowVersion { get; set; }

@@ -30,6 +30,19 @@ namespace Bounce.Api.Controllers
         [HttpDelete("DeleteNotification")]
         public async Task<IActionResult> PopNotification([FromQuery] long notificationid) => Response( await _notificationService.PopNotification(notificationid));
 
+
+        [HttpPost("SendMessage")]
+        public async Task<IActionResult> Chat([FromForm] SendMessageDto model) => Response(await _notificationService.SendMessage(model));
+
+        [HttpGet("GetAllChatMessages")]
+        public IActionResult AllChat() => Response( _notificationService.GetMessages());
+        
+        [HttpGet("GetAllFeedGroups")]
+        public IActionResult FeedGroup() => Response(_notificationService.GetFeedGroups());
+
+        [HttpPost("CreateNewFeed")]
+        public async Task<IActionResult> NewFeed([FromBody] CreateFeedDto model) => Response(await _notificationService.CreateFeed(model));
+
     }
 
 

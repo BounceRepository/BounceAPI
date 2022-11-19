@@ -49,11 +49,6 @@ namespace Bounce.Services.Implementation.Services.Auth
             rootPath = _hostingEnvironment.ContentRootPath;
         }
 
-       
-
-
-    
-
 
 
         public async Task<Response> RegisterAdminUser(RegisterModel registerModel)
@@ -818,6 +813,7 @@ namespace Bounce.Services.Implementation.Services.Auth
         {
             //var user = _context.personalInformations.FirstOrDefault(x => x.ID == userId);
             //var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            //var apiKey = Environment.GetEnvironmentVariable("apiKey");
             var tokenHandler = new JwtSecurityTokenHandler();// for creatiing token
             var keyValue = _configuration["JWT:Secret"];
             var key = Encoding.ASCII.GetBytes(keyValue);

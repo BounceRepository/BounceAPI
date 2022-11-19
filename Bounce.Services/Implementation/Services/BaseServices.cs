@@ -24,28 +24,19 @@ namespace Bounce.Services.Implementation.Services
             _context = context;
         }
 
-        public async Task<Response> InternalErrorResponseAsync(Exception ex)
-        {
-            LogRequest(ex);
-            return new Response
-            {
-                StatusCode = StatusCodes.Status500InternalServerError,
-                Message = InterErrorMessage
-            };
-        }
         /// <summary>
         /// this method logs success informations
         /// </summary>
         /// <param name="message">takes the log messages to the logger</param>
         public void LogInfo(string message)
         {
-            LogRequest(message: message, isError: false);
+            LogRequest(message);
             
         }
         public Response FailedSaveResponse(object? model = null)
         {
             var message = "Sorry your transaction can not completed at the moment, try again later";
-            LogRequest(message: message, model: model);
+            LogError(model, null, message);
             return new Response
             {
                 StatusCode = StatusCodes.Status500InternalServerError,
@@ -73,9 +64,9 @@ namespace Bounce.Services.Implementation.Services
             };
         }
 
-        public Response InternalErrorResponse(Exception ex)
+        public Response InternalErrorResponse(Exception ex, object model = null)
         {
-            LogRequest(ex);
+            LogError( model, ex);
             return new Response
             {
                 StatusCode = StatusCodes.Status500InternalServerError,
@@ -93,15 +84,10 @@ namespace Bounce.Services.Implementation.Services
         /// <param name="message">log messages</param>
         /// <param name="isError">error status which indicates the log type, when set to true logs error otherwise logs information</param>
         /// <param name="model">entity model</param>
-        public void LogRequest(Exception? ex = null, string message = "", bool isError = true, object? model = null)
+        public void LogRequest(string message = "")
         {
         
-            if(isError)
-            {
-                var prefix = model != null ? $"{JsonConvert.SerializeObject(model)}" : "";
-                message = $"{InterErrorMessage}{" - "}{ex.Message}{" - "}{prefix}{DateTime.Now}";
-            }
-
+         
             Log.Logger = new LoggerConfiguration()
            .MinimumLevel.Debug()
            .Enrich.FromLogContext()
@@ -116,14 +102,31 @@ namespace Bounce.Services.Implementation.Services
                flushToDiskInterval: TimeSpan.FromSeconds(1))
            .CreateLogger();
 
-            if (isError)
-            {
-                Log.Logger.Error(message);
-            }
-            else
-            {
-                Log.Logger.Information(message);
-            }
+            Log.Logger.Information(message);
+        }
+
+        public void LogError(object model, Exception? ex = null, string message = "")
+        {
+            var prefix = "";
+            var errorMessage = string.IsNullOrEmpty(message) ? message : InterErrorMessage;
+
+            prefix = model != null ? $"{JsonConvert.SerializeObject(model)}" : "";
+            message = $"{errorMessage}{" - "}{ex}{" - "}{prefix}{DateTime.Now}";
+
+            Log.Logger = new LoggerConfiguration()
+           .MinimumLevel.Debug()
+           .Enrich.FromLogContext()
+           .WriteTo.File(
+              "ApiLogs\\AdminLogs\\events.log",
+               outputTemplate: "{Timestamp:o} [{Level:u3}] ({SourceContext}) {Message}{NewLine}{Exception}",
+               fileSizeLimitBytes: 1_000_000,
+               rollingInterval: RollingInterval.Day,
+               rollOnFileSizeLimit: true,
+               shared: true,
+               flushToDiskInterval: TimeSpan.FromSeconds(1))
+           .CreateLogger();
+
+            Log.Logger.Error(message);
         }
         public async Task<bool> SaveAsync() => await _context.SaveChangesAsync() > 0;
 

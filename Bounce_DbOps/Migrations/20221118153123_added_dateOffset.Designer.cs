@@ -4,6 +4,7 @@ using Bounce_DbOps.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bounce_DbOps.Migrations
 {
     [DbContext(typeof(BounceDbContext))]
-    partial class BounceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221118153123_added_dateOffset")]
+    partial class added_dateOffset
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -478,67 +480,6 @@ namespace Bounce_DbOps.Migrations
                     b.ToTable("Chats");
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.CommentOnFeed", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<string>("Attachment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Comment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("CreatedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("FeedId")
-                        .IsRequired()
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("LikeCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("ModifiedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("FeedId");
-
-                    b.ToTable("Comments");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.Error", b =>
                 {
                     b.Property<long>("Id")
@@ -589,176 +530,6 @@ namespace Bounce_DbOps.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Errors");
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.Feed", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<string>("Attachment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("CreatedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("FeedGroupId")
-                        .IsRequired()
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("LikeCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("ModifiedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Post")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("FeedGroupId");
-
-                    b.ToTable("Feeds");
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.FeedGroup", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<DateTimeOffset?>("CreatedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("ModifiedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("FeedGroups");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9660),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9661),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Relationship"
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9671),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9672),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Self Care"
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9679),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9679),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Work Ethics"
-                        },
-                        new
-                        {
-                            Id = 4L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9686),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9686),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Family"
-                        },
-                        new
-                        {
-                            Id = 5L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9692),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9692),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Self Care"
-                        },
-                        new
-                        {
-                            Id = 6L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9700),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9701),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Sexuality"
-                        },
-                        new
-                        {
-                            Id = 7L,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9717),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9719),
-                            IsActive = false,
-                            IsDeleted = false,
-                            Name = "Parenting"
-                        });
                 });
 
             modelBuilder.Entity("Bounce_Domain.Entity.InteractiveSession", b =>
@@ -1028,8 +799,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 1L,
                             Cost = 50000.0,
                             DailyMeditationCount = 100,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9602),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9612),
+                            DateCreated = new DateTime(2022, 11, 18, 15, 31, 22, 605, DateTimeKind.Utc).AddTicks(5182),
+                            DateModified = new DateTime(2022, 11, 18, 15, 31, 22, 605, DateTimeKind.Utc).AddTicks(5187),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1042,8 +813,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 2L,
                             Cost = 100000.0,
                             DailyMeditationCount = 200,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9636),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9636),
+                            DateCreated = new DateTime(2022, 11, 18, 15, 31, 22, 605, DateTimeKind.Utc).AddTicks(6122),
+                            DateModified = new DateTime(2022, 11, 18, 15, 31, 22, 605, DateTimeKind.Utc).AddTicks(6123),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1056,8 +827,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 3L,
                             Cost = 200000.0,
                             DailyMeditationCount = 500,
-                            DateCreated = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9645),
-                            DateModified = new DateTime(2022, 11, 19, 17, 48, 28, 536, DateTimeKind.Local).AddTicks(9645),
+                            DateCreated = new DateTime(2022, 11, 18, 15, 31, 22, 605, DateTimeKind.Utc).AddTicks(6146),
+                            DateModified = new DateTime(2022, 11, 18, 15, 31, 22, 605, DateTimeKind.Utc).AddTicks(6147),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1065,67 +836,6 @@ namespace Bounce_DbOps.Migrations
                             Name = "Gold",
                             TherapistCount = 500
                         });
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.ReplyOnComment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
-
-                    b.Property<string>("Attachment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("CommentId")
-                        .IsRequired()
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("CreatedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateModified")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("LikeCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("ModifiedTimeOffset")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Reply")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CommentId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.ToTable("Replies");
                 });
 
             modelBuilder.Entity("Bounce_Domain.Entity.SerialNumber", b =>
@@ -1870,44 +1580,6 @@ namespace Bounce_DbOps.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Bounce_Domain.Entity.CommentOnFeed", b =>
-                {
-                    b.HasOne("Bounce_Domain.Entity.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bounce_Domain.Entity.Feed", "Feed")
-                        .WithMany("Comments")
-                        .HasForeignKey("FeedId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Feed");
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.Feed", b =>
-                {
-                    b.HasOne("Bounce_Domain.Entity.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bounce_Domain.Entity.FeedGroup", "Group")
-                        .WithMany("Feeds")
-                        .HasForeignKey("FeedGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Group");
-                });
-
             modelBuilder.Entity("Bounce_Domain.Entity.InteractiveSession", b =>
                 {
                     b.HasOne("Bounce_Domain.Entity.ApplicationUser", "Patient")
@@ -1955,25 +1627,6 @@ namespace Bounce_DbOps.Migrations
                     b.Navigation("Plan");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.ReplyOnComment", b =>
-                {
-                    b.HasOne("Bounce_Domain.Entity.CommentOnFeed", "Comment")
-                        .WithMany("Replies")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bounce_Domain.Entity.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("Bounce_Domain.Entity.Subscription", b =>
@@ -2110,21 +1763,6 @@ namespace Bounce_DbOps.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.CommentOnFeed", b =>
-                {
-                    b.Navigation("Replies");
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.Feed", b =>
-                {
-                    b.Navigation("Comments");
-                });
-
-            modelBuilder.Entity("Bounce_Domain.Entity.FeedGroup", b =>
-                {
-                    b.Navigation("Feeds");
                 });
 #pragma warning restore 612, 618
         }

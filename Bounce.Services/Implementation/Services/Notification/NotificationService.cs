@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.Internal;
 using Bounce.DataTransferObject.DTO.Notification;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Helper;
@@ -27,9 +28,11 @@ namespace Bounce.Services.Implementation.Services.Notification
         private readonly UserManager<ApplicationUser>  _userManager;
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IEmalService _EmailService;
+        private readonly FileManager _fileManager;
+
         public string rootPath { get; set; }
 
-        public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager, IHostingEnvironment hostingEnvironment, IEmalService emailService) : base(context)
+        public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager, IHostingEnvironment hostingEnvironment, IEmalService emailService, FileManager fileManager) : base(context)
         {
             _mapper = mapper;
             _sessionManager = sessionManager;
@@ -38,6 +41,7 @@ namespace Bounce.Services.Implementation.Services.Notification
             rootPath = _hostingEnvironment.ContentRootPath;
             _EmailService = emailService;
             rootPath = _hostingEnvironment.ContentRootPath;
+            _fileManager = fileManager;
         }
         public async Task<Response>  PushNotification(PushNotificationDto model)
         {
@@ -132,7 +136,7 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var notifications = _context.Notification.Where(x => x.IsDeleted && x.Id == _sessionManager.CurrentLogin.Id)
+                var notifications = _context.Notification.Where(x => !x.IsDeleted && x.Id == _sessionManager.CurrentLogin.Id)
                     .OrderByDescending(x=> x.DateCreated).ToList();
                 var totalnotication = notifications.Count();
                 var totalOpenNotifcation = notifications.Where(x => x.IsNewNotication).Count();
@@ -143,7 +147,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                     NotificationId = x.Id,
                     Message = x.Message,
                     Title = x.Title,
-                    Time = x.DateCreated
+                    //Time = x.DateCreated
                 });
                 var data = new
                 {
@@ -153,6 +157,174 @@ namespace Bounce.Services.Implementation.Services.Notification
                 };
   
                 return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> SendMessage(SendMessageDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var reciever = _userManager.Users.FirstOrDefault(x => x.Id == model.ReceieverId);
+                var fileNames = new List<string>();
+                var filename = "";
+                bool hasFile = false;
+                if (model.Files != null &&  model.Files.Any())
+                {
+                    hasFile = true;
+                    foreach (var item in model.Files)
+                    {
+                        fileNames.Add(_fileManager.FileUpload(item, "Chat"));
+                    }
+                    filename =  string.Join("|", fileNames);
+                }
+                var chat = new Chat
+                {
+                    SenderId = user.Id,
+                    ReceieverId = model.ReceieverId,
+                    Message = model.Message,
+                    MessageRefx = DateTime.Now.Ticks.ToString(),
+                    CreatedTimeOffset = model.Time, 
+                    Files = filename,
+                    HasFile = hasFile,
+                };
+                _context.Add(chat);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(chat);
+
+                var defaultApp = FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
+                });
+
+                var message = new Message()
+                {
+
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["User"] = user.Email,
+                        ["UserName"] = user.UserName,
+
+                    },
+                    Notification = new FirebaseAdmin.Messaging.Notification
+                    {
+                        Title = "Message",
+                        Body = model.Message,
+
+                    },
+                    Token = reciever.NotificationToken,
+                };
+
+                var messaging = FirebaseMessaging.DefaultInstance;
+                var result = await messaging.SendAsync(message);
+                defaultApp.Delete();
+                return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response GetMessages()
+        {
+
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var sentMessages = _context.Chats.Where(x => !x.IsDeleted && x.SenderId == user.Id)
+                .Select(x => new AllMessagesDto
+                {
+                    ChatId = x.Id,
+                    Message = x.Message,
+                    Time = x.CreatedTimeOffset,
+                    MessageType = "Send",
+                    ReceieverId = x.ReceieverId,
+                    ReceieverUserName = x.Receiever.UserName,
+                    Files = x.Files.ToSplit('|'),
+                    HasFile = x.HasFile
+
+                }).ToList();
+                var receivedMessages = _context.Chats.Where(x => x.ReceieverId == user.Id)
+                    .Select(x => new AllMessagesDto
+                    {
+                    ChatId = x.Id,
+                    Message = x.Message,
+                    Time = x.CreatedTimeOffset,
+                    MessageType = "Recieved",
+                    SenderId = x.SenderId,
+                    SenderUserName = x.Sender.UserName,
+                    Files = x.Files.ToSplit('|'),
+                    HasFile = x.HasFile
+
+                }).ToList();
+                var messages = sentMessages.Concat(receivedMessages).OrderByDescending(x => x.Time).ToList();
+
+
+                var data = new
+                {
+                    Messages = messages,
+                    totalCount = messages.Count(),
+                    Receieved = receivedMessages.Count(),
+                    Sent = sentMessages.Count(),
+                };
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public Response GetFeedGroups()
+        {
+            try
+            {
+                var feedGroups = _context.FeedGroups.Where(x => !x.IsDeleted)
+                    .Select(x => new
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        Feeds = x.Feeds.ToList().
+                        Select(f=> new 
+                        {
+                            Id = f.Id,
+                            Post = f.Post,
+                            Time = f.CreatedTimeOffset,
+                            Likes = f.LikeCount,
+                            CommentCount = f.Comments.Count()
+
+                        }),
+                    });
+                return SuccessResponse(data: feedGroups);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> CreateFeed(CreateFeedDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var feed = new Feed
+                {
+                    Post = model.Feed,
+                    FeedGroupId = model.FeedGroupId,
+                    CreatedByUserId = user.Id,
+                    CreatedTimeOffset = model.Time
+                };
+                _context.Feeds.Add(feed);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(model);
+                return SuccessResponse();
 
             }
             catch (Exception ex)

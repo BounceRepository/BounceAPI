@@ -10,9 +10,11 @@ namespace Bounce.DataTransferObject.DTO.Patient
     {
         public long Id { get; set; }
         public string Name { get; set; }
-        public int DailyMeditation { get; set; }
-        public int FreeDaysTrialCount { get; set; }
-        public int Therapist { get; set; }
-        public double Cost { get; set; }
+
+        public object SubPlans { get; set; }
+        //public int DailyMeditation { get; set; }
+        //public int FreeDaysTrialCount { get; set; }
+        //public int Therapist { get; set; }
+        //public double Cost { get; set; }
     }
 }
