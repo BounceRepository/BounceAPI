@@ -11,6 +11,7 @@ using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -290,11 +291,13 @@ namespace Bounce.Services.Implementation.Services.Notification
                     {
                         Id = x.Id,
                         Name = x.Name,
+                        FeedCount = x.Feeds.Count(),
                         Feeds = x.Feeds.ToList().
                         Select(f=> new 
                         {
                             Id = f.Id,
                             Post = f.Post,
+                            Creator = f.CreatedByUser.NormalizedUserName,
                             Time = f.CreatedTimeOffset,
                             Likes = f.LikeCount,
                             CommentCount = f.Comments.Count()
@@ -332,5 +335,257 @@ namespace Bounce.Services.Implementation.Services.Notification
                 return InternalErrorResponse(ex);
             }
         }
+        public Response GetAllFeeds()
+        {
+            try
+            {
+                var feedGroups = _context.Feeds.Where(x => !x.IsDeleted)
+                    .Select(x => new
+                    {
+                        FeedId = x.Id,
+                        Feed = x.Post,
+                        Creator = x.CreatedByUser.UserName,
+                        FeedGroup = x.Group.Name,
+                        FeedGroupId = x.Group.Id,
+                        LikesCount = x.LikeCount,
+                        Time = x.CreatedTimeOffset,
+                        CommentCount = x.Comments.Count(),
+                        PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
+                        Comments = x.Comments.ToList().
+                        Select(f => new
+                        {
+                            CommentId = f.Id,
+                            Comment = f.Comment,
+                            Commentor = f.CreatedByUser.UserName,
+                            Time = f.CreatedTimeOffset,
+                            LikeCount = f.LikeCount,
+                            ReplyCount = f.Replies.Count(),
+                            Likes = f.LikeCount,
+
+                        }),
+                    });
+                return SuccessResponse(data: feedGroups);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response GetUserFeeds()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var feedGroups = _context.Feeds.Where(x => !x.IsDeleted && x.CreatedByUserId == user.Id)
+                    .Select(x => new
+                    {
+                        FeedId = x.Id,
+                        Feed = x.Post,
+                        FeedGroup = x.Group.Name,
+                        FeedGroupId = x.Group.Id,
+                        LikesCount = x.LikeCount,
+                        Time = x.CreatedTimeOffset,
+                        CommentCount = x.Comments.Count(),
+                        Comments = x.Comments.ToList().
+                        Select(f => new
+                        {
+                            CommentId = f.Id,
+                            Comment = f.Comment,
+                            Commentor = f.CreatedByUser.UserName,
+                            Time = f.CreatedTimeOffset,
+                            LikeCount = f.LikeCount,
+                            ReplyCount = f.Replies.Count(),
+                            Likes = f.LikeCount,
+
+                        }),
+                    });
+                return SuccessResponse(data: feedGroups);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> CreateComent(CommentDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var feed = new CommentOnFeed
+                {
+                    FeedId = model.FeedId,
+                    Comment = model.Comment,
+                    CreatedByUserId = user.Id,
+                    CreatedTimeOffset = model.Time
+                };
+                _context.Comments.Add(feed);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(model);
+                return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> ReplyComent(PushReplyDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var feed = new ReplyOnComment
+                {
+                    CommentId = model.CommentId,
+                    Reply = model.Text,
+                    CreatedByUserId = user.Id,
+                    CreatedTimeOffset = model.Time
+                };
+                _context.Replies.Add(feed);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(model);
+                return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response GetCommentByFeedId(long feedId)
+        {
+            try
+            {
+                var comments = _context.Comments.Where(x => !x.IsDeleted && x.FeedId == feedId)
+                    .Select(x => new
+                    {
+                        CommentId = x.Id,
+                        Comment = x.Comment,
+                        Commentor = x.CreatedByUser.UserName,
+                        LikesCount = x.LikeCount,
+                        RepliesCount = x.Replies.Count(),
+                        Time = x.CreatedTimeOffset,
+                        Replies = x.Replies
+                        .Select(f => new
+                        {
+                            ReplyId = f.Id,
+                            RepliedBy = f.CreatedByUser.UserName,
+                            ReplyText = f.Reply,
+                            Commentor = f.CreatedByUser.UserName,
+                            Time = f.CreatedTimeOffset,
+                            LikeCount = f.LikeCount,
+                      
+                        }),
+                    });
+                return SuccessResponse(data: comments);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response GetRepliesByCommentId(long commentId)
+        {
+            try
+            {
+                var comments = _context.Replies.Where(x => !x.IsDeleted && x.CommentId == commentId)
+                    .Select(x => new
+                    {
+                        ReplyId = x.Id,
+                        ReplyText = x.Reply,
+                        ReplyBy = x.CreatedByUser.UserName,
+                        Time = x.CreatedTimeOffset,
+                        
+                    });
+                return SuccessResponse(data: comments);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> LikeComment(CommentLikeDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var comment = _context.Comments.FirstOrDefault(x=> x.Id == model.CommentId);
+                if(comment != null)
+                {
+                    comment.LikeCount = comment.LikeCount + 1;
+                    _context.Comments.Update(comment);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse(model);
+                    return SuccessResponse();
+                }
+                
+                
+                return AuxillaryResponse("comment not found", StatusCodes.Status404NotFound);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> LikeFeed(FeedLikeDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var feed = _context.Feeds.Find(model.FeedId);
+                if (feed != null)
+                {
+                    feed.LikeCount = feed.LikeCount + 1;
+                    _context.Feeds.Update(feed);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse(model);
+                    return SuccessResponse();
+                }
+
+
+                return AuxillaryResponse("feed not found", StatusCodes.Status404NotFound);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> LikReply(ReplyLikeDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var reply = _context.Replies.Find(model.ReplyId);
+                if (reply != null)
+                {
+                    reply.LikeCount = reply.LikeCount + 1;
+                    _context.Replies.Update(reply);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse(model);
+                    return SuccessResponse();
+                }
+
+                return AuxillaryResponse("reply not found", StatusCodes.Status404NotFound);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
     }
 }

@@ -43,6 +43,32 @@ namespace Bounce.Api.Controllers
         [HttpPost("CreateNewFeed")]
         public async Task<IActionResult> NewFeed([FromBody] CreateFeedDto model) => Response(await _notificationService.CreateFeed(model));
 
+       
+        [HttpGet("GetAllFeeds")]
+        public IActionResult AllFedds() => Response(_notificationService.GetAllFeeds());
+
+        [HttpPatch("LikeFeed")]
+        public async Task<IActionResult> LikeFeed([FromBody] FeedLikeDto model) => Response(await _notificationService.LikeFeed(model));
+
+        [HttpGet("GetAllFeedsByUser")]
+        public IActionResult UserFedds() => Response(_notificationService.GetUserFeeds());
+
+        [HttpPost("CreateComment")]
+        public async Task<IActionResult> Comment([FromBody] CommentDto model) => Response(await _notificationService.CreateComent(model));
+
+        [HttpPatch("LikeComment")]
+        public async Task<IActionResult> LikeFeed([FromBody] CommentLikeDto model) => Response(await _notificationService.LikeComment(model));
+        [HttpPost("CreateReplyOnComment")]
+        public async Task<IActionResult> ReplyComment([FromBody] PushReplyDto model) => Response(await _notificationService.ReplyComent(model));
+
+        [HttpGet("GetCommentsByFeedId")]
+        public IActionResult GetComment([FromQuery] long feedId) => Response(_notificationService.GetCommentByFeedId(feedId));
+
+        [HttpGet("GetReplyByCommentId")]
+        public IActionResult GetREplies([FromQuery] long commentId) => Response(_notificationService.GetRepliesByCommentId(commentId));
+
+
+
     }
 
 
