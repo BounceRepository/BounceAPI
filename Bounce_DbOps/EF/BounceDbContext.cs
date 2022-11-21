@@ -55,6 +55,9 @@ namespace Bounce_DbOps.EF
 		public DbSet<CommentOnFeed> Comments { get; set; }
 		public DbSet<ReplyOnComment> Replies { get; set; }
 		public DbSet<FeedGroup> FeedGroups { get; set; }
+		public DbSet<TherapistProfile> TherapistProfiles { get; set; }
+		public DbSet<TherapistReview> Reviews { get; set; }
+
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -1,4 +1,11 @@
-﻿using System;
+﻿using Bounce_Application.DTO;
+using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.Utilies;
+using Bounce_DbOps.EF;
+using Bounce_Domain.Entity;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,11 +13,34 @@ using System.Threading.Tasks;
 
 namespace Bounce.Job
 {
-    public class JobScheduler : IJobScheduler
+    public class JobScheduler : BaseJobScheduler, IJobScheduler
     {
-        public Task<bool> CheckFreeTrialAsync()
+        private string rootPath = string.Empty;
+
+        public JobScheduler(IEmalService emailService, IHttpContextAccessor contextAccessor, IHostingEnvironment hostingEnvironment, BounceDbContext context) : base(emailService, contextAccessor, hostingEnvironment, context)
         {
-            return Task.FromResult(true);
+            rootPath = hostingEnvironment.ContentRootPath;
+        }
+
+       
+        public async Task<bool> CheckFreeTrialAsync()
+        {
+           using (var context = new BounceDbContext())
+            {
+      
+                var review = new TherapistReview
+                {
+                    Time = DateTimeOffset.Now,
+                    TherapistUserId = 2,
+                    ReviewComment = "Comment from local server"
+
+                };
+                _context.AddAsync(review);
+                await _context.SaveChangesAsync();
+            }
+ 
+
+            return Task.FromResult(true).Result;
         }
     }
 }

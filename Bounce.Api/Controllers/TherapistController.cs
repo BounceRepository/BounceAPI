@@ -1,5 +1,7 @@
 ﻿using Bounce.DataTransferObject.DTO.Patient;
+using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce_Application.Persistence.Interfaces.Therapist;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +17,11 @@ namespace Bounce.Api.Controllers
         {
             _therapistServices = therapistServices;
         }
+
+
+        [AllowAnonymous]
+        [HttpPost("CreateProfile")]
+        public async Task<IActionResult> Profile([FromForm] TherapistProfileDto model) => Response(await _therapistServices.CreateTherapistProfile(model));
 
         [HttpPost("UpsertBankAccountDetails")]
         public async Task<IActionResult> Subscription([FromBody] BankAccountDetailDto model) => Response(await _therapistServices.BankDetailsUpsert(model));

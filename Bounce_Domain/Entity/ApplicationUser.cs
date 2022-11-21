@@ -12,18 +12,24 @@ namespace Bounce_Domain.Entity
 {
     public class ApplicationUser : IdentityUser<long>
     {
+       
         public bool HasProfile { get; set; }
         public long? ProfileId { get; set; }
 
-        //public string? RoleName { get; set; }
-        //public string? Feelings { get; set; }
-        //[ForeignKey(nameof(ProfileId))]
-        //[JsonIgnore]
-        //public UserProfile Profile { get; set; }
         public string? PatientId { get; set; }
         public UserType Discriminator { get; set; }
         public string? NotificationToken { get; set; }
         public string? DeviceId { get; set; }
+        public long? TherapistUserProfileId { get; set; }
+        [ForeignKey(nameof(TherapistUserProfileId))]
+        public virtual TherapistProfile TherapistProfile { get; set; }
+
+        public long? PatientUserProfileId { get; set; }
+        [ForeignKey(nameof(PatientUserProfileId))]
+        public virtual UserProfile PatientProfile { get; set; }
+
+        public virtual ICollection<TherapistReview> Review { get; set; }
+
 
 
     }

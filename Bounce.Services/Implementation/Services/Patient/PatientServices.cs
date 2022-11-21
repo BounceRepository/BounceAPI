@@ -179,78 +179,65 @@ namespace Bounce.Services.Implementation.Services.Patient
                     return SuccessResponse(data: null);
 
                 var data = (from user in users where user.HasProfile == true
-                            join profile in _context.UserProfile on user.Id equals profile.UserId
-                            join profile2 in _context.TherapistHospitalInformations on user.Id equals profile2.TherapistId
-                            join profile3 in _context.TherapistmedicalRegistrations on user.Id equals profile3.TherapistId
-                           
-                            select new GetTherapistDto
+                            join profile in _context.TherapistProfiles on user.TherapistUserProfileId equals profile.Id                    
+                            select new 
                             {
-                                //Id = user.Id,
-                                //FirstName = profile.FirstName,
-                                //LastName = profile.LastName,
-                                //YearsExperience = "10",
-                                //Ratings = 2,
-                                //About = "lorem",
-                                ////HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
-                                //PhoneNUmber = "08037620380",
-                                //PicturePath = profile.FilePath,
-                                TherapistId = 6,
-                                Descipline = "Psychology",
-                                FirstName = "Ifeanyi",
-                                LastName = "Ozougwu",
+                                TherapistId = user.Id,
+                                FirstName = profile.FirstName,
+                                LastName = profile.LastName,
+                                YearsExperience = profile.YearsOfExperience ,
                                 Ratings = 5,
+                                About = profile.Email,
+                                //HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
+                                PhoneNUmber = profile.PhoneNumber,
                                 Specialization = new List<string> { "Bsc", "LBS" },
-                                YearsExperience = "4",
-                                About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
-                                " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
-                                ListofDays = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" },
-                                StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                                EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                                PhoneNUmber = "08037620380",
-                                PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
+                                ConsultaionDays = profile.ConsultationDays.ToSplit('|'),
+                                StartTime = profile.ConsultationStartTime,
+                                EndTime = profile.ConsultationEndTime,
+                                PicturePath = profile.ProfilePicture,
                                 ServiceChargePerHoure = 50000,
                                 NumberOfPatient = 50
 
                             }).ToList();
 
-                data.Add(new GetTherapistDto
-                {
-                    TherapistId = 6,
-                    Descipline = "Psychology",
-                    FirstName = "Ifeanyi",
-                    LastName =  "Ozougwu",
-                    Ratings = 5,
-                    Specialization =  new List<string> { "Bsc", "LBS" },
-                    YearsExperience = "4",
-                    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
-                    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
-                    ListofDays = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" },
-                    StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                    EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                    PhoneNUmber = "08037620380",
-                    PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
-                    ServiceChargePerHoure = 10000,
-                    NumberOfPatient  = 30
-                });
-                data.Add(new GetTherapistDto
-                {
-                    TherapistId = 6,
-                    FirstName = "Chinedu",
-                    LastName = "Eze",
-                    Descipline = "Therapist",
-                    Ratings = 5,
-                    Specialization = new List<string> { "Bsc", "LBS" },
-                    YearsExperience = "4",
-                    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
-                    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
-                    ListofDays = new List<string> { "Monday", "Tuesday","Wednesday", "Thursday", "Friday","Saturday" },
-                    StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                    EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                    PhoneNUmber = "08037623425243",
-                    PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
-                    ServiceChargePerHoure = 40000,
-                    NumberOfPatient = 20
-                });
+                //data.Add(new GetTherapistDto
+                //{
+                //    TherapistId = 6,
+                //    Descipline = "Psychology",
+                //    FirstName = "Ifeanyi",
+                //    LastName =  "Ozougwu",
+                //    Ratings = 5,
+                //    Specialization =  new List<string> { "Bsc", "LBS" },
+                //    YearsExperience = "4",
+                //    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
+                //    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
+                //    ListofDays = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" },
+                //    StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
+                //    EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
+                //    PhoneNUmber = "08037620380",
+                //    PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
+                //    ServiceChargePerHoure = 10000,
+                //    NumberOfPatient  = 30
+                //});
+                //data.Add(new GetTherapistDto
+                //{
+                //    TherapistId = 6,
+                //    FirstName = "Chinedu",
+                //    LastName = "Eze",
+                //    Descipline = "Therapist",
+                //    Ratings = 5,
+                //    Specialization = new List<string> { "Bsc", "LBS" },
+                //    YearsExperience = "4",
+                //    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
+                //    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
+                //    ListofDays = new List<string> { "Monday", "Tuesday","Wednesday", "Thursday", "Friday","Saturday" },
+                //    StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
+                //    EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
+                //    PhoneNUmber = "08037623425243",
+                //    PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
+                //    ServiceChargePerHoure = 40000,
+                //    NumberOfPatient = 20
+                //});
                 return SuccessResponse(data: data);
 
             }
@@ -453,6 +440,8 @@ namespace Bounce.Services.Implementation.Services.Patient
                                        Discipline = "Msc in clinical Psychology",
                                        Therapist = t.Email,
                                        TherapistId = t.Id,
+                                       Amount = r.TotalAMount,
+                                 
                                    }).ToListAsync();
 
                 return SuccessResponse(data: query);
@@ -491,6 +480,61 @@ namespace Bounce.Services.Implementation.Services.Patient
                 });
                 var message = sendMessages.Concat(sendMessages).OrderByDescending(x => x.Time).ToList();
                 return SuccessResponse(data: message);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> CreateReview(CreateReviewDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var reveiew = new TherapistReview
+                {
+                    Time = model.Time,
+                    ReviewComment = model.ReviewComment,
+                    TherapistUserId = model.TherapistUserId,
+                    PatientUserId = user.Id,
+                    RateCount = model.ReviewStarCount
+                    
+                };
+
+                await _context.Reviews.AddAsync(reveiew);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(reveiew);
+                return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+
+
+        }
+        public Response GetReviewByTherapistId(long id)
+        {
+            try
+            {
+                var revews = _context.Reviews.OrderByDescending(x => x.DateCreated).ToList();
+                var data = (from review in revews where review.IsDeleted == false && review.TherapistUserId == id
+                            join profile in _context.UserProfile on review.PatientUserId equals profile.UserId
+                            select new
+                            {
+                                ReviewId = review.Id,
+                                ReviewStar =  review.RateCount,
+                                ReviewComment = review.ReviewComment,
+                                ReviewName = $"{profile.FirstName} {profile.LastName}",
+                                Time = review.Time,
+                                
+                            }).ToList();
+
+                return SuccessResponse(data: new {TotalReviewCount = data.Count(), Reviews = data});
 
             }
             catch (Exception ex)

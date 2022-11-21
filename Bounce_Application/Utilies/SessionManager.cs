@@ -25,20 +25,34 @@ namespace Bounce_Application.Utilies
         {
             get
             {
-               
-                UserId = GetLoggedUserId();
+               var userId =  GetLoggedUserId();
+                if (userId == "Anonymous")
+                {
+                    return new ApplicationUser
+                    {
+                        Id = 1,
+                        Email = "Bounce@gmail.com",
+                        UserName = "BounceAdmin"
+                    };
+                }
+                UserId = long.Parse(userId);
                 return _userManager.Users.FirstOrDefault(x => x.Id == UserId);
             }
         }
 
 
-        public long GetLoggedUserId()
+        public string GetLoggedUserId()
         {
-            var claimIdentity = _httpContext.HttpContext.User.Identity as ClaimsIdentity;
-            if (!claimIdentity.IsAuthenticated)
-                return 0;
-            var userId = claimIdentity.FindFirst("UserId") != null ? Convert.ToInt64(claimIdentity?.FindFirst("UserId").Value.ToString()) : 0;
-            return userId;
+            var http = _httpContext?.HttpContext?.User;
+           if(http != null)
+            {
+                var claimIdentity = http.Identity as ClaimsIdentity;
+                if (!claimIdentity.IsAuthenticated)
+                    return "Anonymous";
+                return claimIdentity.FindFirst("UserId") != null ? claimIdentity?.FindFirst("UserId").Value.ToString() : "Anonymous";
+    
+            }
+           return "Anonymous";
         }
 
     }

@@ -462,6 +462,7 @@ namespace Bounce.Services.Implementation.Services.Notification
             try
             {
                 var comments = _context.Comments.Where(x => !x.IsDeleted && x.FeedId == feedId)
+                    .OrderByDescending(m=> m.DateCreated)
                     .Select(x => new
                     {
                         CommentId = x.Id,

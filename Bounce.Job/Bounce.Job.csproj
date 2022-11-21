@@ -12,6 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Bounce.Services\Bounce.Services.csproj" />
+    <ProjectReference Include="..\Bounce_DbOps\Bounce_DbOps.csproj" />
+    <ProjectReference Include="..\Bounce_Domain\Bounce_Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="CronExpressions.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>

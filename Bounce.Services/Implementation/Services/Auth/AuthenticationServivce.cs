@@ -515,13 +515,8 @@ namespace Bounce.Services.Implementation.Services.Auth
             try
             {
 
-                var loginUser = await _userManager.FindByNameAsync(loginModel.Username);
-
-                if (loginUser == null)
-                    loginUser = await _userManager.FindByEmailAsync(loginModel.Username);
-
-                if (loginUser == null)
-                    loginUser =  _userManager.Users.FirstOrDefault(x=> x.PatientId == loginModel.Password);
+                var loginUser =  _userManager.Users.FirstOrDefault(x=> x.UserName == loginModel.Username
+                || x.PatientId == loginModel.Username || x.Email == loginModel.Username);
 
                 if (loginUser == null)
                     return new Response

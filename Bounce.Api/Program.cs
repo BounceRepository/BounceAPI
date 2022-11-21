@@ -60,8 +60,6 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 }).AddEntityFrameworkStores<BounceDbContext>()
     .AddDefaultTokenProviders();
 
-
-
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
 builder.Services.AddSession();
@@ -201,7 +199,7 @@ var options = new BackgroundJobServerOptions
 };
 
 var server = new BackgroundJobServer(options);
-app.UseHangfireServer(options);
+app.UseHangfireServer(/*options*/);
 app.UseCors(x =>
 x.AllowAnyMethod()
 .AllowAnyMethod()

@@ -1,4 +1,5 @@
 ﻿using Bounce.DataTransferObject.DTO.Patient;
+using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using System;
 using System.Collections.Generic;
@@ -11,5 +12,6 @@ namespace Bounce_Application.Persistence.Interfaces.Therapist
     public interface ITherapistServices
     {
         Task<Response> BankDetailsUpsert(BankAccountDetailDto model);
+        Task<Response> CreateTherapistProfile(TherapistProfileDto model);
     }
 }

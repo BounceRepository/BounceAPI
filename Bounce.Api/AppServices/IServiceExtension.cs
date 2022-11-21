@@ -58,12 +58,17 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<IArticleServices, ArticleServices>();
             builder.Services.AddScoped<IPaymentServices, PaymentServices>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
+            //Job JobScheduler
             builder.Services.AddScoped<IJobScheduler, JobScheduler>();
+            builder.Services.AddScoped<BaseJobScheduler>();
             builder.Services.AddScoped<SessionManager>();
             builder.Services.AddScoped<BaseServices>();
             builder.Services.AddSingleton<AdminLogger>();
             builder.Services.AddSingleton<FileManager>();
+         
             
+
+
         }
     }
 }

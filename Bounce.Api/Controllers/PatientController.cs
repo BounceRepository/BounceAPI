@@ -52,5 +52,11 @@ namespace Bounce.Api.Controllers
         public IActionResult UserFeelings() => Response(_patientServices.GetUserFeelings());
 
 
+        [HttpPost("CreateReview")]
+        public async Task<IActionResult> Review([FromBody] CreateReviewDto model) => Response(await _patientServices.CreateReview(model));
+
+        [HttpGet("GetReviewsByTherapistId")]
+        public IActionResult GetAllReview([FromQuery] long therapistId) => Response(_patientServices.GetReviewByTherapistId(therapistId));
+
     }
 }
