@@ -2,6 +2,7 @@
 using Bounce.DataTransferObject.DTO.Payment;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace Bounce.Api.Controllers
    
     [ApiController]
     [Route("api/transaction")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class TransactionController : BaseController
     {
         private readonly IPaymentServices _paymentServices;

@@ -1,4 +1,5 @@
 
+using Bounce.Api.ChatHub;
 using Bounce.Api.Filter;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Job;
@@ -31,6 +32,7 @@ using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Hangfire;
 using MessagePack;
+using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -63,14 +65,14 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
 builder.Services.AddSession();
-builder.Services.AddSignalR().AddMessagePackProtocol();
-builder.Services.AddSignalR()
-    .AddMessagePackProtocol(options =>
-    {
-        options.SerializerOptions = MessagePackSerializerOptions.Standard
-            //.WithResolver(new CustomResolver())
-            .WithSecurity(MessagePackSecurity.UntrustedData);
-    });
+/*AddMessagePackProtocol();*/
+//builder.Services.AddSignalR();
+    //.AddMessagePackProtocol(options =>
+    //{
+    //    options.SerializerOptions = MessagePackSerializerOptions.Standard
+    //        .WithResolver(MessagePack.Resolvers.StandardResolver.Instance)
+    //        .WithSecurity(MessagePackSecurity.UntrustedData);
+    //});
 
 builder.ApplicationServices();
 
@@ -113,6 +115,23 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            // If the request is for our hub...
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/hubs/chat")))
+            {
+                // Read the token out of the query string
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
 
@@ -128,6 +147,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
 builder.Services.Configure<SmtpConfiguration>(configuration.GetSection("SmtpConfiguration"));
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 using var scope = app.Services.CreateScope();
@@ -140,13 +160,11 @@ try
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
-    //private readonly IJobScheduler _jobScheduler
     var superAdminUser = new ApplicationUser
     {
         UserName = "Admin",
         Email = configuration["Devsbounce@gmail.com"]
     };
-    //var context = scope.ServiceProvider.GetRequiredService<BounceDbContext>();
     var superAdminExist = await userManager.FindByNameAsync(superAdminUser.UserName);
     if (superAdminExist == null)
     {
@@ -186,6 +204,7 @@ app.UseEndpoints(endpoints =>
         pattern: "{controller=Bounce}/{action=Index}/{id?}");
 
     endpoints.MapHangfireDashboard();
+    endpoints.MapHub<BounceChatHub>("/chat");
 });
 
 
@@ -213,4 +232,6 @@ x.AllowAnyMethod()
 app.MapControllers();
 var _jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
 app.AddCronJob(_jobScheduler);
+
+
 app.Run();

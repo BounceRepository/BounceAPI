@@ -25,19 +25,19 @@ namespace Bounce.Job
        
         public async Task<bool> CheckFreeTrialAsync()
         {
-           using (var context = new BounceDbContext())
-            {
+           ////using (var context = new BounceDbContext())
+           //// {
       
-                var review = new TherapistReview
-                {
-                    Time = DateTimeOffset.Now,
-                    TherapistUserId = 2,
-                    ReviewComment = "Comment from local server"
+           ////     var review = new TherapistReview
+           ////     {
+           ////         Time = DateTimeOffset.Now,
+           ////         TherapistUserId = 2,
+           ////         ReviewComment = "Comment from local server"
 
-                };
-                _context.AddAsync(review);
-                await _context.SaveChangesAsync();
-            }
+           ////     };
+           ////     _context.AddAsync(review);
+           ////     await _context.SaveChangesAsync();
+           // }
  
 
             return Task.FromResult(true).Result;

@@ -1,19 +1,26 @@
-﻿using Bounce.DataTransferObject.DTO.Notification;
+﻿using Bounce.Api.ChatHub;
+using Bounce.DataTransferObject.DTO.Notification;
 using Bounce_Application.Persistence.Interfaces.Notification;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Bounce.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class NotificationController : BaseController
     {
         private readonly INotificationService _notificationService;
+        private readonly IHubContext<BounceChatHub> _chatHubContext;
 
-        public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService) : base(httpContext)
+        public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService, IHubContext<BounceChatHub> chatHubContext) : base(httpContext)
         {
             _notificationService = notificationService;
+            _chatHubContext = chatHubContext;
         }
 
         [HttpPost("PushNotification")]
@@ -30,6 +37,21 @@ namespace Bounce.Api.Controllers
         [HttpDelete("DeleteNotification")]
         public async Task<IActionResult> PopNotification([FromQuery] long notificationid) => Response( await _notificationService.PopNotification(notificationid));
 
+        [HttpPost("PushMessage")]
+        public async Task<IActionResult> PushMessage([FromBody] ChatHubDto model)
+        {
+            try
+            {
+                await _chatHubContext.Clients.All.SendAsync("ReceievedMessage", model);
+
+                return Ok(new { Message = "Message sent" });
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+          
+        }
 
         [HttpPost("SendMessage")]
         public async Task<IActionResult> Chat([FromForm] SendMessageDto model) => Response(await _notificationService.SendMessage(model));

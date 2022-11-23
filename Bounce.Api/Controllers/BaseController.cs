@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace Bounce.Api.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    
     public class BaseController : ControllerBase
     {
         private readonly IHttpContextAccessor httpContext;

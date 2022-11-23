@@ -28,6 +28,8 @@ namespace Bounce.DataTransferObject.DTO.Therapist
         public string? Country { get; set; }
         [Required]
         public string? Specialization { get; set; }
+
+
         [Required]
         public int YearsOfExperience { get; set; }
         [Required]

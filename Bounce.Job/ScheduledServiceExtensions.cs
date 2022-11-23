@@ -14,7 +14,7 @@ namespace Bounce.Job
         public static IApplicationBuilder AddCronJob(this IApplicationBuilder  app, IJobScheduler jobScheduler)
         {     
 
-            RecurringJob.AddOrUpdate("CheckFreeTrial", () => jobScheduler.CheckFreeTrialAsync(), new CronExpressions(1).Minutes);
+            RecurringJob.AddOrUpdate("CheckFreeTrial", () => jobScheduler.CheckFreeTrialAsync(), new CronExpressions(50).Minutes);
 
             return app;
         }

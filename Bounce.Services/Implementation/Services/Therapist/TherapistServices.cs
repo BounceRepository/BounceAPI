@@ -74,7 +74,6 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 var bankProfile = _context.BankAccountDetails.FirstOrDefault(x => x.TherapistId == model.TherapistId);
 
                 var entity = _mapper.Map<BankAccountDetails>(model);
-                //entity.LastModifiedBy = ".";
                 if (bankProfile == null)
                     _context.Add(entity);
                 else
@@ -85,32 +84,45 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     bankProfile.AccountType = model.AccountType;
                     bankProfile.LastModifiedBy = model.TherapistId.ToString();
    
-                     _context.Update(bankProfile);
-                }           
-
-
-                if (await SaveAsync()) return new Response { StatusCode = StatusCodes.Status200OK, Message = "Bank Detail Updated" };
-               
-                return new Response
-                        {
-                                StatusCode = StatusCodes.Status500InternalServerError,
-                                Message = "Sorry we can not complete your request at this time, please try again later"
-                        };
-               
-
+                    _context.Update(bankProfile);
+                }
+                if (!await SaveAsync())
+                    return FailedSaveResponse(bankProfile);
+                return SuccessResponse();
             }
             catch (Exception ex)
             {
 
-                _adminLogger.LogRequest($"{"internal server error }"}{ex}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}", true);
-
-                return new Response
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError,
-                    Message = "Internal server error occured"
-                };
+                return InternalErrorResponse(ex);
             }
         }
-        public async Task<bool> SaveAsync() => await _context.SaveChangesAsync() > 0;
+
+        public Response GetTherapistDashBoard()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var consulations = _context.AppointmentRequest.Where(x => !x.IsDeleted).Where(x => x.TherapistId == user.Id && x.IsPaymentCompleted).ToList();
+                var data = new
+                {
+                    TherapistId = user.Id,
+                    Title = user.TherapistProfile.Title,
+                    FirstName = user.TherapistProfile.FirstName,
+                    LastName = user.TherapistProfile.LastName,
+                    PhoneNumber = user.TherapistProfile.PhoneNumber,
+                    ProfilePicture = user.TherapistProfile.ProfilePicture,
+                    MonthlyConsultationCount = consulations.Count(),
+
+                };
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
     }
 }

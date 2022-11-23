@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Bounce.Api.Controllers
 {
-    [AllowAnonymous]
+ 
     [Route("api/[controller]")]
     [ApiController]
     public class AuthenticationController : BaseController
