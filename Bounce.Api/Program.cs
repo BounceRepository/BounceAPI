@@ -147,6 +147,21 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
 builder.Services.Configure<SmtpConfiguration>(configuration.GetSection("SmtpConfiguration"));
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+            //.WithOrigins("https://localhost:44362/")
+                .AllowAnyHeader()
+               
+                .AllowAnyMethod();
+
+                //.WithMethods("GET", "POST")
+             
+        });
+});
 builder.Services.AddSignalR();
 
 var app = builder.Build();
@@ -219,10 +234,7 @@ var options = new BackgroundJobServerOptions
 
 var server = new BackgroundJobServer(options);
 app.UseHangfireServer(/*options*/);
-app.UseCors(x =>
-x.AllowAnyMethod()
-.AllowAnyMethod()
-.AllowAnyHeader());
+app.UseCors();
 //app.UseStaticFiles(new StaticFileOptions()
 //{
 //    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),
@@ -232,6 +244,7 @@ x.AllowAnyMethod()
 app.MapControllers();
 var _jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
 app.AddCronJob(_jobScheduler);
+//app.MapHub<BounceChatHub>("/chat");
 
 
 app.Run();

@@ -3,9 +3,12 @@ using Bounce_Application.DTO;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.SeriLog;
+using Bounce_DbOps.EF;
+using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
@@ -25,20 +28,22 @@ namespace Bounce.Services.Implementation.Services.Hepler
         private readonly SmtpConfiguration _smtpConfiguration;
         private IHttpContextAccessor contextAccessor;
         private readonly AdminLogger _adminLogger;
+        private readonly BounceDbContext _bounceDbContext;
 
-        public EmailService(IConfiguration configuration, IOptions<SmtpConfiguration> smtpConfiguration, IHttpContextAccessor contextAccessor, AdminLogger adminLogger, ICryptographyService cryptographyService)
+        public EmailService(IConfiguration configuration, IOptions<SmtpConfiguration> smtpConfiguration, IHttpContextAccessor contextAccessor, AdminLogger adminLogger, ICryptographyService cryptographyService, BounceDbContext bounceDbContext)
         {
             this.configuration = configuration;
             _smtpConfiguration = smtpConfiguration.Value;
             this.contextAccessor = contextAccessor;
             _adminLogger = adminLogger;
             _cryptographyService = cryptographyService;
+            _bounceDbContext = bounceDbContext;
         }
 
 
 
 
-        public async Task SendMail(EmailRequest emailRequest)
+        public async Task<bool> SendMail(EmailRequest emailRequest)
         {
             try
             {
@@ -66,14 +71,39 @@ namespace Bounce.Services.Implementation.Services.Hepler
                 client.Credentials = new NetworkCredential(
                     userName: "apikey",
                     password: key
-                );
+                    );
 
 
                 await client.SendMailAsync(message);
+                return true;
             }
-            catch(Exception exp)
+            catch(Exception ex)
             {
 
+                var model = $"{JsonConvert.SerializeObject(emailRequest)}";
+                var message = $"{"internal server occured while sending email"}{" - "}{ex}{" - "}{model}{DateTime.Now}";
+                var fialedMessage = new FailedEmailRequest
+                {
+                    To = emailRequest.To,
+                    Body = emailRequest.Body,
+                    Subject = emailRequest.Subject
+                };
+                try
+                {
+                   
+                   await  _bounceDbContext.AddAsync(fialedMessage);
+                    await _bounceDbContext.SaveChangesAsync();
+
+
+                }
+                catch(Exception exp)
+                {
+                    var failedMessageModel = $"{JsonConvert.SerializeObject(fialedMessage)}";
+                    var Failedmessage = $"{"internal server occured while Saving FailedEmailRequest data "}{" - "}{exp}{" - "}{model}{DateTime.Now}";
+                    _adminLogger.LogRequest(Failedmessage, true);
+                }
+                _adminLogger.LogRequest(message, true);
+                return false;
             }
         }
 

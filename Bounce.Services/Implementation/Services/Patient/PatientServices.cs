@@ -46,6 +46,8 @@ namespace Bounce.Services.Implementation.Services.Patient
             var host = contextAccessor?.HttpContext?.Request.Host.Value;
             root = $"{scheme}://{host}/";
             _sessionManager = sessionManager;
+            //contextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
+          
         }
 
         public async Task<Response> UpdateProfileAsync (UpdateProfileDto model)
@@ -108,7 +110,6 @@ namespace Bounce.Services.Implementation.Services.Patient
             var user = _sessionManager.CurrentLogin;
             using (var _transaction = await  _context.Database.BeginTransactionAsync())
             {
-
                 try
                 {
                     var paymentModel = new PaymentRequestDto
@@ -151,6 +152,32 @@ namespace Bounce.Services.Implementation.Services.Patient
                     await _transaction.RollbackAsync();
                     return InternalErrorResponse(ex);
                 }
+            }
+        }
+
+        public async Task<Response> ReScheduleAppointtment(ReScheduleAppointmentDto model)
+        {
+            try
+            {
+                _adminLogger.LogRequest($"{"Task to Reschedule appointment session has started"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
+                var user = _sessionManager.CurrentLogin;
+                var session = _context.AppointmentRequest.FirstOrDefault(x => x.Id == model.SessionId && x.PatientId == user.Id);
+                if (session == null)
+                    return AuxillaryResponse("session not found", StatusCodes.Status404NotFound);
+
+                session.DateModified = DateTime.Now;
+                session.StartTime = model.StartTime;
+                session.EndTime = model.EndTime;
+                _context.Update(session);
+                if(!await SaveAsync())
+                    return FailedSaveResponse();
+                
+                return SuccessResponse("Appoint has been re-schedule successfully");
+                
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
             }
         }
 

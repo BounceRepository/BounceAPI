@@ -17,6 +17,7 @@ namespace Bounce_Application.Persistence.Interfaces.Notification
         Response GetCommentByFeedId(long feedId);
         Response GetFeedGroups();
         Response GetMessages();
+        Response GetMessagesByUserId(long rceieverId);
         Response GetRepliesByCommentId(long commentId);
         Response GetUserFeeds();
         Task<Response> LikeComment(CommentLikeDto model);

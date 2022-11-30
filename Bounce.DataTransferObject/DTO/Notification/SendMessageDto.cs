@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -17,6 +18,8 @@ namespace Bounce.DataTransferObject.DTO.Notification
         public string? Message { get; set; }
         public IFormFileCollection? Files { get; set; }
         public DateTimeOffset Time { get; set; }
+        [JsonIgnore]
+        public string FilePath { get; set; }
 
     }
 }

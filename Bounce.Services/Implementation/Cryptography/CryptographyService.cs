@@ -335,13 +335,16 @@ namespace Bounce.Services.Implementation.Cryptography
 			long index = default;
 			if(prrfix == "BNP")
             {
-				index = serialNumber.PatientCount++;
-				serialNumber.PatientCount =+ 1;
+
+				serialNumber.PatientCount =  serialNumber.PatientCount + 1;
+				index = serialNumber.PatientCount;
 			}
             else
             {
-				index = serialNumber.TherapistCount++;
-				serialNumber.PatientCount = index;
+				serialNumber.TherapistCount = serialNumber.TherapistCount + 1;
+				index = serialNumber.TherapistCount;
+
+
 			}
 			
 			 _context.Update(serialNumber);

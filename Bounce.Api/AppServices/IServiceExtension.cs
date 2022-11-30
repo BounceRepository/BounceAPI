@@ -1,4 +1,5 @@
 ﻿
+using Bounce.Api.ChatHub;
 using Bounce.Api.Filter;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Job;
@@ -31,6 +32,7 @@ using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Hangfire;
 using MessagePack;
+using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -61,6 +63,7 @@ namespace Microsoft.AspNetCore.Builder
             //Job JobScheduler
             builder.Services.AddScoped<IJobScheduler, JobScheduler>();
             builder.Services.AddScoped<BaseJobScheduler>();
+            //builder.Services.AddSingleton<IHubContext<BounceChatHub>>();
             builder.Services.AddScoped<SessionManager>();
             builder.Services.AddScoped<BaseServices>();
             builder.Services.AddSingleton<AdminLogger>();

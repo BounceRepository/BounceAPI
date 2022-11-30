@@ -57,6 +57,7 @@ namespace Bounce_DbOps.EF
 		public DbSet<FeedGroup> FeedGroups { get; set; }
 		public DbSet<TherapistProfile> TherapistProfiles { get; set; }
 		public DbSet<TherapistReview> Reviews { get; set; }
+		public DbSet<FailedEmailRequest> FailedEmailRequests { get; set; }
 
 
 

@@ -174,15 +174,20 @@ namespace Bounce.Services.Implementation.Services.Notification
                 var fileNames = new List<string>();
                 var filename = "";
                 bool hasFile = false;
-                if (model.Files != null &&  model.Files.Any())
-                {
-                    hasFile = true;
-                    foreach (var item in model.Files)
-                    {
-                        fileNames.Add(_fileManager.FileUpload(item, "Chat"));
-                    }
-                    filename =  string.Join("|", fileNames);
-                }
+                //if (model.Files != null &&  model.Files.Any())
+                //{
+                //    hasFile = true;
+                //    foreach (var item in model.Files)
+                //    {
+                //        fileNames.Add(_fileManager.FileUpload(item, "Chat"));
+                //    }
+                //    filename =  string.Join("|", fileNames);
+                //}
+                //else
+                //{
+                //    filename = model.FilePath;
+                //}
+
                 var chat = new Chat
                 {
                     SenderId = user.Id,
@@ -190,40 +195,65 @@ namespace Bounce.Services.Implementation.Services.Notification
                     Message = model.Message,
                     MessageRefx = DateTime.Now.Ticks.ToString(),
                     CreatedTimeOffset = model.Time, 
-                    Files = filename,
+                    Files = model.FilePath,
                     HasFile = hasFile,
                 };
                 _context.Add(chat);
                 if (!await SaveAsync())
                     return FailedSaveResponse(chat);
 
-                var defaultApp = FirebaseApp.Create(new AppOptions()
-                {
-                    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
-                });
+                //var defaultApp = FirebaseApp.Create(new AppOptions()
+                //{
+                //    Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
+                //});
 
-                var message = new Message()
-                {
+                //var message = new Message()
+                //{
 
-                    Data = new Dictionary<string, string>()
-                    {
-                        ["User"] = user.Email,
-                        ["UserName"] = user.UserName,
+                //    Data = new Dictionary<string, string>()
+                //    {
+                //        ["User"] = user.Email,
+                //        ["UserName"] = user.UserName,
 
-                    },
-                    Notification = new FirebaseAdmin.Messaging.Notification
-                    {
-                        Title = "Message",
-                        Body = model.Message,
+                //    },
+                //    Notification = new FirebaseAdmin.Messaging.Notification
+                //    {
+                //        Title = "Message",
+                //        Body = model.Message,
 
-                    },
-                    Token = reciever.NotificationToken,
-                };
+                //    },
+                //    Token = reciever.NotificationToken,
+                //};
 
-                var messaging = FirebaseMessaging.DefaultInstance;
-                var result = await messaging.SendAsync(message);
-                defaultApp.Delete();
+                //var messaging = FirebaseMessaging.DefaultInstance;
+                //var result = await messaging.SendAsync(message);
+                //defaultApp.Delete();
                 return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response GetMessagesByUserId(long rceieverId)
+        {
+           try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var data = _context.Chats.Where(x => !x.IsDeleted).Where(x=> x.SenderId == user.Id && x.ReceieverId == rceieverId)
+                .Select(x => new 
+                {
+                    ChatId = x.Id,
+                    Message = x.Message,
+                    Time = x.CreatedTimeOffset,
+                    ReceieverId = x.ReceieverId,
+                    SenderId = x.SenderId,
+
+                }).ToList();
+               
+                return SuccessResponse(data: data);
 
             }
             catch (Exception ex)

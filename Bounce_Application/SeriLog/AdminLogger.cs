@@ -15,7 +15,7 @@ namespace Bounce_Application.SeriLog
         {
             Configuration = configuration;
         }
-        public void LogRequest(string message, bool isError)
+        public void LogRequest(string message, bool isError = false)
         {
             var options = Configuration.GetSection(nameof(SerilogConfiguration)).Get<SerilogConfiguration>();
 

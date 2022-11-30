@@ -147,8 +147,8 @@ namespace Bounce.Services.Implementation.Services.Auth
             try
             {
 
-                var userExists = await _userManager.FindByNameAsync(registerModel.Username);
-                if (userExists != null)
+                var userExists = _userManager.Users.Any(x => x.UserName == registerModel.Username || x.Email == registerModel.Email);
+                if (userExists)
                 {
                     return new Response
                     {
@@ -239,8 +239,8 @@ namespace Bounce.Services.Implementation.Services.Auth
         {
             try
             {
-                var userExists = await _userManager.FindByNameAsync(registerModel.Username);
-                if (userExists != null)
+                var userExists =  _userManager.Users.Any(x=> x.UserName == registerModel.Username || x.Email == registerModel.Email);
+                if (userExists)
                     return new Response
                     {
                         StatusCode = StatusCodes.Status400BadRequest,
@@ -332,7 +332,7 @@ namespace Bounce.Services.Implementation.Services.Auth
             try
             {
 
-                var userExists = await _userManager.FindByNameAsync(registerModel.Username);
+                var userExists = _userManager.Users.Any(x => x.UserName == registerModel.Username || x.Email == registerModel.Email);
                 if (userExists != null)
                     return new Response
                     {

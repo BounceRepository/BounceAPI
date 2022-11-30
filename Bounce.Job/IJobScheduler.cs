@@ -9,5 +9,6 @@ namespace Bounce.Job
     public interface IJobScheduler
     {
         Task<bool> CheckFreeTrialAsync();
+        Task<bool> ResendFaileMessages();
     }
 }

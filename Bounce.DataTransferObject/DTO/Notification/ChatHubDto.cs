@@ -8,9 +8,11 @@ namespace Bounce.DataTransferObject.DTO.Notification
 {
     public class ChatHubDto
     {
+
         public long RevceieverId { get; set; }
-        public string Message { get; set; }
-        public string[] FilePaths { get; set; }
+        public string? Message { get; set; }
+        public string? FilePaths { get; set; }
+        public string connectionId { get; set; }
         public DateTimeOffset Time { get; set; }
 
     }
@@ -18,13 +20,14 @@ namespace Bounce.DataTransferObject.DTO.Notification
     public class RecievedMessageDto
     {
         public long SenderId { get; set; }
-        public int SenderName { get; set; }
+        public string SenderName { get; set; }
 
         public long RevceieverId { get; set; }
-        public long RevceieverName { get; set; }
+        public string RevceieverName { get; set; }
         public string Message { get; set; }
         public string[] FilePaths { get; set; }
         public DateTimeOffset Time { get; set; }
+        
 
     }
 }

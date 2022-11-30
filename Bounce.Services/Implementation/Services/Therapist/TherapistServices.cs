@@ -124,5 +124,35 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
 
         }
+
+        public Response GetTherapistConsultaion()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var data = (from consultation in _context.AppointmentRequest
+                            where consultation.TherapistId == user.Id && !consultation.IsDeleted
+                            && consultation.IsPaymentCompleted
+                            join patient in _context.UserProfile on consultation.PatientId equals patient.Id
+                            select new
+                            {
+                                PatientName = patient.FirstName + " " + patient.LastName,
+                                ProfilePicure = patient.FilePath,
+                                Date = consultation.Date,
+                                Time = consultation.StartTime,
+                                EndTime = consultation.EndTime
+
+                            });
+                            
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
     }
 }

@@ -29,6 +29,9 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetTherpaistDashboard")]
         public  IActionResult GetDashboard() => Response( _therapistServices.GetTherapistDashBoard());
 
+        [HttpGet("GetConsultaions")]
+        public IActionResult Consultaions() => Response(_therapistServices.GetTherapistConsultaion());
+
         [HttpPost("UpsertBankAccountDetails")]
         public async Task<IActionResult> Subscription([FromBody] BankAccountDetailDto model) => Response(await _therapistServices.BankDetailsUpsert(model));
     }

@@ -1,6 +1,7 @@
 ﻿using Bounce.Api.ChatHub;
 using Bounce.DataTransferObject.DTO.Notification;
 using Bounce_Application.Persistence.Interfaces.Notification;
+using Bounce_DbOps.EF;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,11 +17,13 @@ namespace Bounce.Api.Controllers
     {
         private readonly INotificationService _notificationService;
         private readonly IHubContext<BounceChatHub> _chatHubContext;
+        private readonly BounceDbContext _context;
 
-        public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService, IHubContext<BounceChatHub> chatHubContext) : base(httpContext)
+        public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService, IHubContext<BounceChatHub> chatHubContext, BounceDbContext context) : base(httpContext)
         {
             _notificationService = notificationService;
             _chatHubContext = chatHubContext;
+            _context = context;
         }
 
         [HttpPost("PushNotification")]
@@ -42,9 +45,35 @@ namespace Bounce.Api.Controllers
         {
             try
             {
-                await _chatHubContext.Clients.All.SendAsync("ReceievedMessage", model);
 
-                return Ok(new { Message = "Message sent" });
+                var receiver = _context.UserProfile.FirstOrDefault(x => x.UserId == model.RevceieverId);
+              
+                if (receiver != null)
+                {
+
+                   
+                    var message = new SendMessageDto
+                    {
+                        ReceieverId = model.RevceieverId,
+                        Message = model.Message,
+                        Time = model.Time,
+                        FilePath = model.FilePaths 
+
+                    };
+                   var response =  await _notificationService.SendMessage(message);
+
+                    if (response.StatusCode == 200)
+                    {
+                        await _chatHubContext.Clients.All.SendAsync("OnMessage", message);
+
+                        return Ok(new { Message = "Message sent" });
+                    }
+                    
+                    return Ok(new { Message = "Message not sent" });
+
+                }
+
+                return BadRequest(new { Message = "user was not found"});
             }
             catch
             {
@@ -57,7 +86,7 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> Chat([FromForm] SendMessageDto model) => Response(await _notificationService.SendMessage(model));
 
         [HttpGet("GetAllChatMessages")]
-        public IActionResult AllChat() => Response( _notificationService.GetMessages());
+        public IActionResult AllChat([FromQuery] long receiverId) => Response( _notificationService.GetMessagesByUserId(receiverId));
         
         [HttpGet("GetAllFeedGroups")]
         public IActionResult FeedGroup() => Response(_notificationService.GetFeedGroups());

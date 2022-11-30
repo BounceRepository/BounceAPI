@@ -58,5 +58,9 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetReviewsByTherapistId")]
         public IActionResult GetAllReview([FromQuery] long therapistId) => Response(_patientServices.GetReviewByTherapistId(therapistId));
 
+
+        [HttpPost("ReScheduleAppointment")]
+        public async Task<IActionResult> RescheduleAppointemnt([FromBody] ReScheduleAppointmentDto model) => Response(await _patientServices.ReScheduleAppointtment(model));
+
     }
 }

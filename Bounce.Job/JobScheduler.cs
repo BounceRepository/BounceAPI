@@ -22,7 +22,30 @@ namespace Bounce.Job
             rootPath = hostingEnvironment.ContentRootPath;
         }
 
-       
+        public async Task<bool> ResendFaileMessages()
+        {
+            var failedMessages = _context.FailedEmailRequests.Where(x => !x.IsCompleted).ToList();
+            foreach (var message in failedMessages)
+            {
+                var email = new EmailRequest
+                {
+                    To = message.To,
+                    Body = message.Body,
+                    Subject = message.Subject,
+                };
+                if(await _EmailService.SendMail(email))
+                {
+                   message.IsCompleted = true;                
+                }
+                message.DateModified = DateTime.Now;
+                _context.Update(message);
+                _context.SaveChanges();
+            }
+            return Task.FromResult(true).Result;
+        }
+
+
+
         public async Task<bool> CheckFreeTrialAsync()
         {
            ////using (var context = new BounceDbContext())

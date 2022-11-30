@@ -9,6 +9,6 @@ namespace Bounce_Application.Persistence.Interfaces.Helper
 {
     public interface IEmalService
     {
-        Task SendMail(EmailRequest emailRequest);
+        Task<bool> SendMail(EmailRequest emailRequest);
     }
 }

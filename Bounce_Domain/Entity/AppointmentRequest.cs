@@ -24,6 +24,10 @@ namespace Bounce_Domain.Entity
         public string AgeRange { get; set; }
         public double Price { get; set; }
         public double TotalAMount { get; set; }
+        public DateTimeOffset?  StartTime{ get; set; }
+
+        public DateTimeOffset? EndTime { get; set; }
+
         public DateTime? Date { get; set; }
         public DateTime AvailableTime { get; set; }
         [Required]
