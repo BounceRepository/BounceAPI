@@ -36,5 +36,7 @@ namespace Bounce_Application.Cryptography.Hash
 
         string CreateClientEncryptionKey();
         Task<string> GeneratePatientIdAsync(string prrfix = "BNP");
+        string Decrypt(string val);
+        string Encrypt(string val);
     }
 }

@@ -1,9 +1,11 @@
 ﻿using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Application.DTO.Hash;
+using Bounce_Application.Settings;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,16 +18,25 @@ namespace Bounce.Services.Implementation.Cryptography
 	public class CryptographyService : ICryptographyService
 	{
 		private readonly BounceDbContext _context;
-        public CryptographyService(BounceDbContext context)
+		private readonly AppSettings _appSettings;
+		internal char[] chars;
+		private int _hashIterations;
+		private int _hashSize;
+		private string BVN_SECRET_KEY;
+
+
+		public CryptographyService(BounceDbContext context, IOptions<AppSettings> appSettings)
         {
             _context = context;
-        }
-        private readonly int _hashSize = 32;
-		private readonly int _hashIterations = 128;
-		internal static readonly char[] Chars =
-			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
-
-		private const string BVN_SECRET_KEY = "iNivDmHLpUA223sqsfhqGbMRdRj1PVk";
+            _appSettings = appSettings.Value;
+			chars = _appSettings.Chars.ToCharArray();
+			_hashIterations = _appSettings.HashIterations;
+			_hashSize = _appSettings.HashSize;
+			BVN_SECRET_KEY = _appSettings.BVN_SECRET_KEY;
+		}
+      
+	
+	
 
 		public string Base64Decode(string base64EncodedData)
 		{
@@ -274,9 +285,9 @@ namespace Bounce.Services.Implementation.Cryptography
 			for (int i = 0; i < size; i++)
 			{
 				var rnd = BitConverter.ToUInt32(data, i * 4);
-				var idx = rnd % Chars.Length;
+				var idx = rnd % chars.Length;
 
-				result.Append(Chars[idx]);
+				result.Append(chars[idx]);
 			}
 
 			return string.Concat(keyPrefix, result.ToString());
@@ -370,6 +381,97 @@ namespace Bounce.Services.Implementation.Cryptography
 			return new Response { StatusCode = StatusCodes.Status200OK, Message = "Token token has been validated" , Data = new { userEmail = userToken.UserEmail } };
 
 		}
+
+		public static string BinaryToString(string binary)
+		{
+			if (string.IsNullOrEmpty(binary))
+				throw new ArgumentNullException("binary");
+
+			if ((binary.Length % 8) != 0)
+				throw new ArgumentException("Binary string invalid (must divide by 8)", "binary");
+
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < binary.Length; i += 8)
+			{
+				string section = binary.Substring(i, 8);
+				int ascii = 0;
+				try
+				{
+					ascii = Convert.ToInt32(section, 2);
+				}
+				catch
+				{
+					throw new ArgumentException("Binary string contains invalid section: " + section, "binary");
+				}
+				builder.Append((char)ascii);
+			}
+			return builder.ToString();
+		}
+		public  String Encrypt(String val)
+		{
+			MemoryStream ms = new MemoryStream();
+			string rsp = "";
+			try
+			{
+				string sharedkeyval = _appSettings.EncryprionKey;
+				string sharedvectorval = _appSettings.EncryprionIV;
+
+
+				sharedkeyval = BinaryToString(sharedkeyval);
+
+				sharedvectorval = BinaryToString(sharedvectorval);
+				byte[] sharedkey = System.Text.Encoding.GetEncoding("utf-8").GetBytes(sharedkeyval);
+				byte[] sharedvector = System.Text.Encoding.GetEncoding("utf-8").GetBytes(sharedvectorval);
+
+				TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();
+				byte[] toEncrypt = Encoding.UTF8.GetBytes(val);
+
+				CryptoStream cs = new CryptoStream(ms, tdes.CreateEncryptor(sharedkey, sharedvector), CryptoStreamMode.Write);
+				cs.Write(toEncrypt, 0, toEncrypt.Length);
+				cs.FlushFinalBlock();
+
+			}
+			catch
+			{
+				return "";
+			}
+			return Convert.ToBase64String(ms.ToArray());
+		}
+		public  String Decrypt(String val)
+		{
+			MemoryStream ms = new MemoryStream();
+
+			try
+			{
+				string sharedkeyval = _appSettings.EncryprionKey;
+				string sharedvectorval = _appSettings.EncryprionIV;
+
+
+				sharedkeyval = BinaryToString(sharedkeyval);
+				sharedvectorval = BinaryToString(sharedvectorval);
+
+				byte[] sharedkey = System.Text.Encoding.GetEncoding("utf-8").GetBytes(sharedkeyval);
+				byte[] sharedvector = System.Text.Encoding.GetEncoding("utf-8").GetBytes(sharedvectorval);
+
+				TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();
+				byte[] toDecrypt = Convert.FromBase64String(val);
+
+				CryptoStream cs = new CryptoStream(ms, tdes.CreateDecryptor(sharedkey, sharedvector), CryptoStreamMode.Write);
+
+
+				cs.Write(toDecrypt, 0, toDecrypt.Length);
+				cs.FlushFinalBlock();
+			}
+			catch
+			{
+				return "";
+			}
+			return Encoding.UTF8.GetString(ms.ToArray());
+		}
+
+
+
+
 
 	}
 }

@@ -58,6 +58,8 @@ namespace Bounce_DbOps.EF
 		public DbSet<TherapistProfile> TherapistProfiles { get; set; }
 		public DbSet<TherapistReview> Reviews { get; set; }
 		public DbSet<FailedEmailRequest> FailedEmailRequests { get; set; }
+		public DbSet<TherapistAccesmentQuestion> TherapistAccesmentQuestions { get; set; }
+		public DbSet<TherapistAccessment> TherapistAccessments { get; set; }
 
 
 

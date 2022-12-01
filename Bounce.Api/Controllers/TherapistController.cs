@@ -32,7 +32,12 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetConsultaions")]
         public IActionResult Consultaions() => Response(_therapistServices.GetTherapistConsultaion());
 
-        [HttpPost("UpsertBankAccountDetails")]
-        public async Task<IActionResult> Subscription([FromBody] BankAccountDetailDto model) => Response(await _therapistServices.BankDetailsUpsert(model));
+        [HttpPut("UpdateBankAccountDetails")]
+        public async Task<IActionResult> Subscription([FromBody] TherapistAccountDetailsDto model) => Response(await _therapistServices.CreateUpdateUpdateTherapistAccountDetails(model));
+
+        [AllowAnonymous]
+        [HttpGet("GetQuestions")]
+        public async Task<IActionResult> Questions() => Response( await _therapistServices.GetQuestions());
+
     }
 }

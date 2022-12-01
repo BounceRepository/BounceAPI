@@ -3,6 +3,7 @@ using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Admin;
 using Bounce_Application.SeriLog;
+using Bounce_Application.Utilies;
 using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
@@ -23,11 +24,13 @@ namespace Bounce.Services.Implementation.Services.Admin
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly SessionManager _sessionManager;
 
-        public AdminServices(BounceDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager) : base(context)
+        public AdminServices(BounceDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, SessionManager sessionManager) : base(context)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _sessionManager = sessionManager;
         }
 
         public async Task<Response> GetUsersAsync(string role)
@@ -92,6 +95,35 @@ namespace Bounce.Services.Implementation.Services.Admin
                 return InternalErrorResponse(ex);
             }
 
+        }
+
+        public async Task<Response> CreateQuestion(TherapistQuestionDTO model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var question = new TherapistAccesmentQuestion
+                {
+                    Question = model.Question,
+                    CorrectAnswer = model.CorrectAnswer,
+                    OptionA = model.A,
+                    OptionB = model.B,
+                    OptionC = model.C,
+                    OptionD = model.D,
+                    CreatedById = user.Id
+                };
+
+              await  _context.AddAsync(question);
+
+                if (!await SaveAsync())
+                    return FailedSaveResponse(question);
+                return SuccessResponse("Question was created successfuly");
+
+            }
+            catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
         }
 
 

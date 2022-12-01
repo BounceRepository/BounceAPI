@@ -185,22 +185,7 @@ namespace Bounce.Services.Implementation.Services.Patient
         {
             try
             {
-                //var userst = new List<ApplicationUser>();
-                ////var fdfdfdf = await  _userManager.GetUsersInRoleAsync("Super Administrator").ConfigureAwait(false);
-
-                ////var users = await _userManager.GetUsersInRoleAsync(UserRoles.Therapist);
-                //using (var sssss = _userManager)
-                //{
-                //    var usersq = sssss.Users;
-                //    foreach (var user in usersq)
-                //    {
-                //        if (await sssss.IsInRoleAsync(user, UserRoles.Therapist))
-                //        {
-                //            userst.Add(user);
-                //        }
-                //    }
-                //};
-
+               
                 var users = _userManager.Users.Where(x=> x.Discriminator == UserType.Therapist).ToList();
                 if (users == null)
                     return SuccessResponse(data: null);
@@ -210,61 +195,24 @@ namespace Bounce.Services.Implementation.Services.Patient
                             select new 
                             {
                                 TherapistId = user.Id,
+                                Title = profile.Title,
                                 FirstName = profile.FirstName,
                                 LastName = profile.LastName,
                                 YearsExperience = profile.YearsOfExperience ,
                                 Ratings = 5,
                                 About = profile.Email,
-                                //HoursWorking = "Mondya-Saturday (08:30 AM - 09: PM)",
                                 PhoneNUmber = profile.PhoneNumber,
-                                Specialization = new List<string> { "Bsc", "LBS" },
-                                ConsultaionDays = profile.ConsultationDays.ToSplit('|'),
+                                Specialization = profile.Specialization,
+                                ConsultaionDays = profile?.ConsultationDays?.ToSplit('|'),
                                 StartTime = profile.ConsultationStartTime,
                                 EndTime = profile.ConsultationEndTime,
                                 PicturePath = profile.ProfilePicture,
                                 ServiceChargePerHoure = 50000,
-                                NumberOfPatient = 50
+                                NumberOfPatient = 50,
+                                Rating = 5
 
                             }).ToList();
 
-                //data.Add(new GetTherapistDto
-                //{
-                //    TherapistId = 6,
-                //    Descipline = "Psychology",
-                //    FirstName = "Ifeanyi",
-                //    LastName =  "Ozougwu",
-                //    Ratings = 5,
-                //    Specialization =  new List<string> { "Bsc", "LBS" },
-                //    YearsExperience = "4",
-                //    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
-                //    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
-                //    ListofDays = new List<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" },
-                //    StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                //    EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                //    PhoneNUmber = "08037620380",
-                //    PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
-                //    ServiceChargePerHoure = 10000,
-                //    NumberOfPatient  = 30
-                //});
-                //data.Add(new GetTherapistDto
-                //{
-                //    TherapistId = 6,
-                //    FirstName = "Chinedu",
-                //    LastName = "Eze",
-                //    Descipline = "Therapist",
-                //    Ratings = 5,
-                //    Specialization = new List<string> { "Bsc", "LBS" },
-                //    YearsExperience = "4",
-                //    About = "Lorem ipsum dolor sit amet consectetur adipisicing elit. Qui adipisci dolor odit architecto, cupiditate totam blanditiis veritatis" +
-                //    " ducimus unde consequuntur impedit fugiat voluptate amet in non beatae saepe corrupti laboriosam.",
-                //    ListofDays = new List<string> { "Monday", "Tuesday","Wednesday", "Thursday", "Friday","Saturday" },
-                //    StartTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                //    EndTime = DateTime.Now.ToString(AdminConstants.FullTime),
-                //    PhoneNUmber = "08037623425243",
-                //    PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
-                //    ServiceChargePerHoure = 40000,
-                //    NumberOfPatient = 20
-                //});
                 return SuccessResponse(data: data);
 
             }

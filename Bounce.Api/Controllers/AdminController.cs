@@ -1,4 +1,5 @@
-﻿using Bounce_Application.Persistence.Interfaces.Admin;
+﻿using Bounce.DataTransferObject.DTO.Admin;
+using Bounce_Application.Persistence.Interfaces.Admin;
 using Bounce_Applucation.DTO.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -33,6 +34,11 @@ namespace Bounce.Api.Controllers
         [AllowAnonymous]
         [HttpGet("GetUserById")]
         public async Task<IActionResult> GetUserById([FromQuery] long Id) => Response(await adminServices.GetUsersByIdAsync(Id));
+
+
+        [HttpPost("CreateAccessmentQuestion")]
+        public async Task<IActionResult> CreateQuestion([FromBody] TherapistQuestionDTO model) => Response(await adminServices.CreateQuestion(model));
+
 
 
 

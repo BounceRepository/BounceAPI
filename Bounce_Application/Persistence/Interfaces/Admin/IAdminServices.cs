@@ -1,4 +1,5 @@
-﻿using Bounce.DataTransferObject.Helpers.BaseResponse;
+﻿using Bounce.DataTransferObject.DTO.Admin;
+using Bounce.DataTransferObject.Helpers.BaseResponse;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,8 @@ namespace Bounce_Application.Persistence.Interfaces.Admin
 {
     public interface IAdminServices
     {
-       Task<Response> GetUsersAsync(string role);
+        Task<Response> CreateQuestion(TherapistQuestionDTO model);
+        Task<Response> GetUsersAsync(string role);
         Task<Response> GetUsersByIdAsync(long Id);
     }
 }

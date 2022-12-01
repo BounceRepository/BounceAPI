@@ -82,6 +82,7 @@ namespace Bounce.Services.Implementation.Services.Hepler
 
                 var model = $"{JsonConvert.SerializeObject(emailRequest)}";
                 var message = $"{"internal server occured while sending email"}{" - "}{ex}{" - "}{model}{DateTime.Now}";
+                _adminLogger.LogRequest(message, true);
                 var fialedMessage = new FailedEmailRequest
                 {
                     To = emailRequest.To,
@@ -102,7 +103,7 @@ namespace Bounce.Services.Implementation.Services.Hepler
                     var Failedmessage = $"{"internal server occured while Saving FailedEmailRequest data "}{" - "}{exp}{" - "}{model}{DateTime.Now}";
                     _adminLogger.LogRequest(Failedmessage, true);
                 }
-                _adminLogger.LogRequest(message, true);
+              
                 return false;
             }
         }

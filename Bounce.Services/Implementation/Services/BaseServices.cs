@@ -54,6 +54,12 @@ namespace Bounce.Services.Implementation.Services
 
             };
         }
+        /// <summary>
+        /// This resturns denamic response based on the choice of response code and message
+        /// </summary>
+        /// <param name="message">dynamic message that is passed to the end user</param>
+        /// <param name="statusCode">dynamic response mesage</param>
+        /// <returns></returns>
         public Response AuxillaryResponse(string message, int statusCode)
         {
             return new Response
@@ -64,6 +70,13 @@ namespace Bounce.Services.Implementation.Services
             };
         }
 
+        /// <summary>
+        /// This method logs all the thrown exceptions to the log file 
+        /// including the time and the object involed
+        /// </summary>
+        /// <param name="ex">Excepion thrown from the current process</param>
+        /// <param name="model">object involved in databasse transaction</param>
+        /// <returns></returns>
         public Response InternalErrorResponse(Exception ex, object model = null)
         {
             LogError( model, ex);

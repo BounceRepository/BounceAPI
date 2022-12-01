@@ -154,5 +154,94 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
 
         }
+        public async Task<Response> CreateUpdateUpdateTherapistAccountDetails(TherapistAccountDetailsDto model)
+        {
+            _adminLogger.LogRequest($"Task to create a bank profile for Therapist userhas started: {DateTime.Now} : {JsonConvert.SerializeObject(model)}");
+
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var bankProfile = _context.BankAccountDetails.FirstOrDefault(x => x.TherapistId == user.Id);
+                if(bankProfile != null)
+                {
+                    bankProfile.BankName = model.BankName.EncryptString();
+                    bankProfile.AccountNumber = model.AccountNumber.EncryptString();
+                    bankProfile.AccountName = model.AccountName.EncryptString();
+                    _context.Update(bankProfile);
+
+                }
+                else
+                {
+                     bankProfile = _mapper.Map<BankAccountDetails>(model);
+                    bankProfile.TherapistId = user.Id;
+                    _context.Add(bankProfile);
+                }
+                    
+                if (!await SaveAsync())
+                    return FailedSaveResponse(model);
+
+                _adminLogger.LogRequest($"Task to update  bank profile for Therapist user {user.Email} has been  successful completed: {DateTime.Now} : {JsonConvert.SerializeObject(model)}");
+
+                return SuccessResponse("Bank profile has been updated");
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response>  GetQuestions()
+        {
+            try
+            {
+                var questions =  await _context.TherapistAccesmentQuestions.Where(x=> !x.IsDeleted).ToListAsync();
+                var newQuestion = new List<QuestionDTO>();
+                if (questions.Any())
+                {
+                   
+                    var indexers = new List<int>();
+                    var counter = 1;
+                    var questionCount = 3;
+                    while (counter > 0)
+                    {
+                        Random rnd = new Random();
+                        int randIndex = rnd.Next(questions.Count);
+                        var question = questions[randIndex];
+
+                        if (!indexers.Contains(randIndex))
+                        {
+                            indexers.Add(randIndex);
+                            newQuestion.Add(new QuestionDTO
+                            {
+                                QuestionId = question.Id,
+                                Question = question.Question,                         
+                                A = question.OptionA,
+                                B = question.OptionB,
+                                C = question.OptionC,
+                                D = question.OptionD
+                            });
+                            if (newQuestion.Count == questionCount)
+                            {
+                                counter = 0;
+                            }
+                        }
+
+
+                    }
+                }
+
+                
+                return SuccessResponse(data: newQuestion);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
     }
 }

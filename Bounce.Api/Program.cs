@@ -26,6 +26,7 @@ using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
 using Bounce_Application.Persistence.Interfaces.Therapist;
 using Bounce_Application.SeriLog;
+using Bounce_Application.Settings;
 using Bounce_Application.Utilies;
 using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
@@ -47,6 +48,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var configuration = builder.Configuration;
 var flutterSettindSection = configuration.GetSection("FlutterWaveSetting");
+var appSettindSection = configuration.GetSection("AppSettings");
 
 
 builder.Services.AddDbContext<BounceDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("BounceDatabase")));
@@ -64,6 +66,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
+builder.Services.Configure<AppSettings>(appSettindSection);
 builder.Services.AddSession();
 /*AddMessagePackProtocol();*/
 //builder.Services.AddSignalR();
