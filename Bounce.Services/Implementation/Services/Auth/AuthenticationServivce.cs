@@ -113,6 +113,7 @@ namespace Bounce.Services.Implementation.Services.Auth
                 var fileurl = $"{scheme}://{host}/{EmailConfrimationUrl}";
                 var baseUrl = $"{fileurl}?token={token}&email={email}";
 
+
                 var emailRequest = new EmailRequest
                 {
                     To = registerModel?.Email,
@@ -308,12 +309,16 @@ namespace Bounce.Services.Implementation.Services.Auth
 
                 await _EmailService.SendMail(emailRequest);
 
+                await _EmailService.SendMail(emailRequest);
+
+                var loginUser = _userManager.Users.FirstOrDefault(x => x.Email == user.Email);
+                var accessToken = await GenerateAccessToken(loginUser);
                 return new Response
                 {
                     StatusCode = StatusCodes.Status200OK,
                     Data = new RegistrationResponseDto
                     {
-                        Token = token,
+                        Token = accessToken,
                         Message = "user created successfully"
                     }
                 };
@@ -333,7 +338,7 @@ namespace Bounce.Services.Implementation.Services.Auth
             {
 
                 var userExists = _userManager.Users.Any(x => x.UserName == registerModel.Username || x.Email == registerModel.Email);
-                if (userExists != null)
+                if (userExists)
                     return new Response
                     {
                         StatusCode = StatusCodes.Status400BadRequest,
@@ -402,12 +407,15 @@ namespace Bounce.Services.Implementation.Services.Auth
 
                 await _EmailService.SendMail(emailRequest);
 
+                var loginUser = _userManager.Users.FirstOrDefault(x => x.Email == user.Email);
+                var accessToken = await GenerateAccessToken(loginUser);
+
                 return new Response
                 {
                     StatusCode = StatusCodes.Status200OK,
                     Data = new
                     {
-                        Token = token,
+                        Token = accessToken,
                         email = registerModel.Email,
                         UserId = user.Id,
                         Message = "Thank you for your sign up, a confirmation link has been sent to your email address"
@@ -595,6 +603,30 @@ namespace Bounce.Services.Implementation.Services.Auth
                     var token = await GenerateAccessToken(loginUser);
                     var roles = string.Join(",", userRoles);
                     //var authToken = JsonConvert.DeserializeObject<TokenViewModel>(token);
+                    var image = "";
+               
+                    if(userRoles.Contains(UserRoles.User))
+                    {
+                        var userProfile = _context.UserProfile.FirstOrDefault(x => x.UserId == loginUser.Id);
+                        if(userProfile != null)
+                        {
+                            image = !string.IsNullOrEmpty(userProfile.FilePath) ? userProfile.FilePath : null;
+                        }
+                        
+                    }
+                    else if (userRoles.Contains(UserRoles.Therapist))
+                    {
+                        var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == loginUser.Id);
+                        if (userProfile != null)
+                        {
+                            image = !string.IsNullOrEmpty(userProfile.ProfilePicture) ? userProfile.ProfilePicture : null;
+                        }
+                        
+                    }
+                    else
+                    {
+                        image = null;
+                    }
 
 
                     return new Response
@@ -609,7 +641,8 @@ namespace Bounce.Services.Implementation.Services.Auth
                             Phone = loginUser?.PhoneNumber,
                             HasProfile = loginUser?.HasProfile,
                             ConfirmedEmail = loginUser?.EmailConfirmed,
-                            UserId = loginUser?.Id
+                            UserId = loginUser?.Id,
+                            Image = image,
                         },
                         Message = "Login Sucessful"
                     };

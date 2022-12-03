@@ -154,6 +154,46 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
 
         }
+        public Response GetTherapisById(long id)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(x => x.Id == id);
+                if (user == null)
+                    return AuxillaryResponse("Therapist not found", 404);
+
+                var profile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == id);
+                if(profile == null)
+                    return AuxillaryResponse("There is no profile for this therapist, kindly update the therapist profile", 404);
+
+ 
+                var data = new
+                {
+                    TherapistId = id,
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    Title = profile.Title,
+                    Descipline = profile.Specialization,
+                    ProfilePicture = profile.ProfilePicture,
+                    AboutMe = profile.Email,
+         
+                    ConsultaionStartTime = profile.ConsultationStartTime,
+                    ConsultaionEndTime = profile.ConsultationEndTime,
+                    Rating = 5,
+                    PatientCount = 50
+
+                };
+
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
         public async Task<Response> CreateUpdateUpdateTherapistAccountDetails(TherapistAccountDetailsDto model)
         {
             _adminLogger.LogRequest($"Task to create a bank profile for Therapist userhas started: {DateTime.Now} : {JsonConvert.SerializeObject(model)}");
@@ -196,14 +236,35 @@ namespace Bounce.Services.Implementation.Services.Therapist
         {
             try
             {
-                var questions =  await _context.TherapistAccesmentQuestions.Where(x=> !x.IsDeleted).ToListAsync();
+                var user = _sessionManager.CurrentLogin;
+                var questions = new List<TherapistAccesmentQuestion>();
+                var existingQuestionIds = _context.TherapistAccessments.Where( x=> !x.IsDeleted && x.TherapistId == user.Id).Select(x=> x.AnsweredQuestionIds).ToList();
+                if(existingQuestionIds.Any())
+                {   
+                    if(existingQuestionIds.Count() == 3)
+                    {
+                        return AuxillaryResponse("You have exceeded your assessment limit", StatusCodes.Status400BadRequest);
+                    }
+                    var ids = new List<long>();
+                    foreach (var item in existingQuestionIds)
+                    {
+                        ids.AddRange(item.Split('|').Select(long.Parse).ToList());
+                    };
+                     questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).Where(m=> ids.Contains(m.Id)).ToListAsync();
+
+                }
+                else
+                {
+                    questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).ToListAsync();
+                }
+             
                 var newQuestion = new List<QuestionDTO>();
                 if (questions.Any())
                 {
                    
                     var indexers = new List<int>();
                     var counter = 1;
-                    var questionCount = 3;
+                    var questionCount = 2;
                     while (counter > 0)
                     {
                         Random rnd = new Random();
@@ -242,6 +303,57 @@ namespace Bounce.Services.Implementation.Services.Therapist
             }
 
 
+        }
+        public async Task<Response> ValidateAssement(AssesmentDto model)
+        {
+            _adminLogger.LogRequest($"Task to create validate therapist accessment started: {DateTime.Now} : {JsonConvert.SerializeObject(model)}");
+
+            try
+            {
+             
+                if (model.Result == null || !model.Result.Any())
+                    return AuxillaryResponse("accessment is empty", StatusCodes.Status400BadRequest);
+
+                var user = _sessionManager.CurrentLogin;
+                var questions = _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).ToList();
+
+                var correctAnswer = 0;
+                var wrongAnswer = 0;
+                
+                foreach (var resut in model.Result)
+                {
+                    var question = questions.FirstOrDefault(x => x.Id == resut.QuestionId);
+                    if (question != null)
+                    {
+                        if (resut.Answer == question.CorrectAnswer)
+                            correctAnswer++;
+                        else
+                            wrongAnswer++;
+                    }
+                }
+                var questionIds = model.Result.Select(x => x.QuestionId).ToList();
+                var assesment = new TherapistAccessment
+                {
+                    TherapistId = user.Id,
+                    TotalFailed = wrongAnswer,
+                    TotalPassed = correctAnswer,
+                    TotalScore = correctAnswer,
+                    TotalQuestion = correctAnswer + wrongAnswer,
+                    AnsweredQuestionIds = String.Join('|', questionIds)
+                };
+                await _context.AddAsync(assesment);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(model);
+
+
+                return SuccessResponse("Text completed", new {TotalScore = correctAnswer});
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
         }
     }
 }

@@ -424,10 +424,11 @@ namespace Bounce.Services.Implementation.Services.Payment
                                               Amount = Convert.ToDecimal(requet.Amount),
                                               Message = notifcation.Message,
                                               Title = notifcation.Title,
-                                              Time = t.CompletionTime.ToString(AdminConstants.FullDateTime),
+                                              TimeToString = t.CompletionTime.ToString(AdminConstants.FullDateTime),
+                                              Time = t.CompletionTime/*.ToString(AdminConstants.FullDateTime)*/,
                                               TransactionType = requet.RequestType == WalletRequestType.TopUp ? 
                                               AdminConstants.WalletTopUp : AdminConstants.WalletPayment
-                                          }).ToList();
+                                          }).OrderByDescending(x=> x.Time).ToList();
 #pragma warning restore CS8601 // Possible null reference assignment.
 
                 return SuccessResponse(data: query);                 

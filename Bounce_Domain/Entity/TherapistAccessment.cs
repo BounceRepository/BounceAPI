@@ -17,5 +17,7 @@ namespace Bounce_Domain.Entity
         public int TotalPassed { get; set; }
         public int TotalFailed { get; set; }
         public int TotalScore { get; set; }
+        public int TotalQuestion { get; set; }
+        public string AnsweredQuestionIds { get; set; }
     }
 }

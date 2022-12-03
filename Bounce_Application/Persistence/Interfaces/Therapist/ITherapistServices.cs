@@ -15,7 +15,9 @@ namespace Bounce_Application.Persistence.Interfaces.Therapist
         Task<Response> CreateTherapistProfile(TherapistProfileDto model);
         Task<Response> CreateUpdateUpdateTherapistAccountDetails(TherapistAccountDetailsDto model);
         Task<Response> GetQuestions();
+        Response GetTherapisById(long id);
         Response GetTherapistConsultaion();
         Response GetTherapistDashBoard();
+        Task<Response> ValidateAssement(AssesmentDto model);
     }
 }

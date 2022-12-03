@@ -19,6 +19,29 @@ namespace System
 
 
 
+		public static DateTimeOffset ConvertToHour(this string startTime, DateTimeOffset dateTime)
+		{
+			if (string.IsNullOrEmpty(startTime))
+				throw new ArgumentNullException("string can not be null");
+
+            try
+            {
+				
+				var timeInt = int.Parse(startTime.Split(':')[0]);
+				var timeUTC = startTime.Split(' ').LastOrDefault().ToLower();
+				if (timeUTC == "pm" && timeInt != 12 )
+				{
+					timeInt = 12 + timeInt;
+				}
+
+				return DateTimeOffset.UtcNow.Date.AddHours(timeInt);
+			}
+			catch(Exception ex)
+            {
+				throw new ArgumentNullException("string can not be null");
+			};
+		}
+
 
 
 

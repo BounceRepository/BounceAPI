@@ -12,8 +12,10 @@ namespace Bounce.DataTransferObject.DTO.Patient
         [Required]
         public long SessionId { get; set; }
         [Required]
-        public DateTimeOffset StartTime { get; set; }
-        [Required]
-        public DateTimeOffset EndTime { get; set; }
+        public string StartTime { get; set; }
+
+        public DateTimeOffset Date { get; set; }
+
+      
     }
 }

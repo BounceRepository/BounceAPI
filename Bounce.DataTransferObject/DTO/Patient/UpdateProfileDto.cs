@@ -11,6 +11,8 @@ namespace Bounce.DataTransferObject.DTO.Patient
     public  class UpdateProfileDto
     {
         [Required]
+        public string Email { get; set; }
+        [Required]
         public string FirstName { get; set; }
         [Required]
         public string LastName { get; set; }
@@ -26,12 +28,12 @@ namespace Bounce.DataTransferObject.DTO.Patient
         //[Required]
         [DataType(DataType.Upload)]
     
-        public IFormFile ImageFile { get; set; }
+        public IFormFile? ImageFile { get; set; }
         //[Required]
         //public string UserId { get; set; }
         //[Required]
         [DataType(DataType.Upload)]
-        public IFormFile MeansOfIdentification { get; set; }
+        public IFormFile ? MeansOfIdentification { get; set; }
 
         public string? PhysicalHealthRate { get; set; }
         public string? MentalHealthRate { get; set; }

@@ -55,7 +55,7 @@ namespace Bounce.Services.Implementation.Services.Patient
             try
             {
 
-                var user = _sessionManager.CurrentLogin;
+                var user = _context.Users.FirstOrDefault(x=> x.Email == model.Email);
                 if (user == null)
                     return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "user does not exist" };
 
@@ -161,18 +161,21 @@ namespace Bounce.Services.Implementation.Services.Patient
             {
                 _adminLogger.LogRequest($"{"Task to Reschedule appointment session has started"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
                 var user = _sessionManager.CurrentLogin;
-                var session = _context.AppointmentRequest.FirstOrDefault(x => x.Id == model.SessionId && x.PatientId == user.Id);
+                var session = _context.AppointmentRequest.FirstOrDefault(/*x => x.Id == model.SessionId*/ /*&& x.PatientId == user.Id*/);
                 if (session == null)
                     return AuxillaryResponse("session not found", StatusCodes.Status404NotFound);
 
+                var time = model.StartTime.ConvertToHour(model.Date);
                 session.DateModified = DateTime.Now;
-                session.StartTime = model.StartTime;
-                session.EndTime = model.EndTime;
+                session.StartTime = time;
+                session.EndTime = time.AddHours(2);
+                session.AvailableTime = time.DateTime;
+                //session.AvailableTime = model.StartTime;
                 _context.Update(session);
                 if(!await SaveAsync())
                     return FailedSaveResponse();
                 
-                return SuccessResponse("Appoint has been re-schedule successfully");
+                return SuccessResponse("Appointment has been re-scheduled successfully");
                 
             }
             catch (Exception ex)
@@ -407,17 +410,23 @@ namespace Bounce.Services.Implementation.Services.Patient
                                    join a in _context.Appointments on r.Id equals a.AppointmentRequestId
                                    where a.Status == AppointStatus.UpComming
                                    join t in _context.Users on r.TherapistId equals t.Id
+                                   join p in _context.TherapistProfiles on t.Id equals p.UserId
+
                                    select new
-                                   {
-                                       Time = r.AvailableTime.ToString(AdminConstants.FullTime),
-                                       Date = r.AvailableTime.ToString(AdminConstants.FullDate),
-                                       TherapistName = "Sahana V",
-                                       Discipline = "Msc in clinical Psychology",
+                                   {    
+                                       SessionId = r.Id,
+                                       StartTime = r.StartTime,
+                                       EndTime = r.EndTime,
+                                       Time = r.StartTime/*.ToString(AdminConstants.FullTime)*/,
+                                       Date = r.StartTime/*.ToString(AdminConstants.FullDate)*/,
+                                       TherapistFirstName = p.FirstName + " " + p.LastName,
+                                       TherapistTitle = p.Title,
+                                       Discipline = p.Specialization,
                                        Therapist = t.Email,
                                        TherapistId = t.Id,
                                        Amount = r.TotalAMount,
                                  
-                                   }).ToListAsync();
+                                   }).OrderByDescending(x=> x.Time).ToListAsync();
 
                 return SuccessResponse(data: query);
 

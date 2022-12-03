@@ -70,7 +70,6 @@ namespace Bounce.Services.Implementation.Services.Notification
                         
                     },
                     Token = user.NotificationToken,
-                    //Topic = Regex.Replace(model.Topic, @"\s", "")
                 };
                 var messaging = FirebaseMessaging.DefaultInstance;
                 var result = await messaging.SendAsync(message);
@@ -84,15 +83,19 @@ namespace Bounce.Services.Implementation.Services.Notification
             }
         }
      
-        public async Task<Response> ReadNotification(long notificationId)
+        public async Task<Response> ReadNotification()
         {
             try
             {
-                var notification = _context.Notification.FirstOrDefault(x => x.Id == notificationId);
-                notification.IsNewNotication = false;
-                _context.Update(notification);
-                if (!await SaveAsync())
-                    return FailedSaveResponse(notification);
+                var user = _sessionManager.CurrentLogin;
+                var notifications = _context.Notification.Where(x => x.UserId == user.Id && x.IsNewNotication).ToList();
+               if(notifications != null || notifications.Any())
+                {
+                    notifications.ForEach(x => { x.IsNewNotication = false; });
+                    _context.UpdateRange(notifications);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse(notifications);
+                }
                 return SuccessResponse();
 
             }
@@ -369,32 +372,23 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var feedGroups = _context.Feeds.Where(x => !x.IsDeleted)
-                    .Select(x => new
-                    {
-                        FeedId = x.Id,
-                        Feed = x.Post,
-                        Creator = x.CreatedByUser.UserName,
-                        FeedGroup = x.Group.Name,
-                        FeedGroupId = x.Group.Id,
-                        LikesCount = x.LikeCount,
-                        Time = x.CreatedTimeOffset,
-                        CommentCount = x.Comments.Count(),
-                        PicturePath = "https://res.cloudinary.com/dukd0jnep/image/upload/v1668681216/xnxg4w7udsgzul9ramdh.jpg",
-                        Comments = x.Comments.ToList().
-                        Select(f => new
-                        {
-                            CommentId = f.Id,
-                            Comment = f.Comment,
-                            Commentor = f.CreatedByUser.UserName,
-                            Time = f.CreatedTimeOffset,
-                            LikeCount = f.LikeCount,
-                            ReplyCount = f.Replies.Count(),
-                            Likes = f.LikeCount,
 
-                        }),
-                    });
-                return SuccessResponse(data: feedGroups);
+                var feeds = (from x in _context.Feeds.Where(x => !x.IsDeleted)
+                             join p in _context.UserProfile on x.CreatedByUserId equals p.UserId
+                             select new
+                             {
+                                 FeedId = x.Id,
+                                 Feed = x.Post,
+                                 Creator = x.CreatedByUser.UserName,
+                                 FeedGroup = x.Group.Name,
+                                 FeedGroupId = x.Group.Id,
+                                 LikesCount = x.LikeCount,
+                                 Time = x.CreatedTimeOffset,
+                                 CommentCount = x.Comments.Count(),
+                                 PicturePath = p.FilePath
+                             });
+                                         
+                return SuccessResponse(data: feeds);
 
             }
             catch (Exception ex)
@@ -501,17 +495,17 @@ namespace Bounce.Services.Implementation.Services.Notification
                         LikesCount = x.LikeCount,
                         RepliesCount = x.Replies.Count(),
                         Time = x.CreatedTimeOffset,
-                        Replies = x.Replies
-                        .Select(f => new
-                        {
-                            ReplyId = f.Id,
-                            RepliedBy = f.CreatedByUser.UserName,
-                            ReplyText = f.Reply,
-                            Commentor = f.CreatedByUser.UserName,
-                            Time = f.CreatedTimeOffset,
-                            LikeCount = f.LikeCount,
+                        //Replies = x.Replies
+                        //.Select(f => new
+                        //{
+                        //    ReplyId = f.Id,
+                        //    RepliedBy = f.CreatedByUser.UserName,
+                        //    ReplyText = f.Reply,
+                        //    Commentor = f.CreatedByUser.UserName,
+                        //    Time = f.CreatedTimeOffset,
+                        //    LikeCount = f.LikeCount,
                       
-                        }),
+                        //}),
                     });
                 return SuccessResponse(data: comments);
 

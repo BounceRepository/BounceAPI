@@ -55,7 +55,6 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<IEmalService, EmailService>();
             builder.Services.AddScoped<IPatientServices, PatientServices>();
             builder.Services.AddScoped<IAdminServices, AdminServices>();
-            builder.Services.AddScoped<IBankAccountDetailServices, BankAccountDetailServices>();
             builder.Services.AddScoped<ITherapistServices, TherapistServices>();
             builder.Services.AddScoped<IArticleServices, ArticleServices>();
             builder.Services.AddScoped<IPaymentServices, PaymentServices>();

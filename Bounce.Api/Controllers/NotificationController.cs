@@ -35,7 +35,7 @@ namespace Bounce.Api.Controllers
         public IActionResult GetAllNotification() => Response(_notificationService.GetAllNotification());
 
         [HttpPost("ReadNotification")]
-        public async Task<IActionResult> ReadNotification([FromQuery] long notificationid) => Response(await _notificationService.ReadNotification(notificationid));
+        public async Task<IActionResult> ReadNotification() => Response(await _notificationService.ReadNotification());
 
         [HttpDelete("DeleteNotification")]
         public async Task<IActionResult> PopNotification([FromQuery] long notificationid) => Response( await _notificationService.PopNotification(notificationid));

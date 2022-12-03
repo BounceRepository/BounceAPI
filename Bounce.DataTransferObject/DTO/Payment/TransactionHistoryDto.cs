@@ -14,7 +14,8 @@ namespace Bounce.DataTransferObject.DTO.Payment
         public string TransactionType { get; set; }
         public string Message { get; set; }
         public string Title { get; set; }
-        public string Time { get; set; }
+        public DateTime Time { get; set; }
+        public string TimeToString { get; set; }
 
     }
 }
