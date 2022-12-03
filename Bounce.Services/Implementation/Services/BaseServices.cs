@@ -84,6 +84,7 @@ namespace Bounce.Services.Implementation.Services
             {
                 StatusCode = StatusCodes.Status500InternalServerError,
                 Message = InterErrorMessage,
+                Data = ex.Message
 
             };
         }

@@ -22,6 +22,8 @@ namespace Bounce_Domain.Entity
 
         //[ForeignKey("FeedId")]
         public virtual ICollection<CommentOnFeed> Comments { get; set; }
+        public virtual ICollection<Likes> Likes { get; set; }
         public string? Attachment  { get; set; }
+
     }
 }

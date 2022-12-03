@@ -23,6 +23,7 @@ namespace Bounce_Domain.Entity
         public int LikeCount { get; set; }
         //[ForeignKey("CommentId")]
         public virtual ICollection<ReplyOnComment> Replies { get; set; }
+        public virtual ICollection<Likes> Likes { get; set; }
         public string? Attachment { get; set; }
     }
 }

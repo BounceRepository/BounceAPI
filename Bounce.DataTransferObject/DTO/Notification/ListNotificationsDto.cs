@@ -13,6 +13,6 @@ namespace Bounce.DataTransferObject.DTO.Notification
         public string Message { get; set; }
         public string Title { get; set; }
         public DateTime Time { get; set; }
-        public string IsNewNotification { get; set; }
+        public bool IsNewNotification { get; set; }
     }
 }

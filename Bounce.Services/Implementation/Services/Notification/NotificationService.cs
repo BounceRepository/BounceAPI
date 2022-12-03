@@ -13,6 +13,7 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -151,6 +152,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                     NotificationId = x.Id,
                     Message = x.Message,
                     Title = x.Title,
+                    IsNewNotification = x.IsNewNotication
                     //Time = x.DateCreated
                 });
                 var data = new
@@ -565,26 +567,68 @@ namespace Bounce.Services.Implementation.Services.Notification
 
         public async Task<Response> LikeFeed(FeedLikeDto model)
         {
-            try
+           using(var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var user = _sessionManager.CurrentLogin;
-                var feed = _context.Feeds.Find(model.FeedId);
-                if (feed != null)
+                try
                 {
+                    var user = _sessionManager.CurrentLogin;
+                    var feed = _context.Feeds.Include("Likes").FirstOrDefault( x=> x.Id == model.FeedId);
+
+                    if(feed == null)
+                        return AuxillaryResponse("feed not found", StatusCodes.Status404NotFound);
+
+                    if (feed != null)
+                    {
+                        var like = feed.Likes.FirstOrDefault(x => x.LikedByUserId == model.FeedId);
+                        if (like != null)
+                        {
+                            if (like.Liked)
+                            {
+                                feed.LikeCount = feed.LikeCount - 1;
+                                like.Liked = false;
+                            }
+                            else
+                            {
+                                feed.LikeCount = feed.LikeCount + 1;
+                                like.Liked = true;
+                            }
+                            _context.Update(feed);
+                            _context.Update(like);
+                            if (!await SaveAsync())
+                                return FailedSaveResponse(model);
+
+                            await transaction.CommitAsync();
+                            return SuccessResponse();
+
+                        }
+                        
+                    }
+
+
+                    var userLike = new Likes
+                    {
+                        LikedByUserId = user.Id,
+                        Liked = true,
+                        FeedId = model.FeedId
+                    };
+                    
                     feed.LikeCount = feed.LikeCount + 1;
+                    await _context.AddAsync(userLike);
                     _context.Feeds.Update(feed);
                     if (!await SaveAsync())
                         return FailedSaveResponse(model);
+
+                    await transaction.CommitAsync();
                     return SuccessResponse();
+
+
+
                 }
-
-
-                return AuxillaryResponse("feed not found", StatusCodes.Status404NotFound);
-
-            }
-            catch (Exception ex)
-            {
-                return InternalErrorResponse(ex);
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return InternalErrorResponse(ex);
+                }
             }
         }
 

@@ -505,8 +505,25 @@ namespace Bounce.Services.Implementation.Services.Patient
         {
             try
             {
-                var revews = _context.Reviews.OrderByDescending(x => x.DateCreated).ToList();
-                var data = (from review in revews where review.IsDeleted == false && review.TherapistUserId == id
+
+
+                var revews = _context.Reviews.Where(x=> !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
+                var oneStarRating = revews.Where(x => x.RateCount == 1).Sum(x => x.RateCount);
+                var twoStarRating = revews.Where(x => x.RateCount == 2).Sum(x => x.RateCount);
+                var threeStarRating = revews.Where(x => x.RateCount == 3).Sum(x => x.RateCount);
+                var fourStarRating = revews.Where(x => x.RateCount == 4).Sum(x => x.RateCount);
+                var fiveStarRating = revews.Where(x => x.RateCount == 5).Sum(x => x.RateCount);
+
+                var total = oneStarRating + twoStarRating + threeStarRating + fourStarRating + fiveStarRating;
+                var oneStarPercent = (100 * oneStarRating) / total;
+                var twoStarPercent = (100 * twoStarRating) / total;
+                var threeStarPercent = (100 * threeStarRating) / total;
+                var fourStarPercent = (100 * fourStarRating) / total;
+                var fiveStarPercent = (100 * fiveStarRating) / total;
+
+                var reviewRatio = (decimal.Parse(total.ToString()) / decimal.Parse(revews.Count().ToString()));
+
+                var query = (from review in revews
                             join profile in _context.UserProfile on review.PatientUserId equals profile.UserId
                             select new
                             {
@@ -514,11 +531,26 @@ namespace Bounce.Services.Implementation.Services.Patient
                                 ReviewStar =  review.RateCount,
                                 ReviewComment = review.ReviewComment,
                                 ReviewName = $"{profile.FirstName} {profile.LastName}",
+                                Picture = profile.FilePath,
                                 Time = review.Time,
                                 
                             }).ToList();
 
-                return SuccessResponse(data: new {TotalReviewCount = data.Count(), Reviews = data});
+                var data = new
+                {
+                    TotalReviewCount = revews.Count(),
+                    ReviewRation = Math.Round(reviewRatio, 1),
+                    OneStarPercentage = oneStarPercent,
+                    TwoStarPercentage = twoStarPercent,
+                    ThreeStarPercentage = threeStarPercent,
+                    FourStarPercentage = fourStarPercent,
+                    FiveStarPercentage = fiveStarPercent,
+                    Reviews = query,
+
+
+                };
+
+                return SuccessResponse(data: data);
 
             }
             catch (Exception ex)

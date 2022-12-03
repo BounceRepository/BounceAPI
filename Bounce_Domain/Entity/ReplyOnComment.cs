@@ -19,5 +19,6 @@ namespace Bounce_Domain.Entity
         public virtual CommentOnFeed Comment { get; set; }
         public int LikeCount { get; set; }
         public string? Attachment { get; set; }
+        public virtual ICollection<Likes> Likes { get; set; }
     }
 }

@@ -60,7 +60,7 @@ namespace Bounce_DbOps.EF
 		public DbSet<FailedEmailRequest> FailedEmailRequests { get; set; }
 		public DbSet<TherapistAccesmentQuestion> TherapistAccesmentQuestions { get; set; }
 		public DbSet<TherapistAccessment> TherapistAccessments { get; set; }
-
+		public DbSet<Likes> Like { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
