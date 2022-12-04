@@ -9,6 +9,7 @@ namespace Bounce.DataTransferObject.DTO.Patient
     public class CreateReviewDto
     {
         public string ReviewComment { get; set; }
+
         public int ReviewStarCount { get; set; }
         public DateTimeOffset Time { get; set; }
         public long TherapistUserId { get; set; }

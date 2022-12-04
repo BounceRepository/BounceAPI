@@ -13,6 +13,7 @@ namespace Bounce_Application.Persistence.Interfaces.Notification
         Task<Response> CreateComent(CommentDto model);
         Task<Response> CreateFeed(CreateFeedDto model);
         Response GetAllFeeds();
+        Response GetAllFeedsByGroupId(long groupId);
         Response GetAllNotification();
         Response GetCommentByFeedId(long feedId);
         Response GetFeedGroups();

@@ -399,6 +399,35 @@ namespace Bounce.Services.Implementation.Services.Notification
             }
         }
 
+        public Response GetAllFeedsByGroupId(long groupId)
+        {
+            try
+            {
+
+                var feeds = (from x in _context.Feeds.Where(x => !x.IsDeleted && x.FeedGroupId == groupId)
+                             join p in _context.UserProfile on x.CreatedByUserId equals p.UserId
+                             select new
+                             {
+                                 FeedId = x.Id,
+                                 Feed = x.Post,
+                                 Creator = x.CreatedByUser.UserName,
+                                 FeedGroup = x.Group.Name,
+                                 FeedGroupId = x.Group.Id,
+                                 LikesCount = x.LikeCount,
+                                 Time = x.CreatedTimeOffset,
+                                 CommentCount = x.Comments.Count(),
+                                 PicturePath = p.FilePath
+                             });
+
+                return SuccessResponse(data: feeds);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
         public Response GetUserFeeds()
         {
             try

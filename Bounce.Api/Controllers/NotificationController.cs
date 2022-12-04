@@ -98,6 +98,10 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetAllFeeds")]
         public IActionResult AllFedds() => Response(_notificationService.GetAllFeeds());
 
+        [AllowAnonymous]
+        [HttpGet("GetAllFeedsGroupById")]
+        public IActionResult GetAllFeedsGroupById([FromQuery] long groupId) => Response(_notificationService.GetAllFeedsByGroupId(groupId));
+
         [HttpPatch("LikeFeed")]
         public async Task<IActionResult> LikeFeed([FromBody] FeedLikeDto model) => Response(await _notificationService.LikeFeed(model));
 
