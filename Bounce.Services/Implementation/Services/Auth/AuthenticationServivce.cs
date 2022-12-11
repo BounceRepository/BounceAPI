@@ -537,22 +537,7 @@ namespace Bounce.Services.Implementation.Services.Auth
                 var isPasswordValid = await _userManager.CheckPasswordAsync(loginUser, loginModel.Password);
                 if (isPasswordValid)
                 {
-                    var existingWallet = _context.Wallets.FirstOrDefault(x => x.UserId == loginUser.Id);
-                    if (existingWallet == null)
-                    {
-                        var wallet = new Wallet
-                        {
-                            UserId = loginUser.Id,
-                            Balance = 0,
-                            AvailableBalance = 0,
-                            ReferalBonus = 0,
-                            DateCreated = DateTime.Now
-                        };
-                        _context.Add(wallet);
-                        _context.SaveChanges();
-                    }
-
-
+                   
                     var userRoles = await _userManager.GetRolesAsync(loginUser);
                     var isEmailConfrimed = await _userManager.IsEmailConfirmedAsync(loginUser);
 

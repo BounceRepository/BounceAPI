@@ -1,4 +1,5 @@
 ﻿using Bounce.DataTransferObject.DTO.Patient;
+using Bounce.DataTransferObject.DTO.Payment;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -30,11 +31,14 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> GetAllTherapists() => Response(await _patientServices.GetTherapist());
 
 
-        [AllowAnonymous]
+
         [HttpGet("GetPlans")]
         public IActionResult GetAllPlans() => Response( _patientServices.GetAllPlans());
 
-  
+        [HttpPost("SubscribeToPlan")]
+        public async Task<IActionResult> PlanSub([FromBody] PlanScubscriptionDto model) => Response(await _patientServices.SubscribeToPlan(model.PlanId));
+
+
         [HttpPost("BookAppointment")]
         public async Task<IActionResult> Appointment([FromBody] AppointmentDto model) => Response(await _patientServices.BookAppointment(model));
 

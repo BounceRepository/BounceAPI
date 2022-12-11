@@ -15,6 +15,7 @@ namespace Bounce_Application.Utilies
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContext;
         private long UserId;
+        
         public SessionManager(UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContext)
         {
             _userManager = userManager;
@@ -40,6 +41,39 @@ namespace Bounce_Application.Utilies
             }
         }
 
+        public long LoginUserId 
+        { 
+            get
+            {
+                var userId = GetLoggedUserId();
+                if (userId == "Anonymous")
+                {
+                    return 1;
+                }
+                else
+                {
+                    return long.Parse(userId);
+                }
+            }
+            
+         }
+
+        public string LoginUserEmail
+        {
+            get
+            {
+                var userId = GetLoggedUserId();
+                if (userId == "Anonymous")
+                {
+                    return "Bounce@gmail.com";
+                }
+                else
+                {
+                    return  _userManager.Users.FirstOrDefault(x => x.Id == long.Parse(userId)).Email;
+                }
+            }
+
+        }
 
         public string GetLoggedUserId()
         {

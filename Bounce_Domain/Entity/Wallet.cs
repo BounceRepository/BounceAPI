@@ -17,7 +17,14 @@ namespace Bounce_Domain.Entity
 
         public double Balance { get; set; }
         public double ReferalBonus { get; set; }
-        public double AvailableBalance { get; set; }
+        public double AvailableBalance {
+
+            get
+            {
+                return Balance;
+            }
+                
+        }
         public double Pendingdebit { get; set; }
 
     }

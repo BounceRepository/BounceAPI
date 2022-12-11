@@ -4,6 +4,7 @@ using Bounce_DbOps.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bounce_DbOps.Migrations
 {
     [DbContext(typeof(BounceDbContext))]
-    partial class BounceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221206144748_Journals")]
+    partial class Journals
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

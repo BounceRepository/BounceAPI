@@ -33,6 +33,11 @@ namespace Bounce.Services.Implementation.Services
             LogRequest(message);
             
         }
+
+        protected async Task<bool> AdminSaveChanges()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
         public Response FailedSaveResponse(object? model = null)
         {
             var message = "Sorry your transaction can not completed at the moment, try again later";

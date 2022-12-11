@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bounce_Domain.Enum
+namespace Bounce.DataTransferObject.DTO.Payment
 {
-    public enum TransactionType
+    public class PlanScubscriptionDto
     {
-        Wallet,Other, TopUp, Payment
+        public long PlanId { get; set; }
     }
 }

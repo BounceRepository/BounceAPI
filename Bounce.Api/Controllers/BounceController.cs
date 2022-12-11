@@ -96,7 +96,6 @@ namespace Bounce.Api.Controllers
                     {
                         UserId = user.Id,
                         Balance = 0,
-                        AvailableBalance = 0,
                         ReferalBonus = 0,
                         DateCreated = DateTime.Now
                     };

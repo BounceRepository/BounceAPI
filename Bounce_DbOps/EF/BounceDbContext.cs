@@ -61,6 +61,7 @@ namespace Bounce_DbOps.EF
 		public DbSet<TherapistAccesmentQuestion> TherapistAccesmentQuestions { get; set; }
 		public DbSet<TherapistAccessment> TherapistAccessments { get; set; }
 		public DbSet<Likes> Like { get; set; }
+		public DbSet<Journal> Journals { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

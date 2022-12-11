@@ -45,9 +45,7 @@ namespace Bounce.Api.Controllers
         {
             try
             {
-
-                var receiver = _context.UserProfile.FirstOrDefault(x => x.UserId == model.RevceieverId);
-              
+                var receiver = _context.Users.FirstOrDefault(x => x.Id == model.RevceieverId);            
                 if (receiver != null)
                 {
 
@@ -112,7 +110,7 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> Comment([FromBody] CommentDto model) => Response(await _notificationService.CreateComent(model));
 
         [HttpPatch("LikeComment")]
-        public async Task<IActionResult> LikeFeed([FromBody] CommentLikeDto model) => Response(await _notificationService.LikeComment(model));
+        public async Task<IActionResult> LikeComment([FromBody] CommentLikeDto model) => Response(await _notificationService.LikeComment(model));
         [HttpPost("CreateReplyOnComment")]
         public async Task<IActionResult> ReplyComment([FromBody] PushReplyDto model) => Response(await _notificationService.ReplyComent(model));
 

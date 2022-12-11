@@ -20,6 +20,7 @@ namespace Bounce_Application.Persistence.Interfaces.Patient
         Response GetUserFeelings();
         Response LogUserFeeling(List<string> feelings);
         Task<Response> ReScheduleAppointtment(ReScheduleAppointmentDto model);
+        Task<Response> SubscribeToPlan(long planId);
         Task<Response> UpcomingAppointment();
         Task<Response> UpdateProfileAsync(UpdateProfileDto model);
     }

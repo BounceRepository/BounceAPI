@@ -65,7 +65,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                
                 var payment = new PaymentRequest
                 {
-                    PaymentRequestId = DateTime.Now.Ticks.ToString(),
+                    PaymentRequestId = "TRV" + DateTime.Now.Ticks.ToString(),
                     UserId = _sessionManager.CurrentLogin.Id,
                     PaymentType = paymentType,
                     Amount = model.Amount,
@@ -84,8 +84,97 @@ namespace Bounce.Services.Implementation.Services.Payment
 
         }
 
-        
+        public async Task<Response> PayWithWallet(string TxRef)
+        {
+            
+           LogInfo($"Started task to pay with wallet , TRxf: {TxRef}: Time: {DateTime.UtcNow}");
+           using (var dbTransaction =await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var user = _sessionManager.CurrentLogin;
+                    var transactionRequest = _context.PaymentRequests.FirstOrDefault(x => x.PaymentRequestId == TxRef && x.UserId == user.Id);
 
+                    if (transactionRequest == null)
+                        return AuxillaryResponse("invalid transactionRef", StatusCodes.Status404NotFound);
+
+                    if (transactionRequest.Completed)
+                        return AuxillaryResponse("Transaction has been completed", StatusCodes.Status400BadRequest);
+
+                    var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
+
+                    if (transactionRequest.Amount > wallet.AvailableBalance)
+                        return AuxillaryResponse("Your wallet balance is insufficient for this transaction", StatusCodes.Status400BadRequest);
+
+                    var profile = _context.UserProfile.FirstOrDefault(x => x.UserId == user.Id);
+
+                    wallet.Balance = wallet.Balance -= transactionRequest.Amount;
+                    wallet.ModifiedTimeOffset = DateTimeOffset.UtcNow;
+                    _context.Update(wallet);
+                    if (!await AdminSaveChanges())
+                        return FailedSaveResponse();
+
+                    var transaction = new Transaction
+                    {
+
+                        RequestId = transactionRequest.Id,
+                        TransactionType = TransactionType.Wallet,
+                        Decription = "Wallet Transaction",
+                        UserId = _sessionManager.CurrentLogin.Id,
+                        CreatedTimeOffset = DateTimeOffset.UtcNow
+                
+                    };
+
+                    _context.Transactions.Add(transaction);
+                    if (!await AdminSaveChanges())
+                        return FailedSaveResponse();
+
+                    transactionRequest.PaymentType = PaymentType.wallet;
+                    transactionRequest.Completed = true;
+                    transactionRequest.CompletedTime = DateTime.UtcNow;
+                    transactionRequest.ModifiedTimeOffset = DateTimeOffset.Now;
+                    _context.Update(transactionRequest);
+   
+                    if (!await AdminSaveChanges())
+                        return FailedSaveResponse();
+
+                    await dbTransaction.CommitAsync();
+
+                    
+                    var mailBuilder = new StringBuilder();
+
+                    mailBuilder.AppendLine($"Dear {profile?.FirstName}<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Your wallet transaction of {transactionRequest.Amount} was successful.<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Transaction RefreneceNumber: {transactionRequest.PaymentRequestId} <br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Date:" + "  " + DateTime.Now + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("<br />");
+
+                    var emailRequest = new EmailRequest
+                    {
+                        To = user.Email,
+                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                        Subject = "Payment Confirmation"
+                    };
+
+                    await _EmailService.SendMail(emailRequest);
+
+                    LogInfo($"Started task to pay with wallet has been completed , TRxf: {TxRef}: Time: {DateTime.UtcNow}");
+
+                    return SuccessResponse();
+
+                }
+                catch (Exception ex)
+                {
+
+                    await dbTransaction.RollbackAsync();
+                    return InternalErrorResponse(ex);
+                }
+            }
+        }
         public async Task<Response> Requery(string TxRef)
         {
 
@@ -252,7 +341,8 @@ namespace Bounce.Services.Implementation.Services.Payment
                             RequestId = paymentRequest.Id,
                             TransactionType = TransactionType.Other,
                             Decription = "Session Booking",
-                            UserId = _sessionManager.CurrentLogin.Id
+                            UserId = _sessionManager.CurrentLogin.Id,
+                            status = "00",
                         };
                         _context.Appointments.Add(appointment);
                         _context.Add(transaction);
@@ -294,6 +384,17 @@ namespace Bounce.Services.Implementation.Services.Payment
                     DateModified = DateTime.Now,
                     Time = DateTime.UtcNow,
                 };
+
+                var paymentRequest = new PaymentRequest
+                {
+                    UserId = user.Id,
+                    Amount = model.Amount,
+                    PaymentRequestId = walletModel.Refxn,
+                    CreatedTimeOffset = DateTimeOffset.UtcNow,
+                    PaymentDecription = "Top Up",
+                    PaymentType = PaymentType.card
+                };
+                 _context.Add(paymentRequest);
                 _context.Add(walletModel);
 
                 if (!await SaveAsync())
@@ -353,6 +454,10 @@ namespace Bounce.Services.Implementation.Services.Payment
                 request.IsCompleted = "TRUE";
                 request.DateModified = DateTime.Now;
 
+                var paymentRequest = _context.PaymentRequests.FirstOrDefault(x => x.PaymentRequestId == request.Refxn);
+                paymentRequest.Completed = true;
+                paymentRequest.DateModified = DateTime.Now;
+
                 var pushNotification = new PushNotificationDto
                 {
                     Title = "Top-Up",
@@ -370,6 +475,7 @@ namespace Bounce.Services.Implementation.Services.Payment
 
                 };
 
+                _context.Update(paymentRequest);
                 _context.Update(request);
                 _context.Add(transaction);
                 _context.Add(notification);
@@ -435,6 +541,46 @@ namespace Bounce.Services.Implementation.Services.Payment
 
             }
             catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public async Task<Response> TransactionByFilter( string filter)
+        {
+            try
+            {
+                var val = filter.ToLower();
+
+                var user = _sessionManager.CurrentLogin;
+                var transactions = await _context.Transactions.Where(x => x.UserId == user.Id && x.status == "00").ToListAsync();
+                if (val == "topup")
+                    transactions = transactions.Where(x => x.TransactionType == TransactionType.TopUp).ToList();
+
+                else if (val == "payment" )
+                    transactions = transactions.Where(x => x.TransactionType != TransactionType.TopUp).ToList();
+                else
+                    return AuxillaryResponse("Invalid filter value, kindly use 'topup' or 'topup' ", StatusCodes.Status400BadRequest);
+
+
+#pragma warning disable CS8601 // Possible null reference assignment.
+                var query = (from t in transactions
+                             join requet in _context.PaymentRequests on t.RequestId equals requet.Id
+                             select new 
+                             {
+                                 TransactionId = requet.PaymentRequestId,
+                                 Amount = Convert.ToDecimal(requet.Amount),
+                                 PaymentDescription = t.Decription,
+                                 Time = t.CompletionTime,
+                                 TransactionType = t.TransactionType == TransactionType.TopUp ?
+                                 AdminConstants.WalletTopUp : AdminConstants.WalletPayment
+                             }).OrderByDescending(x => x.Time).ToList();
+#pragma warning restore CS8601 // Possible null reference assignment.
+
+                return SuccessResponse(data: query);
+
+            }
+            catch (Exception ex)
             {
                 return InternalErrorResponse(ex);
             }

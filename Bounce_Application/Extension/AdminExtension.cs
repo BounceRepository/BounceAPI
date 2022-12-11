@@ -34,7 +34,7 @@ namespace System
 					timeInt = 12 + timeInt;
 				}
 
-				return DateTimeOffset.UtcNow.Date.AddHours(timeInt);
+				return dateTime.Date.AddHours(timeInt);
 			}
 			catch(Exception ex)
             {

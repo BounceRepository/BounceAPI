@@ -10,6 +10,7 @@ using Bounce.Services.Implementation.Services.Admin;
 using Bounce.Services.Implementation.Services.Articles;
 using Bounce.Services.Implementation.Services.Auth;
 using Bounce.Services.Implementation.Services.Hepler;
+using Bounce.Services.Implementation.Services.Journal;
 using Bounce.Services.Implementation.Services.Notification;
 using Bounce.Services.Implementation.Services.Patient;
 using Bounce.Services.Implementation.Services.Payment;
@@ -21,6 +22,7 @@ using Bounce_Application.Persistence.Interfaces.Articles;
 using Bounce_Application.Persistence.Interfaces.Auth;
 using Bounce_Application.Persistence.Interfaces.Auth.Jwt;
 using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.Persistence.Interfaces.Journal;
 using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
@@ -58,7 +60,8 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<ITherapistServices, TherapistServices>();
             builder.Services.AddScoped<IArticleServices, ArticleServices>();
             builder.Services.AddScoped<IPaymentServices, PaymentServices>();
-            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>(); 
+            builder.Services.AddScoped<IJournalServices, JournalServices>(); 
             //Job JobScheduler
             builder.Services.AddScoped<IJobScheduler, JobScheduler>();
             builder.Services.AddScoped<BaseJobScheduler>();

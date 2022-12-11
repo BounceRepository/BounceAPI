@@ -21,6 +21,8 @@ namespace Bounce_Domain.Entity
         [JsonIgnore]
         public virtual ApplicationUser Therapist { get; set; }
         public string TrxRef { get; set; }
+
+        [Display(Name = "Start Time")]
         public string AgeRange { get; set; }
         public double Price { get; set; }
         public double TotalAMount { get; set; }

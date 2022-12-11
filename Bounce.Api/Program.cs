@@ -70,12 +70,12 @@ builder.Services.Configure<AppSettings>(appSettindSection);
 builder.Services.AddSession();
 /*AddMessagePackProtocol();*/
 //builder.Services.AddSignalR();
-    //.AddMessagePackProtocol(options =>
-    //{
-    //    options.SerializerOptions = MessagePackSerializerOptions.Standard
-    //        .WithResolver(MessagePack.Resolvers.StandardResolver.Instance)
-    //        .WithSecurity(MessagePackSecurity.UntrustedData);
-    //});
+//.AddMessagePackProtocol(options =>
+//{
+//    options.SerializerOptions = MessagePackSerializerOptions.Standard
+//        .WithResolver(MessagePack.Resolvers.StandardResolver.Instance)
+//        .WithSecurity(MessagePackSecurity.UntrustedData);
+//});
 
 builder.ApplicationServices();
 

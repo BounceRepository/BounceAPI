@@ -166,7 +166,9 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 if(profile == null)
                     return AuxillaryResponse("There is no profile for this therapist, kindly update the therapist profile", 404);
 
- 
+                var ratings = _context.Reviews.Where(x => !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
+
+
                 var data = new
                 {
                     TherapistId = id,
@@ -176,10 +178,10 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     Descipline = profile.Specialization,
                     ProfilePicture = profile.ProfilePicture,
                     AboutMe = profile.Email,
-         
+                    ConsultaionDays = profile.ConsultationDays.Split('|').ToList(),
                     ConsultaionStartTime = profile.ConsultationStartTime,
                     ConsultaionEndTime = profile.ConsultationEndTime,
-                    Rating = 5,
+                    Rating = ratings.Count(),
                     PatientCount = 50
 
                 };

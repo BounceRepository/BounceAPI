@@ -16,9 +16,12 @@ namespace Bounce_Application.Persistence.Interfaces.Payment
         Task<Response> ConfirmAppointment(string trxRef);
         Task<Response> GetWalletBallance();
         Task<Response> InitailizePaymentAsync(PaymentRequestDto model);
+        Task<Response> PayWithWallet(string TxRef);
         Task<Response> Requery(string TxRef);
+        Task<Response> TransactionByFilter(string filter);
         Task<Response> TransactionHistory();
   
         Task<Response> WalletTop(WalletToUpDto model);
+  
     }
 }

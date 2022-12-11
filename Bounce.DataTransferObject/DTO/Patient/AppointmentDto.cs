@@ -14,6 +14,9 @@ namespace Bounce.DataTransferObject.DTO.Patient
         public long TherapistId { get; set; }
         public double Price { get; set; }
         public double TotalAMount { get; set; }
+
+        [Required]
+        public string StartTime { get; set; }
         public DateTime AvailableTime { get; set; }
         [Required]
         public string PaymentType { get; set; }

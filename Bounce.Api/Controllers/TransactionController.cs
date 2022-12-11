@@ -25,7 +25,10 @@ namespace Bounce.Api.Controllers
             _paymentServices = paymentServices;
         }
 
-       
+
+        [HttpPost("PaymentWithWallet")]
+        public async Task<IActionResult> PaymentWithWallet([FromQuery] string TxRef) => Response(await _paymentServices.PayWithWallet(TxRef));
+
         [HttpPost("PaymentRequest")]
         public async Task<IActionResult> PaymentRequest([FromBody] PaymentRequestDto model) => Response(await _paymentServices.InitailizePaymentAsync(model));
 
@@ -38,8 +41,8 @@ namespace Bounce.Api.Controllers
         [HttpPost("ComfirmTopUp")]
         public async Task<IActionResult> ComfirmTopUp([FromQuery] string TxRef) => Response(await _paymentServices.ComfirmWalletTop(TxRef));
 
-        [HttpGet("WalletTransactionHistory")]
-        public async Task<IActionResult> TopUpHistory() => Response(await _paymentServices.TransactionHistory());
+        [HttpGet("GetTransactionHistory")]
+        public async Task<IActionResult> TopUpHistory([FromQuery] string filter) => Response(await _paymentServices.TransactionByFilter(filter));
         [HttpGet("GetWalletBalance")]
         public async Task<IActionResult> WalletBallance() => Response(await _paymentServices.GetWalletBallance());
         //[AllowAnonymous]

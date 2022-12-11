@@ -92,7 +92,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                 var notifications = _context.Notification.Where(x => x.UserId == user.Id && x.IsNewNotication).ToList();
                if(notifications != null || notifications.Any())
                 {
-                    notifications.ForEach(x => { x.IsNewNotication = false; });
+                    notifications.ForEach(x => { x.IsNewNotication = true; });
                     _context.UpdateRange(notifications);
                     if (!await SaveAsync())
                         return FailedSaveResponse(notifications);
@@ -375,20 +375,22 @@ namespace Bounce.Services.Implementation.Services.Notification
             try
             {
 
-                var feeds = (from x in _context.Feeds.Where(x => !x.IsDeleted)
+                var user = _sessionManager.CurrentLogin;
+                var feeds = (from x in _context.Feeds.Include("Likes").Where(x => !x.IsDeleted)
                              join p in _context.UserProfile on x.CreatedByUserId equals p.UserId
                              select new
                              {
                                  FeedId = x.Id,
                                  Feed = x.Post,
-                                 Creator = x.CreatedByUser.UserName,
+                                 LikeedByMe = x.Likes.Any(x => x.LikedByUserId == user.Id && x.Liked) ? true : false,
+                                 Creator = p.FirstName + " " + p.LastName,
                                  FeedGroup = x.Group.Name,
                                  FeedGroupId = x.Group.Id,
-                                 LikesCount = x.LikeCount,
+                                 LikesCount = x.Likes.Where(x=> x.Liked).Count(),
                                  Time = x.CreatedTimeOffset,
                                  CommentCount = x.Comments.Count(),
                                  PicturePath = p.FilePath
-                             });
+                             }); 
                                          
                 return SuccessResponse(data: feeds);
 
@@ -404,20 +406,26 @@ namespace Bounce.Services.Implementation.Services.Notification
             try
             {
 
-                var feeds = (from x in _context.Feeds.Where(x => !x.IsDeleted && x.FeedGroupId == groupId)
+      
+                var user = _sessionManager.CurrentLogin;
+                var feeds = (from x in _context.Feeds.Include("Likes").Where(x => !x.IsDeleted && x.FeedGroupId == groupId)
                              join p in _context.UserProfile on x.CreatedByUserId equals p.UserId
                              select new
                              {
                                  FeedId = x.Id,
                                  Feed = x.Post,
-                                 Creator = x.CreatedByUser.UserName,
+                                 LikeedByMe = x.Likes.Any(x => x.LikedByUserId == user.Id && x.Liked) ? true : false,
+                                 Creator = p.FirstName + " " + p.LastName,
                                  FeedGroup = x.Group.Name,
                                  FeedGroupId = x.Group.Id,
-                                 LikesCount = x.LikeCount,
+                                 LikesCount = x.Likes.Where(x => x.Liked).Count(),
                                  Time = x.CreatedTimeOffset,
                                  CommentCount = x.Comments.Count(),
                                  PicturePath = p.FilePath
-                             });
+                             }); ;
+
+
+
 
                 return SuccessResponse(data: feeds);
 
@@ -440,21 +448,21 @@ namespace Bounce.Services.Implementation.Services.Notification
                         Feed = x.Post,
                         FeedGroup = x.Group.Name,
                         FeedGroupId = x.Group.Id,
-                        LikesCount = x.LikeCount,
+                        LikesCount = x.Likes.Where(x=> x.Liked).Count(),
                         Time = x.CreatedTimeOffset,
                         CommentCount = x.Comments.Count(),
-                        Comments = x.Comments.ToList().
-                        Select(f => new
-                        {
-                            CommentId = f.Id,
-                            Comment = f.Comment,
-                            Commentor = f.CreatedByUser.UserName,
-                            Time = f.CreatedTimeOffset,
-                            LikeCount = f.LikeCount,
-                            ReplyCount = f.Replies.Count(),
-                            Likes = f.LikeCount,
+                        //Comments = x.Comments.ToList().
+                        //Select(f => new
+                        //{
+                        //    CommentId = f.Id,
+                        //    Comment = f.Comment,
+                        //    Commentor = f.CreatedByUser.UserName,
+                        //    Time = f.CreatedTimeOffset,
+                        //    LikeCount = f.LikeCount,
+                        //    ReplyCount = f.Replies.Count(),
+                        //    Likes = f.LikeCount,
 
-                        }),
+                        //}),
                     });
                 return SuccessResponse(data: feedGroups);
 
@@ -516,29 +524,26 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var comments = _context.Comments.Where(x => !x.IsDeleted && x.FeedId == feedId)
-                    .OrderByDescending(m=> m.DateCreated)
-                    .Select(x => new
-                    {
-                        CommentId = x.Id,
-                        Comment = x.Comment,
-                        Commentor = x.CreatedByUser.UserName,
-                        LikesCount = x.LikeCount,
-                        RepliesCount = x.Replies.Count(),
-                        Time = x.CreatedTimeOffset,
-                        //Replies = x.Replies
-                        //.Select(f => new
-                        //{
-                        //    ReplyId = f.Id,
-                        //    RepliedBy = f.CreatedByUser.UserName,
-                        //    ReplyText = f.Reply,
-                        //    Commentor = f.CreatedByUser.UserName,
-                        //    Time = f.CreatedTimeOffset,
-                        //    LikeCount = f.LikeCount,
-                      
-                        //}),
-                    });
-                return SuccessResponse(data: comments);
+                var user = _sessionManager.CurrentLogin;
+                var comments = _context.Comments.Include("Replies").Include("Likes").Where(x => !x.IsDeleted && x.FeedId == feedId)
+                    .OrderByDescending(m => m.DateCreated).ToList();
+                var data = (from comment in comments
+                            join profile in _context.UserProfile on comment.CreatedByUserId equals profile.UserId
+                            select new
+                            {
+                                CommentId = comment.Id,
+                                Comment = comment.Comment,
+                                LikeedByMe = comment.Likes.Any(x => x.LikedByUserId == user.Id && x.Liked) ? true : false,
+                                Commentor = profile.FirstName + " " + profile.LastName,
+                                CommentorPicture = profile.FilePath,
+                                LikesCount = comment.Likes.Where(x=> x.Liked).Count(),
+                                RepliesCount = comment.Replies.Where(x=> !x.IsDeleted).Count(),
+                                Time = comment.CreatedTimeOffset,
+
+                            }).ToList();
+                                
+                    
+                return SuccessResponse(data: data);
 
             }
             catch (Exception ex)
@@ -551,16 +556,18 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var comments = _context.Replies.Where(x => !x.IsDeleted && x.CommentId == commentId)
-                    .Select(x => new
-                    {
-                        ReplyId = x.Id,
-                        ReplyText = x.Reply,
-                        ReplyBy = x.CreatedByUser.UserName,
-                        Time = x.CreatedTimeOffset,
-                        
-                    });
-                return SuccessResponse(data: comments);
+                    var data = (from reply in _context.Replies where reply.IsDeleted == false && reply.CommentId == commentId
+                                join profile in _context.UserProfile on reply.CreatedByUserId equals profile.UserId
+                                select new
+                                {
+                                    ReplyId = reply.Id,
+                                    ReplyText = reply.Reply,
+                                    ReplyBy = profile.FirstName + " " + profile.LastName,
+                                    Time = reply.CreatedTimeOffset,
+                                    PicturePath = profile.FilePath
+                                });
+                                                   
+                return SuccessResponse(data: data);
 
             }
             catch (Exception ex)
@@ -574,18 +581,43 @@ namespace Bounce.Services.Implementation.Services.Notification
             try
             {
                 var user = _sessionManager.CurrentLogin;
-                var comment = _context.Comments.FirstOrDefault(x=> x.Id == model.CommentId);
-                if(comment != null)
+              
+                var feed = _context.Comments.Include("Likes").FirstOrDefault(x => x.Id == model.CommentId);
+
+                if (feed == null)
+                    return AuxillaryResponse("feed not found", StatusCodes.Status404NotFound);
+
+                var like = feed.Likes.FirstOrDefault(x => x.CommentId == model.CommentId && x.LikedByUserId == user.Id);
+                if (like != null)
                 {
-                    comment.LikeCount = comment.LikeCount + 1;
-                    _context.Comments.Update(comment);
+                    if (like.Liked)
+                    {
+                        like.Liked = false;
+                    }
+                    else
+                    {
+                        like.Liked = true;
+                    }
+                    _context.Update(like);
                     if (!await SaveAsync())
                         return FailedSaveResponse(model);
+
                     return SuccessResponse();
+
                 }
-                
-                
-                return AuxillaryResponse("comment not found", StatusCodes.Status404NotFound);
+
+                var userLike = new Likes
+                {
+                    LikedByUserId = user.Id,
+                    Liked = true,
+                    CommentId = model.CommentId
+                };
+                await _context.AddAsync(userLike);
+                if (!await SaveAsync())
+                    return FailedSaveResponse(model);
+
+                return SuccessResponse();
+
 
             }
             catch (Exception ex)
@@ -606,31 +638,24 @@ namespace Bounce.Services.Implementation.Services.Notification
                     if(feed == null)
                         return AuxillaryResponse("feed not found", StatusCodes.Status404NotFound);
 
-                    if (feed != null)
+                    var like = feed.Likes.FirstOrDefault(x => x.FeedId == model.FeedId && x.LikedByUserId == user.Id);
+                    if (like != null)
                     {
-                        var like = feed.Likes.FirstOrDefault(x => x.LikedByUserId == model.FeedId);
-                        if (like != null)
+                        if (like.Liked)
                         {
-                            if (like.Liked)
-                            {
-                                feed.LikeCount = feed.LikeCount - 1;
-                                like.Liked = false;
-                            }
-                            else
-                            {
-                                feed.LikeCount = feed.LikeCount + 1;
-                                like.Liked = true;
-                            }
-                            _context.Update(feed);
-                            _context.Update(like);
-                            if (!await SaveAsync())
-                                return FailedSaveResponse(model);
-
-                            await transaction.CommitAsync();
-                            return SuccessResponse();
-
+                            like.Liked = false;
                         }
-                        
+                        else
+                        {
+                            like.Liked = true;
+                        }
+                        _context.Update(like);
+                        if (!await SaveAsync())
+                            return FailedSaveResponse(model);
+
+                        await transaction.CommitAsync();
+                        return SuccessResponse();
+
                     }
 
 
@@ -639,11 +664,8 @@ namespace Bounce.Services.Implementation.Services.Notification
                         LikedByUserId = user.Id,
                         Liked = true,
                         FeedId = model.FeedId
-                    };
-                    
-                    feed.LikeCount = feed.LikeCount + 1;
+                    };                  
                     await _context.AddAsync(userLike);
-                    _context.Feeds.Update(feed);
                     if (!await SaveAsync())
                         return FailedSaveResponse(model);
 

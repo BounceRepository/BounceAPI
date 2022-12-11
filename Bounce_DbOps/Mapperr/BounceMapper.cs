@@ -30,7 +30,7 @@ namespace Bounce_DbOps.Mapperr
                 .ForMember(x => x.YearsOfExperience, o => o.MapFrom(f => f.YearsOfExperience.ToString()))
                  .ForMember(x => x.Email, o => o.MapFrom(f => f.AboutMe))
                 .ForMember(x => x.ProfilePicture, o => o.Ignore())
-                .ForMember(x => x.ConsultationDays, o => o.MapFrom(f => string.Join("|", f.ConsultationDays.ToString())));
+                .ForMember(x => x.ConsultationDays, o => o.MapFrom(f => string.Join("|", f.ConsultationDays)));
 
 
 
