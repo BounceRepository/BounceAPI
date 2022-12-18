@@ -50,6 +50,14 @@ namespace Bounce.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel loginModel) => Response(await registrationServivce.Login(loginModel));
 
+        [HttpPost("PatientLogin")]
+        public async Task<IActionResult> PatientLogin([FromBody] LoginModel loginModel) => Response(await registrationServivce.PatientLogin(loginModel));
+
+        [HttpPost("TherapistLogin")]
+        public async Task<IActionResult> TherapistLogin([FromBody] LoginModel loginModel) => Response(await registrationServivce.TherapistLogin(loginModel));
+
+
+
         [HttpPost("ConfirmLogin")]
         public async Task<IActionResult> ConfirmLogin([FromBody] LoginModel loginModel) => Response(await registrationServivce.Login(loginModel));
 

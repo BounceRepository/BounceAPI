@@ -41,8 +41,12 @@ namespace Bounce.Api.Controllers
         [HttpPost("ComfirmTopUp")]
         public async Task<IActionResult> ComfirmTopUp([FromQuery] string TxRef) => Response(await _paymentServices.ComfirmWalletTop(TxRef));
 
+        [HttpGet("WalletTransactionHistory")]
+        public async Task<IActionResult> WalletUpHistory() => Response(await _paymentServices.TransactionByFilter("all"));
+
         [HttpGet("GetTransactionHistory")]
         public async Task<IActionResult> TopUpHistory([FromQuery] string filter) => Response(await _paymentServices.TransactionByFilter(filter));
+
         [HttpGet("GetWalletBalance")]
         public async Task<IActionResult> WalletBallance() => Response(await _paymentServices.GetWalletBallance());
         //[AllowAnonymous]

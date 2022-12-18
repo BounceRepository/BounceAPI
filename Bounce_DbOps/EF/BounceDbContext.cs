@@ -36,6 +36,7 @@ namespace Bounce_DbOps.EF
 
 		public DbSet<UserProfile> UserProfile { get; set; }
 		public DbSet<Plan> Plan { get; set; }
+		public DbSet<SubPlan> SubPlan { get; set; }
 		public DbSet<Subscription> Subscriptions { get; set; }
 		public DbSet<Wallet> Wallets { get; set; }
 		public DbSet<WalletRequest> WalletRequests { get; set; }

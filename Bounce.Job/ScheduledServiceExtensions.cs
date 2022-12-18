@@ -15,6 +15,8 @@ namespace Bounce.Job
         {     
 
             RecurringJob.AddOrUpdate("ResendFailedEmailMessages", () => jobScheduler.ResendFaileMessages(), new CronExpressions(10).Minutes);
+            RecurringJob.AddOrUpdate("CheckUpcommingSession", () => jobScheduler.CheckDueAppointments(), new CronExpressions(5).Minutes);
+
 
             return app;
         }

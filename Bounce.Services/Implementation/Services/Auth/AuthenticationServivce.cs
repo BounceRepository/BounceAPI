@@ -646,6 +646,138 @@ namespace Bounce.Services.Implementation.Services.Auth
                 return InternalErrorResponse(ex);
             }
         }
+        public async Task<Response> PatientLogin(LoginModel loginModel)
+        {
+            try
+            {
+
+                var loginUser = _userManager.Users.Where(t => t.Discriminator == Bounce_Domain.Enum.UserType.Patient)
+                    .Where(x => x.Discriminator == Bounce_Domain.Enum.UserType.Patient)
+                    .FirstOrDefault(x => x.UserName == loginModel.Username ||
+                    x.PatientId == loginModel.Username || x.Email == loginModel.Username);
+
+                if (loginUser == null)
+                    return new Response
+                    {
+                        StatusCode = StatusCodes.Status401Unauthorized,
+                        Message = "User does not exist"
+                    };
+
+                var isPasswordValid = await _userManager.CheckPasswordAsync(loginUser, loginModel.Password);
+                if (isPasswordValid)
+                {
+                    var userRoles = await _userManager.GetRolesAsync(loginUser);
+                    var isEmailConfrimed = await _userManager.IsEmailConfirmedAsync(loginUser);
+
+                    var token = await GenerateAccessToken(loginUser);
+                    var roles = string.Join(",", userRoles);
+                    var image = "";
+
+                    var userProfile = _context.UserProfile.FirstOrDefault(x => x.UserId == loginUser.Id);
+                    if (userProfile != null)
+                    {
+                        image = !string.IsNullOrEmpty(userProfile.FilePath) ? userProfile.FilePath : null;
+                    }
+
+                    return new Response
+                    {
+                        StatusCode = StatusCodes.Status200OK,
+                        Data = new
+                        {
+                            Token = token,
+                            UserName = loginUser.UserName,
+                            Email = loginUser.Email,
+                            Role = userRoles.FirstOrDefault(),
+                            Phone = loginUser?.PhoneNumber,
+                            HasProfile = loginUser?.HasProfile,
+                            ConfirmedEmail = loginUser?.EmailConfirmed,
+                            UserId = loginUser?.Id,
+                            Image = image,
+                            PatientId = loginUser.PatientId
+                        },
+                        Message = "Login Sucessful"
+                    };
+                }
+
+                return new Response
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized,
+                    Message = "Invalid Password"
+                };
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+        public async Task<Response> TherapistLogin(LoginModel loginModel)
+        {
+            try
+            {
+
+                var loginUser = _userManager.Users.Where(t=> t.Discriminator == Bounce_Domain.Enum.UserType.Therapist)
+                    .FirstOrDefault(x => x.UserName == loginModel.Username|| 
+                    x.PatientId == loginModel.Username || x.Email == loginModel.Username);
+
+                if (loginUser == null)
+                    return new Response
+                    {
+                        StatusCode = StatusCodes.Status401Unauthorized,
+                        Message = "User does not exist"
+                    };
+
+                var isPasswordValid = await _userManager.CheckPasswordAsync(loginUser, loginModel.Password);
+                if (isPasswordValid)
+                {
+
+                    var userRoles = await _userManager.GetRolesAsync(loginUser);
+                    var isEmailConfrimed = await _userManager.IsEmailConfirmedAsync(loginUser);
+
+                    var token = await GenerateAccessToken(loginUser);
+                    var roles = string.Join(",", userRoles);
+                    var image = "";
+
+                    var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == loginUser.Id);
+                    if (userProfile != null)
+                    {
+                        image = !string.IsNullOrEmpty(userProfile.ProfilePicture) ? userProfile.ProfilePicture : null;
+                    }
+
+                    return new Response
+                    {
+                        StatusCode = StatusCodes.Status200OK,
+                        Data = new
+                        {
+                            Token = token,
+                            UserName = loginUser.UserName,
+                            Email = loginUser.Email,
+                            Role = userRoles.FirstOrDefault(),
+                            Phone = loginUser?.PhoneNumber,
+                            HasProfile = loginUser?.HasProfile,
+                            ConfirmedEmail = loginUser?.EmailConfirmed,
+                            UserId = loginUser?.Id,
+                            Image = image,
+                            TherapistId = loginUser.PatientId
+                        },
+                        Message = "Login Sucessful"
+                    };
+                }
+
+                return new Response
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized,
+                    Message = "Invalid Password"
+                };
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
 
         public async Task<Response> ConfirmEmail(ConfirmEmailDto model)
         {

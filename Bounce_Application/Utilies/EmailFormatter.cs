@@ -33,12 +33,13 @@ namespace Bounce_Application.Utilies
             content = content.Replace("{{Token}}", token);
             return content;
         }
-        public static string FormatGenericEmail (string message, string rootPath)
+        public static string FormatGenericEmail (string message, string rootPath, string subject = "")
         {
             string templateRootPath = CombinePath(rootPath, genericEmail);
             string content = string.Empty;
             using var sr = new StreamReader(templateRootPath);
             content = sr.ReadToEnd();
+            content = content.Replace("{{subject}}", subject);
             content = content.Replace("{{message}}", message);
             return content;
         }

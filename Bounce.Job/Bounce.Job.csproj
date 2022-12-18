@@ -38,4 +38,8 @@
     </Compile>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="TaskSchedules\Therapist\" />
+  </ItemGroup>
+
 </Project>

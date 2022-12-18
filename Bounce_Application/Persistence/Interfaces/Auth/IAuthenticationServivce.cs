@@ -23,5 +23,7 @@ namespace Bounce_Application.Persistence.Interfaces.Auth
         Task<Response> SendEmailConfrimationLink(string userEmail);
         Task<Response> EmailConfirmationStatus(string userEmail);
         Task<Response> RegisterSuperAdminUser(RegisterModel registerModel);
+        Task<Response> TherapistLogin(LoginModel loginModel);
+        Task<Response> PatientLogin(LoginModel loginModel);
     }
 }

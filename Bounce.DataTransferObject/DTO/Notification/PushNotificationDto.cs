@@ -15,6 +15,7 @@ namespace Bounce.DataTransferObject.DTO.Notification
         public string Title { get; set; }
         public string Topic { get; set; }
         public string TrxRef { get; set; }
+        public long userId { get; set; }
 
     }
 }

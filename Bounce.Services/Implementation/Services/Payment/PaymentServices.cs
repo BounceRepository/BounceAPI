@@ -69,7 +69,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                     UserId = _sessionManager.CurrentLogin.Id,
                     PaymentType = paymentType,
                     Amount = model.Amount,
-                    PlanId = 1,                
+                    //PlanId = 1,                
 
                 };
                 await _context.AddAsync(payment);
@@ -273,37 +273,7 @@ namespace Bounce.Services.Implementation.Services.Payment
             }
         }
 
-        public async Task<Response> BookAppointment(AppointmentDto model)
-        {
-            try
-            {
-
-                var paymentModel = new PaymentRequestDto
-                {
-                    PaymentType = model.PaymentType,
-                    Amount = model.TotalAMount
-
-                };
-                var response = await InitailizePaymentAsync(paymentModel);
-                if (response.StatusCode != 200)
-                    return AuxillaryResponse("Error occured while booking your appointement", response.StatusCode);
-
-                var responseData = (PaymentResonseDto)response.Data;
-                var appointement = _mapper.Map<AppointmentRequest>(model);
-                appointement.TrxRef = responseData.TransactionRef;
-                _context.Add(appointement);
-
-                if (!await SaveAsync())
-                    return FailedSaveResponse();
-                return SuccessResponse(data: new { TrxRef = appointement.TrxRef });
-
-
-            }
-            catch (Exception ex)
-            {
-                return InternalErrorResponse(ex);
-            }
-        }
+       
         public async Task<Response> ConfirmAppointment(string trxRef)
         {
             try
@@ -339,7 +309,7 @@ namespace Bounce.Services.Implementation.Services.Payment
                         var transaction = new Transaction
                         {
                             RequestId = paymentRequest.Id,
-                            TransactionType = TransactionType.Other,
+                            TransactionType = TransactionType.Payment,
                             Decription = "Session Booking",
                             UserId = _sessionManager.CurrentLogin.Id,
                             status = "00",
@@ -392,7 +362,8 @@ namespace Bounce.Services.Implementation.Services.Payment
                     PaymentRequestId = walletModel.Refxn,
                     CreatedTimeOffset = DateTimeOffset.UtcNow,
                     PaymentDecription = "Top Up",
-                    PaymentType = PaymentType.card
+                    PaymentType = PaymentType.card,
+                    //SubPlanId = 7
                 };
                  _context.Add(paymentRequest);
                 _context.Add(walletModel);
@@ -550,18 +521,20 @@ namespace Bounce.Services.Implementation.Services.Payment
         {
             try
             {
+                var filters = new List<string> { "all", "topup", "payment" };
                 var val = filter.ToLower();
+                if (!filters.Contains(filter))
+                    return AuxillaryResponse("Invalid filter value, kindly use 'topup', 'all' or 'topup' ", StatusCodes.Status400BadRequest);
 
                 var user = _sessionManager.CurrentLogin;
                 var transactions = await _context.Transactions.Where(x => x.UserId == user.Id && x.status == "00").ToListAsync();
+
                 if (val == "topup")
                     transactions = transactions.Where(x => x.TransactionType == TransactionType.TopUp).ToList();
 
-                else if (val == "payment" )
+                if (val == "payment" )
                     transactions = transactions.Where(x => x.TransactionType != TransactionType.TopUp).ToList();
-                else
-                    return AuxillaryResponse("Invalid filter value, kindly use 'topup' or 'topup' ", StatusCodes.Status400BadRequest);
-
+      
 
 #pragma warning disable CS8601 // Possible null reference assignment.
                 var query = (from t in transactions

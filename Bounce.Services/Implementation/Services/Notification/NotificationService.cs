@@ -4,6 +4,7 @@ using Bounce.DataTransferObject.DTO.Notification;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.Persistence.Interfaces.Notification;
+using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
@@ -31,10 +32,11 @@ namespace Bounce.Services.Implementation.Services.Notification
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IEmalService _EmailService;
         private readonly FileManager _fileManager;
+        private readonly AdminLogger _adminLogger;
 
         public string rootPath { get; set; }
 
-        public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager, IHostingEnvironment hostingEnvironment, IEmalService emailService, FileManager fileManager) : base(context)
+        public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager, IHostingEnvironment hostingEnvironment, IEmalService emailService, FileManager fileManager, AdminLogger adminLogger) : base(context)
         {
             _mapper = mapper;
             _sessionManager = sessionManager;
@@ -44,6 +46,55 @@ namespace Bounce.Services.Implementation.Services.Notification
             _EmailService = emailService;
             rootPath = _hostingEnvironment.ContentRootPath;
             _fileManager = fileManager;
+            _adminLogger = adminLogger;
+        }
+
+        public async Task PushMultipleNotificationAsyn(List<PushNotificationDto> models)
+        {
+            try
+            {
+                foreach (var model in models)
+                {
+                    var user = _userManager.Users.FirstOrDefault(x => x.Id == model.userId);
+                   
+                   if(!string.IsNullOrEmpty(user.NotificationToken))
+                    {
+                        var defaultApp = FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
+                        });
+
+                        var message = new Message()
+                        {
+
+                            Data = new Dictionary<string, string>()
+                            {
+                                ["User"] = user.Email,
+                                ["UserName"] = user.UserName,
+                                ["Time"] = DateTime.Now.ToString(),
+
+                            },
+                            Notification = new FirebaseAdmin.Messaging.Notification
+                            {
+                                Title = model.Title,
+                                Body = model.Message,
+
+                            },
+                            Token = user.NotificationToken,
+                        };
+                        var messaging = FirebaseMessaging.DefaultInstance;
+                        var result = await messaging.SendAsync(message);
+                        defaultApp.Delete();
+                    }
+                  
+                   
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError(models, ex , "push notification failed");
+            }
         }
         public async Task<Response>  PushNotification(PushNotificationDto model)
         {
@@ -62,6 +113,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                     {
                         ["User"] = user.Email,
                         ["UserName"] = user.UserName,
+                        ["Time"] = DateTime.Now.ToString(),
 
                     },
                     Notification = new FirebaseAdmin.Messaging.Notification
@@ -387,10 +439,10 @@ namespace Bounce.Services.Implementation.Services.Notification
                                  FeedGroup = x.Group.Name,
                                  FeedGroupId = x.Group.Id,
                                  LikesCount = x.Likes.Where(x=> x.Liked).Count(),
-                                 Time = x.CreatedTimeOffset,
+                                 Time = x.DateCreated,
                                  CommentCount = x.Comments.Count(),
                                  PicturePath = p.FilePath
-                             }); 
+                             }).OrderByDescending(x=> x.Time); 
                                          
                 return SuccessResponse(data: feeds);
 

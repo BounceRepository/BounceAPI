@@ -26,7 +26,8 @@ namespace Bounce.Api.Controllers
         [HttpPatch("UpdateBioData")]
         public async Task<IActionResult> UdateProfile([FromForm] UpdateProfileDto model) => Response(await _patientServices.UpdateProfileAsync(model));
 
-   
+
+        [AllowAnonymous]
         [HttpGet("GetAllTherapists")]
         public async Task<IActionResult> GetAllTherapists() => Response(await _patientServices.GetTherapist());
 
@@ -36,7 +37,7 @@ namespace Bounce.Api.Controllers
         public IActionResult GetAllPlans() => Response( _patientServices.GetAllPlans());
 
         [HttpPost("SubscribeToPlan")]
-        public async Task<IActionResult> PlanSub([FromBody] PlanScubscriptionDto model) => Response(await _patientServices.SubscribeToPlan(model.PlanId));
+        public async Task<IActionResult> PlanSub([FromBody] PlanScubscriptionDto model) => Response(await _patientServices.SubscribeToPlan(model.PlanId, model.PlanId));
 
 
         [HttpPost("BookAppointment")]

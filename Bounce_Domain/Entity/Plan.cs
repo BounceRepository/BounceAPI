@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ namespace Bounce_Domain.Entity
         public int TherapistCount { get; set; }
         public int Duration { get; set; }
         public double Cost { get; set; }
-      
+
+        public virtual ICollection<SubPlan> SubPlans { get; set; }
+
     }
 }

@@ -25,6 +25,7 @@ namespace Bounce_Application.Persistence.Interfaces.Notification
         Task<Response> LikeFeed(FeedLikeDto model);
         Task<Response> LikReply(ReplyLikeDto model);
         Task<Response> PopNotification(long notificationId);
+        Task PushMultipleNotificationAsyn(List<PushNotificationDto> models);
         Task<Response> PushNotification(PushNotificationDto model);
         Task<Response> ReadNotification();
         Task<Response> ReplyComent(PushReplyDto model);

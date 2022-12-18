@@ -4,6 +4,7 @@ using Bounce_DbOps.EF;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bounce_DbOps.Migrations
 {
     [DbContext(typeof(BounceDbContext))]
-    partial class BounceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221215171744_added_status")]
+    partial class added_status
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,6 +228,10 @@ namespace Bounce_DbOps.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
+                    b.Property<string>("AppointmentType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("AvailableTime")
                         .HasColumnType("datetime2");
 
@@ -267,11 +273,10 @@ namespace Bounce_DbOps.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProblemDecription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
 
-                    b.Property<string>("ReasonForTherapy")
+                    b.Property<string>("ProblemDecription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -770,8 +775,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 1L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6473),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6473),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9521),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9521),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Relationship"
@@ -779,8 +784,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 2L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6483),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6483),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9530),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9530),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Self Care"
@@ -788,8 +793,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 3L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6490),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6490),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9538),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9538),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Work Ethics"
@@ -797,8 +802,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 4L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6496),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6497),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9545),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9545),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Family"
@@ -806,8 +811,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 5L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6503),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6503),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9552),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9552),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Self Care"
@@ -815,8 +820,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 6L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6510),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6511),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9560),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9560),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Sexuality"
@@ -824,8 +829,8 @@ namespace Bounce_DbOps.Migrations
                         new
                         {
                             Id = 7L,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6517),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6517),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9567),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9568),
                             IsActive = false,
                             IsDeleted = false,
                             Name = "Parenting"
@@ -1221,8 +1226,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 1L,
                             Cost = 50000.0,
                             DailyMeditationCount = 100,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6307),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6317),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9348),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9357),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1235,8 +1240,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 2L,
                             Cost = 100000.0,
                             DailyMeditationCount = 200,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6340),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6341),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9379),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9379),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1249,8 +1254,8 @@ namespace Bounce_DbOps.Migrations
                             Id = 3L,
                             Cost = 200000.0,
                             DailyMeditationCount = 500,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6348),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6348),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9388),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9388),
                             Duration = 0,
                             FreeTrialCount = 7,
                             IsActive = false,
@@ -1438,8 +1443,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 1L,
                             Cost = 100000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6387),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6388),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9437),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9438),
                             FreeTrialCount = 50,
                             IsActive = false,
                             IsDeleted = false,
@@ -1452,8 +1457,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 2L,
                             Cost = 80000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6400),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6400),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9450),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9450),
                             FreeTrialCount = 30,
                             IsActive = false,
                             IsDeleted = false,
@@ -1466,8 +1471,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 3L,
                             Cost = 500000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6407),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6407),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9459),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9459),
                             FreeTrialCount = 20,
                             IsActive = false,
                             IsDeleted = false,
@@ -1480,8 +1485,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 4L,
                             Cost = 50000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6413),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6414),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9467),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9467),
                             FreeTrialCount = 20,
                             IsActive = false,
                             IsDeleted = false,
@@ -1494,8 +1499,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 5L,
                             Cost = 420000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6429),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6429),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9474),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9475),
                             FreeTrialCount = 30,
                             IsActive = false,
                             IsDeleted = false,
@@ -1508,8 +1513,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 6L,
                             Cost = 350000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6436),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6437),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9484),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9484),
                             FreeTrialCount = 18,
                             IsActive = false,
                             IsDeleted = false,
@@ -1522,8 +1527,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 7L,
                             Cost = 20000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6443),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6443),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9491),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9492),
                             FreeTrialCount = 10,
                             IsActive = false,
                             IsDeleted = false,
@@ -1536,8 +1541,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 8L,
                             Cost = 10000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6450),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6450),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9499),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9500),
                             FreeTrialCount = 5,
                             IsActive = false,
                             IsDeleted = false,
@@ -1550,8 +1555,8 @@ namespace Bounce_DbOps.Migrations
                         {
                             Id = 9L,
                             Cost = 5000.0,
-                            DateCreated = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6456),
-                            DateModified = new DateTime(2022, 12, 18, 9, 0, 15, 433, DateTimeKind.Local).AddTicks(6456),
+                            DateCreated = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9507),
+                            DateModified = new DateTime(2022, 12, 15, 18, 17, 44, 394, DateTimeKind.Local).AddTicks(9507),
                             FreeTrialCount = 2,
                             IsActive = false,
                             IsDeleted = false,

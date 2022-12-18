@@ -2,6 +2,7 @@
 using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
+using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Therapist;
 using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
@@ -27,14 +28,16 @@ namespace Bounce.Services.Implementation.Services.Therapist
         private readonly IMapper _mapper;
         private readonly SessionManager _sessionManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IPatientServices _patientServices;
 
-        public TherapistServices(BounceDbContext context, FileManager fileManager, AdminLogger adminLogger, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager) : base(context)
+        public TherapistServices(BounceDbContext context, FileManager fileManager, AdminLogger adminLogger, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager, IPatientServices patientServices) : base(context)
         {
             _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
             _adminLogger = adminLogger ?? throw new ArgumentNullException(nameof(adminLogger));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _sessionManager = sessionManager;
             _userManager = userManager;
+            _patientServices = patientServices;
         }
 
         public async Task<Response> CreateTherapistProfile(TherapistProfileDto model)
@@ -125,6 +128,75 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
         }
 
+
+        public Response GetPatientProfileHistory(long patientId)
+        {
+            try
+            {
+                var profile = _context.UserProfile.FirstOrDefault(x => x.UserId == patientId);
+                if (profile == null)
+                    return AuxillaryResponse("user does not exist", StatusCodes.Status400BadRequest);
+
+
+                var data = new
+                {
+                    PatientName = profile.FirstName + " " + profile.LastName,
+                    PatientId = patientId,
+                    PatientNamePicure = profile.FilePath,
+                    Gender = profile.Gender,
+                    DateOfBirth = profile.DateOfBirth.Date.ToString("MMM dd"),
+                    PhoneNumber = profile.Phone,
+                    PhysicalHealth = profile.PhysicalHealthRate,
+                    MentalHealth = profile.MentalHealthRate,
+                    EmotionalHealth = profile.EmotionalHealthRate,
+                    EatingHabit = profile.EatingHabit
+
+                };
+
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
+
+        public Response GetTherapistConsultaionById(long id)
+        {
+            try
+            {
+
+                var data = (from consultation in _context.AppointmentRequest
+                            where consultation.Id == id && !consultation.IsDeleted
+                            join patient in _context.UserProfile on consultation.PatientId equals patient.Id
+                            select new
+                            {
+                                PatientName = patient.FirstName + " " + patient.LastName,
+                                PatientId = patient.Id,
+                                PatientNamePicure = patient.FilePath,
+                                PrefaredDate = consultation.Date,
+                                AvailableTime = consultation.StartTimeToString,
+                                AdditionalNote = consultation.ProblemDecription
+
+                            }).FirstOrDefault();
+
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
+
+
+
+
         public Response GetTherapistConsultaion()
         {
             try
@@ -132,15 +204,21 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 var user = _sessionManager.CurrentLogin;
                 var data = (from consultation in _context.AppointmentRequest
                             where consultation.TherapistId == user.Id && !consultation.IsDeleted
-                            && consultation.IsPaymentCompleted
+                            //&& consultation.IsPaymentCompleted
                             join patient in _context.UserProfile on consultation.PatientId equals patient.Id
                             select new
                             {
                                 PatientName = patient.FirstName + " " + patient.LastName,
-                                ProfilePicure = patient.FilePath,
+                                PatientId = patient.Id,
+                                PatientNamePicure = patient.FilePath,
                                 Date = consultation.Date,
-                                Time = consultation.StartTime,
-                                EndTime = consultation.EndTime
+                                SatrtTime = consultation.StartTimeToString,
+                                EndTime = consultation.EndTime,
+                                Status = consultation.Status.ToString(),
+                                IsDueTime = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Due ? true : false,
+                                IsDue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Due ? true : false,
+                                IsOverdue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Overdue ? true : false,
+
 
                             });
                             
@@ -168,24 +246,26 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
                 var ratings = _context.Reviews.Where(x => !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
 
-
                 var data = new
                 {
                     TherapistId = id,
+                    Title = profile.Title,
                     FirstName = profile.FirstName,
                     LastName = profile.LastName,
-                    Title = profile.Title,
-                    Descipline = profile.Specialization,
-                    ProfilePicture = profile.ProfilePicture,
-                    AboutMe = profile.Email,
-                    ConsultaionDays = profile.ConsultationDays.Split('|').ToList(),
-                    ConsultaionStartTime = profile.ConsultationStartTime,
-                    ConsultaionEndTime = profile.ConsultationEndTime,
-                    Rating = ratings.Count(),
-                    PatientCount = 50
+                    YearsExperience = profile.YearsOfExperience,
+                    About = profile.Email,
+                    PhoneNUmber = profile.PhoneNumber,
+                    Specialization = profile.Specialization,
+                    ConsultaionDays = profile?.ConsultationDays?.ToSplit('|'),
+                    StartTime = profile.ConsultationStartTime,
+                    EndTime = profile.ConsultationEndTime,
+                    PicturePath = profile.ProfilePicture,
+                    ServiceChargePerHoure = 50000,
+                    NumberOfPatient = 50,
+                    ReviewCount = ratings.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).Count(),
+                    ReviewRatio = _patientServices.CalculateTherapisRating(user.Id).Ratio
 
                 };
-
                 return SuccessResponse(data: data);
 
             }

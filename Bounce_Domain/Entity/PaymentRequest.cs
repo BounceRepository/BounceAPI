@@ -16,9 +16,11 @@ namespace Bounce_Domain.Entity
         public long? UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; }
-        public long? PlanId { get; set; }
-        [ForeignKey("PlanId")]
-        public virtual Plan Plan { get; set; }
+
+        public long? SubId { get; set; }
+        public long? SubPlanId { get; set; }
+        [ForeignKey("SubId")]
+        public virtual SubPlan SubPlan { get; set; }
         public double Amount { get; set; }
         public string? PaymentDecription { get; set; }
         public DateTime CompletedTime { get; set; }

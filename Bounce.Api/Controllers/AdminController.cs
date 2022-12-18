@@ -9,6 +9,10 @@ namespace Bounce.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
+    //[Route("api/v{version:apiVersion}/[controller]")]
+    //[ApiController]
+    //[ApiVersion("2.0")]
     public class AdminController : BaseController
     {
         private readonly IAdminServices adminServices;

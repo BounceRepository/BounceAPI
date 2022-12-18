@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bounce_Domain.Enum;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,6 +12,10 @@ namespace Bounce_Domain.Entity
 {
     public class AppointmentRequest : BaseEntity
     {
+        public AppointmentRequest()
+        {
+            PaymentType = "Wallet";
+        }
         public long? PatientId { get; set; }
         [ForeignKey(nameof(PatientId))]
         [JsonIgnore]
@@ -23,8 +28,8 @@ namespace Bounce_Domain.Entity
         public string TrxRef { get; set; }
 
         [Display(Name = "Start Time")]
-        public string AgeRange { get; set; }
-        public double Price { get; set; }
+        public string StartTimeToString { get; set; }
+ 
         public double TotalAMount { get; set; }
         public DateTimeOffset?  StartTime{ get; set; }
 
@@ -32,12 +37,13 @@ namespace Bounce_Domain.Entity
 
         public DateTime? Date { get; set; }
         public DateTime AvailableTime { get; set; }
+        public string ReasonForTherapy { get; set; }
         [Required]
         public string PaymentType { get; set; }
-        [Required]
-        public string AppointmentType { get; set; }
+   
         [Required]
         public string ProblemDecription { get; set; }
+        public AppointmentStatus Status { get; set; }
         public bool IsPaymentCompleted { get; set; }
     }
 }

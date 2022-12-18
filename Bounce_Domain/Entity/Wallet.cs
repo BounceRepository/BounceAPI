@@ -17,6 +17,8 @@ namespace Bounce_Domain.Entity
 
         public double Balance { get; set; }
         public double ReferalBonus { get; set; }
+        [NotMapped]
+        public double Commission { get; set; }
         public double AvailableBalance {
 
             get

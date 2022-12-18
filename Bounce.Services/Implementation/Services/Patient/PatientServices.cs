@@ -1,8 +1,13 @@
 ﻿using AutoMapper;
+using Bounce.DataTransferObject.DTO;
+using Bounce.DataTransferObject.DTO.Notification;
 using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Payment;
 using Bounce.DataTransferObject.Helpers;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
+using Bounce_Application.DTO;
+using Bounce_Application.Persistence.Interfaces.Helper;
+using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
 using Bounce_Application.SeriLog;
@@ -11,6 +16,7 @@ using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Bounce_Domain.Enum;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,24 +36,33 @@ namespace Bounce.Services.Implementation.Services.Patient
         private readonly FileManager _fileManager;
         private readonly AdminLogger _adminLogger;
         private readonly IPaymentServices _paymentServices;
+        private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor contextAccessor;
+        private string rootPath = "";
         private string root = "";
+        private readonly IHostingEnvironment _hostingEnvironment;
         private readonly SessionManager _sessionManager;
-        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger, IPaymentServices paymentServices, IMapper mapper, IHttpContextAccessor contextAccessor, SessionManager sessionManager) : base(context)
+        private readonly IEmalService _EmailService;
+        public PatientServices(BounceDbContext context, UserManager<ApplicationUser> userManager, FileManager fileManager, AdminLogger adminLogger, IPaymentServices paymentServices, IMapper mapper, IHttpContextAccessor contextAccessor, SessionManager sessionManager, INotificationService notificationService, IEmalService emailService, IHostingEnvironment hostingEnvironment) : base(context)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-            _fileManager = fileManager;
-            _adminLogger = adminLogger;
-            _paymentServices = paymentServices;
-            _mapper = mapper;
-            this.contextAccessor = contextAccessor;
+            _fileManager = fileManager ?? throw new ArgumentNullException(nameof(fileManager));
+            _adminLogger = adminLogger ?? throw new ArgumentNullException(nameof(paymentServices));
+            _paymentServices = paymentServices ?? throw new ArgumentNullException(nameof(fileManager));
+            _hostingEnvironment = hostingEnvironment ?? throw new ArgumentNullException(nameof(hostingEnvironment));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            this.contextAccessor = contextAccessor ?? throw new ArgumentNullException(nameof(contextAccessor));
+            _sessionManager = sessionManager ?? throw new ArgumentNullException(nameof(sessionManager));
+            _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+            _EmailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
             var scheme = contextAccessor?.HttpContext?.Request.Scheme;
             var host = contextAccessor?.HttpContext?.Request.Host.Value;
             root = $"{scheme}://{host}/";
-            _sessionManager = sessionManager;
+            rootPath = _hostingEnvironment.ContentRootPath;
+           
             //contextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString();
-          
+
         }
 
         public async Task<Response> UpdateProfileAsync (UpdateProfileDto model)
@@ -117,22 +132,21 @@ namespace Bounce.Services.Implementation.Services.Patient
 
 
         }
-        public async Task<Response> SubscribeToPlan(long planId)
+        public async Task<Response> SubscribeToPlan(long planId, long subplanId)
         {
 
             try
             {
                 LogInfo($"{"Started task to initialize plan subscription }"}{" - "}{planId}{" - "}{DateTime.Now}");
 
-                var plan = _context.Plan.FirstOrDefault(x => x.Id == planId);
+                var plan = _context.SubPlan.FirstOrDefault(x => x.Id == subplanId);
 
                 var payment = new PaymentRequest
                 {
                     PaymentRequestId = DateTime.Now.Ticks.ToString(),
                     UserId = _sessionManager.CurrentLogin.Id,
-                    //PaymentType = paymentType,
                     Amount = plan.Cost,
-                    PlanId = planId,
+                    SubPlanId = subplanId,
                     PaymentDecription = "Plan Subscription",
                     CreatedTimeOffset = DateTimeOffset.Now
 
@@ -154,52 +168,127 @@ namespace Bounce.Services.Implementation.Services.Patient
 
         public async Task<Response> BookAppointment(AppointmentDto model)
         {
+            LogInfo($"{"Started task to initialize wallert payment for session Booking  }"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
+
             var user = _sessionManager.CurrentLogin;
             using (var _transaction = await  _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    var paymentModel = new PaymentRequestDto
-                    {
-                        PaymentType = model.PaymentType,
-                        Amount = model.TotalAMount
+                  
+                    var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
+                    if (wallet?.Balance < model.TotalAMount)
+                        return AuxillaryResponse("Insufficient balance", StatusCodes.Status402PaymentRequired);
 
-                    };
-                    LogInfo($"{"Started task to initialize payment }"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
-
-                    if (!Enum.TryParse<PaymentType>(model.PaymentType.ToLower(), out PaymentType paymentType))
-                        return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "Invalid payment type" };
-
+                    wallet.Balance =  wallet.Balance - model.TotalAMount;
+                    _context.Update(wallet);
 
                     var payment = new PaymentRequest
                     {
                         PaymentRequestId = DateTime.Now.Ticks.ToString(),
                         UserId = _sessionManager.CurrentLogin.Id,
-                        PaymentType = paymentType,
-                        Amount = paymentModel.Amount,
-                        PlanId = 1,
-
-
+                        PaymentType = PaymentType.wallet,
+                        Amount = model.TotalAMount,
+                        Completed = true,
+                        CompletedTime = DateTime.UtcNow
+                        
                     };
                     await _context.AddAsync(payment);
 
                     var time = model.StartTime.ConvertToHour((DateTimeOffset)model.Date);
                     var appointement = _mapper.Map<AppointmentRequest>(model);
                     appointement.StartTime = time;
-                    appointement.AgeRange = model.StartTime;
-                    appointement.EndTime = time.AddHours(2);
+                    appointement.StartTimeToString = model.StartTime;
+                    appointement.Status = AppointmentStatus.Upcomming;
+                    appointement.EndTime = time.AddHours(1);
                     appointement.AvailableTime = time.DateTime;
                     appointement.TrxRef = payment.PaymentRequestId;
                     appointement.PatientId = user.Id;
-                    _context.Add(appointement);
+                    appointement.ReasonForTherapy = model.ReasonForTherapy;
+                    await _context.AddAsync(appointement);
+
+                    var transaction = new Transaction
+                    {
+                        RequestId = payment.Id,
+                        TransactionType = TransactionType.Payment,
+                        Decription = "Session Booking",
+                        UserId = _sessionManager.CurrentLogin.Id,
+                        status = "00",
+                        CreatedTimeOffset = DateTimeOffset.UtcNow,
+                    };
+
+                   await  _context.AddAsync(transaction);
 
                     if (!await SaveAsync())
                         return FailedSaveResponse();
 
                     await _transaction.CommitAsync();
 
-   
-                    return SuccessResponse(data: new { TrxRef = appointement.TrxRef });
+                    var userProfile = _context.UserProfile.FirstOrDefault(x=> x.UserId == user.Id);
+                    var therapist = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == model.TherapistId);
+                    var therapistUser = _context.Users.FirstOrDefault(x => x.Id == model.TherapistId);
+                    var mailBuilder = new StringBuilder();
+
+                    mailBuilder.AppendLine("Dear" + " " + userProfile.FirstName + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Your session booking with { therapist?.Title + " " + therapist.FirstName + " " + therapist.LastName } was was scuccessful with .<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+
+                    var emailRequest = new EmailRequest
+                    {
+                        To = user.Email,
+                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                        Subject = "Consultaion Session Booking"
+                    };
+
+                    await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
+
+                    mailBuilder.Clear();
+
+                    mailBuilder.AppendLine("Dear" + " " + therapist.Title + " " + therapist.FirstName + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Your have an active session with { userProfile.FirstName + " " + userProfile.LastName} by {appointement.StartTime} .<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+
+                    var emailRequest2 = new EmailRequest
+                    {
+                        To = therapistUser?.Email,
+                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                        Subject = "Consultaion Session Booking"
+                    };
+                    await _EmailService.SendMail(emailRequest2).ConfigureAwait(false);
+
+                    var pushNotifications = new List<PushNotificationDto>();
+                    var patientPushNotification = new PushNotificationDto
+                    {
+                        Title = "Session Booking",
+                        Topic = "Wallet transaction",
+                        Message = $"Your have an active session {userProfile.FirstName + " " + userProfile.LastName} by {appointement.StartTime} ",
+                        TrxRef = appointement.TrxRef,
+                        userId = userProfile.UserId,
+
+                    };
+                    pushNotifications.Add(patientPushNotification);
+                    var TherapistPushNotification = new PushNotificationDto
+                    {
+                        Title = "Session Booking",
+                        Topic = "Apponitment Notification",
+                        Message = $"Your session booking with {therapist?.Title + " " + therapist.FirstName + " " + therapist.LastName} was was scuccessful with ",
+                        TrxRef = appointement.TrxRef,
+                        userId = therapistUser.Id
+
+                    };
+                    pushNotifications.Add(TherapistPushNotification);
+                  
+             
+                    await _notificationService.PushMultipleNotificationAsyn(pushNotifications);
+                    LogInfo($"{"Started task to initialize wallet payment for session Booking was successful }"}{" - "}{JsonConvert.SerializeObject(model)}{" - "}{DateTime.Now}");
+
+                    return SuccessResponse("your booking was successful");
+
+                    //return SuccessResponse(data: new { TrxRef = appointement.TrxRef });
                 }
                 catch (Exception ex)
                 {
@@ -217,15 +306,15 @@ namespace Bounce.Services.Implementation.Services.Patient
 
                 var query = await (from r in _context.AppointmentRequest
                                    where r.PatientId == user.Id
-                                   join a in _context.Appointments on r.Id equals a.AppointmentRequestId
-                                   where a.Status == AppointStatus.UpComming
+                                   //join a in _context.Appointments on r.Id equals a.AppointmentRequestId
+                                   //where a.Status == AppointStatus.UpComming
                                    join t in _context.Users on r.TherapistId equals t.Id
                                    join p in _context.TherapistProfiles on t.Id equals p.UserId
 
                                    select new
                                    {
                                        SessionId = r.Id,
-                                       StartTime = r.AgeRange,
+                                       StartTime = r.StartTimeToString,
                                        EndTime = r.EndTime,
                                        Date = r.StartTime,
                                        TherapistFirstName = p.FirstName + " " + p.LastName,
@@ -234,8 +323,12 @@ namespace Bounce.Services.Implementation.Services.Patient
                                        Therapist = t.Email,
                                        TherapistId = t.Id,
                                        Amount = r.TotalAMount,
+                                       ProblemDecription = r.ProblemDecription,
+                                       Status = r.Status.ToString(),
                                        IsCompleted = false,
- 
+                                       IsDue = r.Status == AppointmentStatus.Due ? true : false,
+                                       IsOverdue = r.Status == AppointmentStatus.Overdue ? true : false,
+
 
                                    }).OrderByDescending(x => x.EndTime).ToListAsync();
 
@@ -261,7 +354,8 @@ namespace Bounce.Services.Implementation.Services.Patient
 
                 var time = model.StartTime.ConvertToHour(model.Date);
                 session.DateModified = DateTime.Now;
-                session.AgeRange = model.StartTime;
+                session.StartTimeToString = model.StartTime;
+                session.Status = AppointmentStatus.Upcomming;
                 session.StartTime = time;
                 session.EndTime = time.AddHours(2);
                 session.AvailableTime = time.DateTime;
@@ -309,7 +403,7 @@ namespace Bounce.Services.Implementation.Services.Patient
                                 ReviewCount = ratings.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).Count(),
                                 ReviewRatio = CalculateTherapisRating(user.Id).Ratio
 
-                            }).ToList();
+                            }).OrderByDescending(x=> x.ReviewRatio).ToList();
 
                 return SuccessResponse(data: data);
 
@@ -385,111 +479,25 @@ namespace Bounce.Services.Implementation.Services.Patient
         public Response GetAllPlans()
         {
 
-            #region Subplans
-            var subplans = new List<SubPlan>
-            {
-                new SubPlan
-                {
-                    Title = "Annual",
-                    PLanId = 3,
-                    NumberOfMeditation = 100,
-                    Cost = 100000,
-                    TherapistCount = 50,
-                    FreeTrialCount = 50,
-
-                },
-                 new SubPlan
-                {
-                    Title = "Quarter",
-                    PLanId = 3,
-                    NumberOfMeditation = 50,
-                    Cost = 80000,
-                    TherapistCount = 36,
-                    FreeTrialCount = 30,
-
-                },
-                new SubPlan
-                {
-                    Title = "Month",
-                    PLanId = 3,
-                    NumberOfMeditation = 30,
-                    Cost = 500000,
-                    TherapistCount = 30,
-                    FreeTrialCount = 20,
-
-                },////////////////
-
-                 new SubPlan
-                {
-                    Title = "Annual",
-                    PLanId = 2,
-                    NumberOfMeditation = 50,
-                    Cost = 50000,
-                    TherapistCount = 30,
-                    FreeTrialCount = 20,
-
-                },
-                 new SubPlan
-                {
-                    Title = "Quarter",
-                    PLanId = 2,
-                    NumberOfMeditation = 40,
-                    Cost = 420000,
-                    TherapistCount = 30,
-                    FreeTrialCount = 30,
-
-                },
-                new SubPlan
-                {
-                    Title = "Month",
-                    PLanId = 2,
-                    NumberOfMeditation = 30,
-                    Cost = 350000,
-                    TherapistCount = 29,
-                    FreeTrialCount = 18,
-
-                },////////
-                 new SubPlan
-                {
-                    Title = "Annual",
-                    PLanId = 1,
-                    NumberOfMeditation = 30,
-                    Cost = 20000,
-                    TherapistCount = 20,
-                    FreeTrialCount = 10,
-
-                },
-                 new SubPlan
-                {
-                    Title = "Quarter",
-                    PLanId = 1,
-                    NumberOfMeditation = 20,
-                    Cost = 10000,
-                    TherapistCount = 15,
-                    FreeTrialCount = 5,
-
-                },
-                new SubPlan
-                {
-                    Title = "Month",
-                    PLanId = 2,
-                    NumberOfMeditation = 10,
-                    Cost = 5000,
-                    TherapistCount = 10,
-                    FreeTrialCount = 2,
-
-                },
-            };
-            #endregion
 
             try
             {
-                var plans = _context.Plan.ToList().Select(x => new
+                var plans = _context.Plan.Select(x => new
                 GetAllPlansDto
                 {
                     Id = x.Id,
                     Name = x.Name,
-                    SubPlans = subplans.Where(s=> s.PLanId == x.Id).ToList()
+                    SubPlans = x.SubPlans.Select(s=> new
+                    {
+                        SubPlanId = s.Id,
+                        Title = s.Title,
+                        PLanId = s.PLanId,
+                        NumberOfMeditation =s.NumberOfMeditation,
+                        Cost = s.Cost,
+                        TherapistCount = s.TherapistCount,
+                        FreeTrialCount = s.FreeTrialCount
+
+                    })
       
                 });
 
@@ -581,13 +589,13 @@ namespace Bounce.Services.Implementation.Services.Patient
                 var fiveStarRating = revews.Where(x => x.RateCount == 5).Sum(x => x.RateCount);
 
                 var total = oneStarRating + twoStarRating + threeStarRating + fourStarRating + fiveStarRating;
-                var oneStarPercent = (100 * oneStarRating) / total;
-                var twoStarPercent = (100 * twoStarRating) / total;
-                var threeStarPercent = (100 * threeStarRating) / total;
-                var fourStarPercent = (100 * fourStarRating) / total;
-                var fiveStarPercent = (100 * fiveStarRating) / total;
+                var oneStarPercent = oneStarRating > 0 ? (100 * oneStarRating) / total : 0;
+                var twoStarPercent = twoStarRating > 0 ? (100 * twoStarRating) / total : 0;
+                var threeStarPercent = threeStarRating > 0 ? (100 * threeStarRating) / total : 0;
+                var fourStarPercent = fourStarRating > 0 ? (100 * fourStarRating) / total : 0;
+                var fiveStarPercent = fiveStarRating > 0 ? (100 * fiveStarRating) / total : 0;
 
-                var reviewRatio = (decimal.Parse(total.ToString()) / decimal.Parse(revews.Count().ToString()));
+                var reviewRatio = (decimal.Parse(total.ToString()) > 0 ? decimal.Parse(total.ToString()) / decimal.Parse(revews.Count().ToString()) : 0);
 
                 var query = (from review in revews
                             join profile in _context.UserProfile on review.PatientUserId equals profile.UserId
@@ -629,7 +637,9 @@ namespace Bounce.Services.Implementation.Services.Patient
 
         public ReviewCalculationDto CalculateTherapisRating(long id)
         {
-            var revews = _context.Reviews.Where(x => !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
+            var revews = _context.Reviews.Where(x => !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0)
+                .OrderByDescending(x => x.DateCreated).ToList();
+
             var oneStarRating = revews.Where(x => x.RateCount == 1).Sum(x => x.RateCount);
             var twoStarRating = revews.Where(x => x.RateCount == 2).Sum(x => x.RateCount);
             var threeStarRating = revews.Where(x => x.RateCount == 3).Sum(x => x.RateCount);
@@ -637,17 +647,17 @@ namespace Bounce.Services.Implementation.Services.Patient
             var fiveStarRating = revews.Where(x => x.RateCount == 5).Sum(x => x.RateCount);
 
             var total = oneStarRating + twoStarRating + threeStarRating + fourStarRating + fiveStarRating;
-            var oneStarPercent = (100 * oneStarRating) / total;
-            var twoStarPercent = (100 * twoStarRating) / total;
-            var threeStarPercent = (100 * threeStarRating) / total;
-            var fourStarPercent = (100 * fourStarRating) / total;
-            var fiveStarPercent = (100 * fiveStarRating) / total;
+            var oneStarPercent = oneStarRating > 0 ? (100 * oneStarRating) / total : 0;
+            var twoStarPercent = twoStarRating > 0 ? (100 * twoStarRating) / total : 0;
+            var threeStarPercent = threeStarRating > 0 ?(100 * threeStarRating) / total : 0;
+            var fourStarPercent = fourStarRating > 0 ? (100 * fourStarRating) / total : 0;
+            var fiveStarPercent = fiveStarRating > 0  ? (100 * fiveStarRating) / total : 0;
 
-            var reviewRatio = (decimal.Parse(total.ToString()) / decimal.Parse(revews.Count().ToString()));
+            var reviewRatio = (decimal.Parse(total.ToString()) > 0 ? decimal.Parse(total.ToString()) / decimal.Parse(revews.Count().ToString()) : 0);
 
             return new ReviewCalculationDto
             {
-                Reviews = revews,
+                Reviews =  revews,
                 TotalRating = total,
                 OneStarPercent = oneStarPercent,
                 TwoStarPercent = twoStarPercent,
@@ -658,18 +668,5 @@ namespace Bounce.Services.Implementation.Services.Patient
             };
         }
 
-
-        public class ReviewCalculationDto
-        {
-            public List<TherapistReview> Reviews { get; set; }
-            public int TotalRating { get; set; }
-            public int OneStarPercent { get; set; }
-            public int TwoStarPercent { get; set; }
-            public int ThreeStarPercent { get; set; }
-            public int FourStarPercent { get; set; }
-            public int FiveStarPercent { get; set; }
-            public decimal Ratio { get; set; }
-
-        }
     }
 }

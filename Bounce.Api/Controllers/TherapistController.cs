@@ -32,12 +32,24 @@ namespace Bounce.Api.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("GetTherpaistById")]
-       
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public IActionResult GetTherpaistById([FromQuery] long id) => Response(_therapistServices.GetTherapisById(id));
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
-        [HttpGet("GetConsultaions")]
-       
+        [HttpGet("GetConsultaions")]      
         public IActionResult Consultaions() => Response(_therapistServices.GetTherapistConsultaion());
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
+        [HttpGet("GetPatientProfileHistoryByPatientId")]
+        public IActionResult PatientProfileHistory([FromQuery] long patientId) => Response(_therapistServices.GetPatientProfileHistory(patientId));
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
+        [HttpGet("GetConsultaionById")]
+        public IActionResult Consultaions([FromQuery] long consultaionId) => Response(_therapistServices.GetTherapistConsultaionById(consultaionId));
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
         [HttpPut("UpdateBankAccountDetails")]
        

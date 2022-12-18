@@ -11,7 +11,7 @@ namespace Bounce_Application.Persistence.Interfaces.Payment
 {
     public interface IPaymentServices
     {
-        Task<Response> BookAppointment(AppointmentDto model);
+
         Task<Response> ComfirmWalletTop(string TrxRef);
         Task<Response> ConfirmAppointment(string trxRef);
         Task<Response> GetWalletBallance();

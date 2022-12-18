@@ -71,6 +71,7 @@ namespace Bounce.Services.Implementation.Services
             {
                 StatusCode = statusCode,
                 Message = message,
+                
    
             };
         }
