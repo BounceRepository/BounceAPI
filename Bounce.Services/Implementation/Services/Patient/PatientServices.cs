@@ -165,6 +165,51 @@ namespace Bounce.Services.Implementation.Services.Patient
             }
         }
 
+        public async Task<Response> GetAvialableTimeByTherapistId(long therapistid, DateTime date)
+        {
+            try
+            {
+                var therapist = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == therapistid);
+                if (therapist == null)
+                    return AuxillaryResponse("user not found", StatusCodes.Status400BadRequest);
+
+                var validTimes = new List<string>();
+                var startTime = therapist.ConsultationStartTime.ConvertToHourLocal(DateTime.Now);
+                var endTime = therapist.ConsultationEndTime.ConvertToHourLocal(DateTime.Now);
+
+                var availableHours = GetAvailableSingleTime(startTime, endTime);
+                var consultaionsTimes = _context.AppointmentRequest.Where(x=> x.Date.Value.Date == date.Date)
+                    .Where(x => x.TherapistId == therapistid).Select(x => x.StartTimeToString).ToList();
+                foreach (var time in availableHours)
+                {
+                    if (!consultaionsTimes.Contains(time))
+                    {
+                        if(date.Date == DateTime.Now.Date)
+                        {
+                            if(time.ValidTime())
+                            {
+                                validTimes.Add(time);
+                            }
+                          
+                        }
+                        else
+                        {
+                            validTimes.Add(time);
+                        }
+                       
+                    }
+                }
+        
+
+                return SuccessResponse(data: validTimes);
+
+            }
+            catch (Exception ex)
+            {
+               
+                return InternalErrorResponse(ex);
+            }
+        }
 
         public async Task<Response> BookAppointment(AppointmentDto model)
         {
@@ -175,7 +220,12 @@ namespace Bounce.Services.Implementation.Services.Patient
             {
                 try
                 {
-                  
+                    var time = model.StartTime.ConvertToHourLocal((DateTime)model.Date);
+                    if (time <= DateTime.Now)
+                    {
+                        return AuxillaryResponse("Your booking time must be greater than current time", StatusCodes.Status400BadRequest);
+                    }
+
                     var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
                     if (wallet?.Balance < model.TotalAMount)
                         return AuxillaryResponse("Insufficient balance", StatusCodes.Status402PaymentRequired);
@@ -195,16 +245,18 @@ namespace Bounce.Services.Implementation.Services.Patient
                     };
                     await _context.AddAsync(payment);
 
-                    var time = model.StartTime.ConvertToHour((DateTimeOffset)model.Date);
+                    //var time = model.StartTime.ConvertToHour((DateTimeOffset)model.Date);
                     var appointement = _mapper.Map<AppointmentRequest>(model);
                     appointement.StartTime = time;
                     appointement.StartTimeToString = model.StartTime;
                     appointement.Status = AppointmentStatus.Upcomming;
                     appointement.EndTime = time.AddHours(1);
-                    appointement.AvailableTime = time.DateTime;
+                    appointement.AvailableTime = time;
                     appointement.TrxRef = payment.PaymentRequestId;
                     appointement.PatientId = user.Id;
                     appointement.ReasonForTherapy = model.ReasonForTherapy;
+                    appointement.IsPaymentCompleted = true;
+                    
                     await _context.AddAsync(appointement);
 
                     var transaction = new Transaction
@@ -634,6 +686,40 @@ namespace Bounce.Services.Implementation.Services.Patient
             }
         }
 
+        public Response GetPatienceById (long id)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(x => x.Id == id && x.Discriminator == UserType.Patient);
+                if (user == null)
+                    return AuxillaryResponse("User does not exist", StatusCodes.Status404NotFound);
+
+                var patientProfile = _context.UserProfile.FirstOrDefault(x=> x.UserId == id);
+                if (patientProfile == null)
+                    return AuxillaryResponse("User does not have not profile", StatusCodes.Status404NotFound);
+
+
+                var data = new
+                {
+                    Id = id,
+                    UserName = user.UserName,
+                    FirstName = patientProfile?.FirstName,
+                    LastName = patientProfile?.LastName,
+                    Email = user.Email,
+                    ProfilePicture = patientProfile?.FilePath,
+                    Gender = patientProfile?.Gender,
+                    PhoneNumber = patientProfile?.Phone,
+                    DateOfBirth = patientProfile?.DateOfBirth.ToShortDateString(),
+
+                };
+                return SuccessResponse(data: data);
+            }
+            catch(Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
 
         public ReviewCalculationDto CalculateTherapisRating(long id)
         {
@@ -666,6 +752,70 @@ namespace Bounce.Services.Implementation.Services.Patient
                 Ratio = Math.Round(reviewRatio, 1),
 
             };
+        }
+
+        private List<string> GetAvailableSingleTime(DateTime startDate, DateTime endDate)
+        {
+            var availabeleTimes = new List<string>();
+            var count = 0;
+
+            while (count != -1)
+            {
+                var time2 = startDate.AddHours(count).ToString("hh:00 t");
+                var time3 = startDate.AddHours(count + 1).ToString("hh:00 t");
+                var formatedStartDate = Uri.UnescapeDataString(time2);
+
+                if (formatedStartDate.Contains("P"))
+                    formatedStartDate = formatedStartDate.Replace("P", "PM");
+                if (formatedStartDate.Contains("A"))
+                    formatedStartDate = formatedStartDate.Replace("A", "AM");
+
+
+                var realTime = $"{formatedStartDate}";
+                availabeleTimes.Add(realTime);
+
+                count++;
+                if (endDate.Hour == startDate.AddHours(count).Hour)
+                {
+                    count = -1;
+                }
+            }
+            return availabeleTimes;
+        }
+
+        private List<string> GetAvailableTime(DateTime startDate, DateTime endDate)
+        {
+            var availabeleTimes = new List<string>();
+            var count = 0;
+
+            while (count != -1)
+            {
+                var time2 = startDate.AddHours(count).ToString("hh:00 t");
+                var time3 = startDate.AddHours(count + 1).ToString("hh:00 t");
+                var formatedStartDate = Uri.UnescapeDataString(time2);
+                var formatedEndDate= Uri.UnescapeDataString(time3);
+
+                if (formatedStartDate.Contains("P"))
+                    formatedStartDate = formatedStartDate.Replace("P", "PM");
+                if (formatedStartDate.Contains("A"))
+                    formatedStartDate = formatedStartDate.Replace("A", "AM");
+
+                if (formatedEndDate.Contains("P"))
+                    formatedEndDate = formatedEndDate.Replace("P", "PM");
+                if (formatedEndDate.Contains("A"))
+                    formatedEndDate = formatedEndDate.Replace("A", "AM");
+
+
+                var realTime = $"{formatedStartDate} - {formatedEndDate}";
+                availabeleTimes.Add(realTime);
+
+                count++;
+                if (endDate.Hour == startDate.AddHours(count).Hour)
+                {
+                    count = -1;
+                }
+            }
+            return availabeleTimes;
         }
 
     }

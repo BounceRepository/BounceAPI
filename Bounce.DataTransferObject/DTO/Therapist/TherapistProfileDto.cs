@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace Bounce.DataTransferObject.DTO.Therapist
 {
-    public class TherapistProfileDto
+
+    public class TherapistBaseProfileDto
     {
         [Required]
         public string? Title { get; set; }
@@ -38,6 +39,10 @@ namespace Bounce.DataTransferObject.DTO.Therapist
         public string? ConsultationStartTime { get; set; }
         [Required]
         public string? ConsultationEndTime { get; set; }
+    }
+    public class TherapistProfileDto : TherapistBaseProfileDto
+    {
+       
         public IFormFile ProfilePicture { get; set; }
     }
 }

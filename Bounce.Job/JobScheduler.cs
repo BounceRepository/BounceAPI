@@ -1,4 +1,5 @@
-﻿using Bounce_Application.DTO;
+﻿using Bounce.DataTransferObject.DTO.Notification;
+using Bounce_Application.DTO;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
@@ -62,6 +63,7 @@ namespace Bounce.Job
                                    PatientName =    patientProfile.FirstName,
                                    SectionTime = app.AvailableTime
                                }).ToList();
+            var pushNotifications = new List<PushNotificationDto>();
 
             foreach (var appointment in appoinments)
             {
@@ -145,6 +147,29 @@ namespace Bounce.Job
                         Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Notification"),
                         Subject = "Email Confirmation"
                     };
+
+           
+                    //var patientPushNotification = new PushNotificationDto
+                    //{
+                    //    Title = "Appointment with ",
+                    //    Topic = "Wallet transaction",
+                    //    Message = $"Your have an active session {userProfile.FirstName + " " + userProfile.LastName} by {appointement.StartTime} ",
+                    //    TrxRef = appointement.TrxRef,
+                    //    userId = userProfile.UserId,
+
+                    //};
+                    //pushNotifications.Add(patientPushNotification);
+                    //var TherapistPushNotification = new PushNotificationDto
+                    //{
+                    //    Title = "Session Booking",
+                    //    Topic = "Apponitment Notification",
+                    //    Message = $"Your session booking with {therapist?.Title + " " + therapist.FirstName + " " + therapist.LastName} was was scuccessful with ",
+                    //    TrxRef = appointement.TrxRef,
+                    //    userId = therapistUser.Id
+
+                    //};
+                    //pushNotifications.Add(TherapistPushNotification);
+
 
 
                 }

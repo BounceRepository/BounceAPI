@@ -42,6 +42,82 @@ namespace System
 			};
 		}
 
+		public static DateTime ConvertToHourLocal(this string startTime, DateTime dateTime)
+		{
+			if (string.IsNullOrEmpty(startTime))
+				throw new ArgumentNullException("string can not be null");
+
+			try
+			{
+
+				var timeInt = int.Parse(startTime.Split(':')[0]);
+				var timeUTC = startTime.Split(' ').LastOrDefault().ToLower();
+				if (timeUTC == "pm" && timeInt != 12)
+				{
+					timeInt = 12 + timeInt;
+				}
+
+				return dateTime.Date.AddHours(timeInt);
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentNullException("string can not be null");
+			};
+		}
+
+		public static bool ValidTime2(this string startTime)
+		{
+			if (string.IsNullOrEmpty(startTime))
+				throw new ArgumentNullException("string can not be null");
+
+			try
+			{
+				var timeInt = int.Parse(startTime.Split(':')[0]);
+				var timeUTC = startTime.Split(' ').LastOrDefault().ToLower();
+				if (timeUTC == "pm" && timeInt != 12)
+				{
+					timeInt = 12 + timeInt;
+				}
+				var time = DateTime.Now.Date.AddHours(timeInt);
+				if (time.Hour > DateTime.Now.Hour - 1)
+					return true;
+				else
+					return false;
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentNullException("string can not be null");
+			};
+		}
+
+		public static bool ValidTime(this string startTime)
+		{
+			if (string.IsNullOrEmpty(startTime))
+				throw new ArgumentNullException("string can not be null");
+
+			try
+			{
+				var decr1 = startTime.Split(':');		
+				var decr2 = decr1[1].Split(' ');
+				var decr = startTime.Split(':')[0];
+				var timeInt = int.Parse(decr.Split(':')[0]);
+				var timeUTC = decr2[1].ToLower();
+				if (timeUTC == "pm" && timeInt != 12)
+				{
+					timeInt = 12 + timeInt;
+				}
+
+				var time =  DateTime.Now.Date.AddHours(timeInt);
+				if (time.Hour > DateTime.Now.Hour - 1)
+					return true;
+				else
+					return false;
+			}
+			catch (Exception ex)
+			{
+				throw new ArgumentNullException("string can not be null");
+			};
+		}
 
 
 

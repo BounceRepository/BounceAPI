@@ -49,42 +49,63 @@ namespace Bounce.Services.Implementation.Services.Notification
             _adminLogger = adminLogger;
         }
 
+
         public async Task PushMultipleNotificationAsyn(List<PushNotificationDto> models)
         {
             try
             {
+                var notifications = new List<NotificationModel>();
                 foreach (var model in models)
                 {
                     var user = _userManager.Users.FirstOrDefault(x => x.Id == model.userId);
-                   
-                   if(!string.IsNullOrEmpty(user.NotificationToken))
+                    if (!string.IsNullOrEmpty(user.NotificationToken))
                     {
-                        var defaultApp = FirebaseApp.Create(new AppOptions()
-                        {
-                            Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
-                        });
-
-                        var message = new Message()
+                        try
                         {
 
-                            Data = new Dictionary<string, string>()
+                            var notification = new NotificationModel()
                             {
-                                ["User"] = user.Email,
-                                ["UserName"] = user.UserName,
-                                ["Time"] = DateTime.Now.ToString(),
-
-                            },
-                            Notification = new FirebaseAdmin.Messaging.Notification
-                            {
+                                UserId = user.Id,
                                 Title = model.Title,
-                                Body = model.Message,
+                                Message = model.Message,
+                                IsNewNotication = true,
+                                CreatedTimeOffset = DateTimeOffset.UtcNow
+                            };
+                            _context.Add(notification);
+                            await _context.SaveChangesAsync();
 
-                            },
-                            Token = user.NotificationToken,
-                        };
-                        var messaging = FirebaseMessaging.DefaultInstance;
-                        var result = await messaging.SendAsync(message);
-                        defaultApp.Delete();
+                            var defaultApp = FirebaseApp.Create(new AppOptions()
+                            {
+                                Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
+                            });
+
+                            var message = new Message()
+                            {
+
+                                Data = new Dictionary<string, string>()
+                                {
+                                    ["User"] = user.Email,
+                                    ["UserName"] = user.UserName,
+                                    ["Time"] = DateTime.Now.ToString(),
+
+                                },
+                                Notification = new FirebaseAdmin.Messaging.Notification
+                                {
+                                    Title = model.Title,
+                                    Body = model.Message,
+
+                                },
+                                Token = user.NotificationToken,
+                            };
+                            var messaging = FirebaseMessaging.DefaultInstance;
+                            var result = await messaging.SendAsync(message);
+                            defaultApp.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+                            LogError(models, ex, "push notification failed");
+                            continue;
+                        }
                     }
                   
                    
@@ -93,6 +114,7 @@ namespace Bounce.Services.Implementation.Services.Notification
             }
             catch (Exception ex)
             {
+                
                 LogError(models, ex , "push notification failed");
             }
         }
@@ -105,6 +127,16 @@ namespace Bounce.Services.Implementation.Services.Notification
                 {
                     Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
                 });
+                var notification = new NotificationModel()
+                {
+                    UserId = user.Id,
+                    Title = model.Title,
+                    Message = model.Message,
+                    IsNewNotication = true,
+                    CreatedTimeOffset = DateTimeOffset.UtcNow
+                };
+                _context.Add(notification);
+                await _context.SaveChangesAsync();
 
                 var message = new Message()
                 {
@@ -116,10 +148,12 @@ namespace Bounce.Services.Implementation.Services.Notification
                         ["Time"] = DateTime.Now.ToString(),
 
                     },
+                    //Topic = model.Topic,
                     Notification = new FirebaseAdmin.Messaging.Notification
                     {
                         Title = model.Title,
                         Body = model.Message,
+                        
                         
                     },
                     Token = user.NotificationToken,
@@ -193,7 +227,7 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var notifications = _context.Notification.Where(x => !x.IsDeleted && x.Id == _sessionManager.CurrentLogin.Id)
+                var notifications = _context.Notification.Where(x => !x.IsDeleted && x.UserId == _sessionManager.CurrentLogin.Id)
                     .OrderByDescending(x=> x.DateCreated).ToList();
                 var totalnotication = notifications.Count();
                 var totalOpenNotifcation = notifications.Where(x => x.IsNewNotication).Count();
@@ -204,9 +238,9 @@ namespace Bounce.Services.Implementation.Services.Notification
                     NotificationId = x.Id,
                     Message = x.Message,
                     Title = x.Title,
-                    IsNewNotification = x.IsNewNotication
-                    //Time = x.DateCreated
-                });
+                    IsNewNotification = x.IsNewNotication,
+                    Time = x.DateCreated
+                });;
                 var data = new
                 {
                     Total = totalnotication,

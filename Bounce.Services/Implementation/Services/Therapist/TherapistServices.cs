@@ -52,6 +52,10 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     profile.UserId = user.Id;
 
                     var entity = _context.Set<TherapistProfile>().Add(profile);
+                    var response  = _mapper.Map<TherapistProfileResponseDto>(model);
+
+                    response.ProfilePicture = profile.ProfilePicture;
+
                     if (!await SaveAsync())
                         return FailedSaveResponse(model);
 
@@ -59,7 +63,8 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     user.HasProfile = true;
                     await _userManager.UpdateAsync(user);
                    await transaction.CommitAsync();
-                    return SuccessResponse();
+               
+                    return SuccessResponse(data: response);
 
                 }
                 catch (Exception ex)
@@ -195,8 +200,6 @@ namespace Bounce.Services.Implementation.Services.Therapist
         }
 
 
-
-
         public Response GetTherapistConsultaion()
         {
             try
@@ -213,14 +216,14 @@ namespace Bounce.Services.Implementation.Services.Therapist
                                 PatientNamePicure = patient.FilePath,
                                 Date = consultation.Date,
                                 SatrtTime = consultation.StartTimeToString,
-                                EndTime = consultation.EndTime,
+                                ReasonForTherapy = consultation.ReasonForTherapy,
+                                //EndTime = consultation.EndTime.Value.DateTime,
                                 Status = consultation.Status.ToString(),
-                                IsDueTime = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Due ? true : false,
                                 IsDue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Due ? true : false,
                                 IsOverdue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Overdue ? true : false,
 
 
-                            });
+                            }).ToList();
                             
                 return SuccessResponse(data: data);
 

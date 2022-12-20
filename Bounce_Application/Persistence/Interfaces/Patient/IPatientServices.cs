@@ -16,7 +16,9 @@ namespace Bounce_Application.Persistence.Interfaces.Patient
         Task<Response> CreateReview(CreateReviewDto model);
         Response GetAllFeelings();
         Response GetAllPlans();
+        Task<Response> GetAvialableTimeByTherapistId(long therapistid, DateTime date);
         Response GetMessages();
+        Response GetPatienceById(long id);
         Response GetReviewByTherapistId(long id);
         Task<Response> GetTherapist();
         Response GetUserFeelings();
