@@ -47,24 +47,50 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 try
                 {
                     var user = _sessionManager.CurrentLogin;
-                    var profile = _mapper.Map<TherapistProfile>(model);
-                    profile.ProfilePicture = _fileManager.FileUpload(model.ProfilePicture);
-                    profile.UserId = user.Id;
+                    var existingProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == user.Id);
+                    if(existingProfile != null)
+                    {
+                        var profile = _mapper.Map<TherapistProfile>(model);
+                        if(model.ProfilePicture != null)
+                        {
+                            existingProfile.ProfilePicture = _fileManager.FileUpload(model.ProfilePicture);
+                        }
+            
+                        var entity = _context.Set<TherapistProfile>().Add(profile);
+                        var response = _mapper.Map<TherapistProfileResponseDto>(model);
 
-                    var entity = _context.Set<TherapistProfile>().Add(profile);
-                    var response  = _mapper.Map<TherapistProfileResponseDto>(model);
+                        response.ProfilePicture = profile.ProfilePicture;
+                        response.EmailAddress = user.Email;
 
-                    response.ProfilePicture = profile.ProfilePicture;
+                        if (!await SaveAsync())
+                            return FailedSaveResponse(model);
+                        await transaction.CommitAsync();
 
-                    if (!await SaveAsync())
-                        return FailedSaveResponse(model);
+                        return SuccessResponse(data: response);
+                    }
+                    else
+                    {
+                        var profile = _mapper.Map<TherapistProfile>(model);
+                        profile.ProfilePicture = _fileManager.FileUpload(model.ProfilePicture);
+                        profile.UserId = user.Id;
 
-                    user.TherapistUserProfileId = entity.Entity.Id;
-                    user.HasProfile = true;
-                    await _userManager.UpdateAsync(user);
-                   await transaction.CommitAsync();
-               
-                    return SuccessResponse(data: response);
+                        var entity = _context.Set<TherapistProfile>().Add(profile);
+                        var response = _mapper.Map<TherapistProfileResponseDto>(model);
+
+                        response.ProfilePicture = profile.ProfilePicture;
+                        response.EmailAddress = user.Email;
+
+                        if (!await SaveAsync())
+                            return FailedSaveResponse(model);
+
+                        user.TherapistUserProfileId = entity.Entity.Id;
+                        user.HasProfile = true;
+                        await _userManager.UpdateAsync(user);
+                        await transaction.CommitAsync();
+
+                        return SuccessResponse(data: response);
+                    }
+                   
 
                 }
                 catch (Exception ex)
@@ -176,15 +202,18 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
                 var data = (from consultation in _context.AppointmentRequest
                             where consultation.Id == id && !consultation.IsDeleted
-                            join patient in _context.UserProfile on consultation.PatientId equals patient.Id
+                            join patient in _context.UserProfile on consultation.PatientId equals patient.UserId
                             select new
                             {
                                 PatientName = patient.FirstName + " " + patient.LastName,
                                 PatientId = patient.Id,
                                 PatientNamePicure = patient.FilePath,
                                 PrefaredDate = consultation.Date,
+                                ReasonForTherapy = consultation.ReasonForTherapy,
                                 AvailableTime = consultation.StartTimeToString,
-                                AdditionalNote = consultation.ProblemDecription
+                                AdditionalNote = consultation.ProblemDecription,
+                                IsDue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Due ? true : false,
+                                IsOverdue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Overdue ? true : false,
 
                             }).FirstOrDefault();
 
@@ -199,7 +228,21 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
         }
 
+        public static string GetEndDate(DateTimeOffset statrtTme)
+        {
+            if (statrtTme == null)
+                return "";
 
+            var time3 = statrtTme.ToString("hh:00 t");
+            var decodeMessage2 = Uri.UnescapeDataString(time3);
+            if (decodeMessage2.Contains("A"))
+                decodeMessage2 = decodeMessage2.Replace("A", "AM");
+
+            if (decodeMessage2.Contains("P"))
+                decodeMessage2 = decodeMessage2.Replace("P", "PM");
+
+            return decodeMessage2;
+        }
         public Response GetTherapistConsultaion()
         {
             try
@@ -208,22 +251,27 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 var data = (from consultation in _context.AppointmentRequest
                             where consultation.TherapistId == user.Id && !consultation.IsDeleted
                             //&& consultation.IsPaymentCompleted
-                            join patient in _context.UserProfile on consultation.PatientId equals patient.Id
+                            join patient in _context.UserProfile on consultation.PatientId equals patient.UserId
                             select new
                             {
                                 PatientName = patient.FirstName + " " + patient.LastName,
-                                PatientId = patient.Id,
+                                PatientId = patient.UserId,
                                 PatientNamePicure = patient.FilePath,
                                 Date = consultation.Date,
+                                Time = consultation.StartTime.HasValue ? consultation.StartTime.Value.ToString("D") +" " + "at " + consultation.StartTime.Value.ToString("t") : "",
                                 SatrtTime = consultation.StartTimeToString,
+                                EndTime = consultation.EndTime.HasValue ? GetEndDate(consultation.EndTime.Value) : "",
                                 ReasonForTherapy = consultation.ReasonForTherapy,
+                                AdditionalNote = consultation.ProblemDecription,
+                                AvailableTime = consultation.StartTimeToString,
                                 //EndTime = consultation.EndTime.Value.DateTime,
                                 Status = consultation.Status.ToString(),
                                 IsDue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Due ? true : false,
                                 IsOverdue = consultation.Status == Bounce_Domain.Enum.AppointmentStatus.Overdue ? true : false,
+                                OrderBy = consultation.StartTime
 
 
-                            }).ToList();
+                            }).ToList().OrderByDescending(x=> x.OrderBy);
                             
                 return SuccessResponse(data: data);
 
@@ -249,27 +297,14 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
                 var ratings = _context.Reviews.Where(x => !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
 
-                var data = new
-                {
-                    TherapistId = id,
-                    Title = profile.Title,
-                    FirstName = profile.FirstName,
-                    LastName = profile.LastName,
-                    YearsExperience = profile.YearsOfExperience,
-                    About = profile.Email,
-                    PhoneNUmber = profile.PhoneNumber,
-                    Specialization = profile.Specialization,
-                    ConsultaionDays = profile?.ConsultationDays?.ToSplit('|'),
-                    StartTime = profile.ConsultationStartTime,
-                    EndTime = profile.ConsultationEndTime,
-                    PicturePath = profile.ProfilePicture,
-                    ServiceChargePerHoure = 50000,
-                    NumberOfPatient = 50,
-                    ReviewCount = ratings.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).Count(),
-                    ReviewRatio = _patientServices.CalculateTherapisRating(user.Id).Ratio
-
-                };
-                return SuccessResponse(data: data);
+                var response = _mapper.Map<TherapistProfileDetailDto>(profile);
+                response.ReviewCount = ratings.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).Count();
+                response.ReviewRatio = _patientServices.CalculateTherapisRating(user.Id).Ratio;
+                response.ServiceChargePerHoure = 50000;
+                response.NumberOfPatient = 50;
+                response.EmailAddress = user.Email;
+               
+                return SuccessResponse(data: response);
 
             }
             catch (Exception ex)
@@ -426,12 +461,20 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     TotalQuestion = correctAnswer + wrongAnswer,
                     AnsweredQuestionIds = String.Join('|', questionIds)
                 };
+                var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == user.Id);
+                if(correctAnswer > wrongAnswer)
+                {
+                    userProfile.PassedAccessment = true;
+                    _context.Update(userProfile);
+                }
+
+                
                 await _context.AddAsync(assesment);
                 if (!await SaveAsync())
                     return FailedSaveResponse(model);
 
 
-                return SuccessResponse("Text completed", new {TotalScore = correctAnswer});
+                return SuccessResponse("Text completed", new {Passed = true});
 
 
             }

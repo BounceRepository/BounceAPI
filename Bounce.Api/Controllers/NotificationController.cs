@@ -54,7 +54,7 @@ namespace Bounce.Api.Controllers
                     {
                         ReceieverId = model.RevceieverId,
                         Message = model.Message,
-                        Time = model.Time,
+                        Time = DateTime.UtcNow,
                         FilePath = model.FilePaths 
 
                     };

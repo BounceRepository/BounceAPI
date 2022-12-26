@@ -9,9 +9,9 @@ namespace Bounce_Domain.Entity
 {
     public class Subscription : BaseEntity
     {
-        public long PlanId { get; set; }
-        [ForeignKey(nameof(PlanId))]
-        public virtual Plan Plan { get; set; }
+        public long SubPlanId { get; set; }
+        [ForeignKey(nameof(SubPlanId))]
+        public virtual SubPlan SubPlan { get; set; }
         public long UserId { get; set; }
         [ForeignKey(nameof(UserId))]
         public virtual ApplicationUser User { get; set; }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net.Http.Headers;
 
 namespace Bounce.Api.Controllers
@@ -15,14 +16,17 @@ namespace Bounce.Api.Controllers
     [Route("api/transaction")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class TransactionController : BaseController
+
     {
         private readonly IPaymentServices _paymentServices;
+        private readonly IWebHostEnvironment hostEnvironment;
 
 
-        public TransactionController(IHttpContextAccessor httpContext, IPaymentServices paymentServices) : base(httpContext)
+        public TransactionController(IHttpContextAccessor httpContext, IPaymentServices paymentServices, IWebHostEnvironment hostEnvironment) : base(httpContext)
         {
 
             _paymentServices = paymentServices;
+            this.hostEnvironment = hostEnvironment;
         }
 
 
@@ -49,6 +53,34 @@ namespace Bounce.Api.Controllers
 
         [HttpGet("GetWalletBalance")]
         public async Task<IActionResult> WalletBallance() => Response(await _paymentServices.GetWalletBallance());
+
+ 
+        [HttpGet("GetBankList")]
+        public async Task<IActionResult> BankList()
+        {
+
+            try
+            {
+                var jsonPath = Path.Combine(hostEnvironment.ContentRootPath, "bankList.json");
+                using (var fs = System.IO.File.OpenText(jsonPath))
+                {
+                    var data = await fs.ReadToEndAsync();
+                    var obj = JsonConvert.DeserializeObject<List<BankCodeName>>(data);
+                    var resp = obj.OrderBy(x => x.name);
+                 
+
+
+                    return Ok(resp);
+                }
+            }
+            catch(Exception exp)
+            {
+                return BadRequest(exp.Message);
+            }
+           
+
+        
+        }
         //[AllowAnonymous]
 
 

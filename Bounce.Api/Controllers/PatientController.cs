@@ -53,7 +53,7 @@ namespace Bounce.Api.Controllers
         [HttpPost("ComfirmAppointment")]
         public async Task<IActionResult> ComfirmAppointment([FromQuery] string TxRef) => Response(await _paymentServices.ConfirmAppointment(TxRef));
         [HttpGet("UpComingSessions")]
-        public async  Task<IActionResult> UpcomingSessions() => Response( await _patientServices.UpcomingAppointment());
+        public async  Task<IActionResult> UpcomingSessions([FromQuery] string filter) => Response( await _patientServices.UpcomingAppointment(filter));
 
         [HttpPost("LogUserfeelings")]
         public IActionResult LogUserFeelings([FromBody] List<string> feelings) => Response( _patientServices.LogUserFeeling(feelings));

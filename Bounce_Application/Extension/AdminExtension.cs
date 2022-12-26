@@ -90,6 +90,18 @@ namespace System
 			};
 		}
 
+		public static string GetEndDate(DateTimeOffset statrtTme)
+        {
+			var time3 = statrtTme.ToString("hh:00 t");
+			var decodeMessage2 = Uri.UnescapeDataString(time3);
+			if (decodeMessage2.Contains("A"))
+				decodeMessage2 = decodeMessage2.Replace("A", "AM");
+
+			if (decodeMessage2.Contains("P"))
+				decodeMessage2 = decodeMessage2.Replace("P", "PM");
+
+			return decodeMessage2;
+		}
 		public static bool ValidTime(this string startTime)
 		{
 			if (string.IsNullOrEmpty(startTime))

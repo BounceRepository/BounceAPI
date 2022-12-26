@@ -32,6 +32,12 @@ namespace Bounce_DbOps.Mapperr
                 .ForMember(x => x.ProfilePicture, o => o.Ignore())
                 .ForMember(x => x.ConsultationDays, o => o.MapFrom(f => string.Join("|", f.ConsultationDays.ToList())));
             CreateMap<TherapistProfileDto, TherapistProfileResponseDto>().ReverseMap();
+            CreateMap<TherapistProfile, TherapistProfileDetailDto>()
+                  .ForMember(x => x.AboutMe, o => o.MapFrom(f => f.Email))
+                 .ForMember(x => x.ConsultationDays, o => o.MapFrom(f => f.ConsultationDays.ToSplit('|').ToArray()));
+             //.ForMember(x => x.ConsultationDays, o => o.Ignore());
+
+
 
 
 

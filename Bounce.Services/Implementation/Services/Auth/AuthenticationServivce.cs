@@ -738,11 +738,15 @@ namespace Bounce.Services.Implementation.Services.Auth
                     var token = await GenerateAccessToken(loginUser);
                     var roles = string.Join(",", userRoles);
                     var image = "";
+                    var name = loginUser.UserName;
+                    var passedAccessment = false;
 
                     var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == loginUser.Id);
                     if (userProfile != null)
                     {
                         image = !string.IsNullOrEmpty(userProfile.ProfilePicture) ? userProfile.ProfilePicture : null;
+                        name = userProfile.Title + " " + userProfile.FirstName;
+                        passedAccessment = userProfile.PassedAccessment;
                     }
 
                     return new Response
@@ -752,6 +756,8 @@ namespace Bounce.Services.Implementation.Services.Auth
                         {
                             Token = token,
                             UserName = loginUser.UserName,
+                            Name = name,
+                            HasAccessment = passedAccessment,
                             Email = loginUser.Email,
                             Role = userRoles.FirstOrDefault(),
                             Phone = loginUser?.PhoneNumber,

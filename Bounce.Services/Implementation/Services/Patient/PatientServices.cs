@@ -134,34 +134,98 @@ namespace Bounce.Services.Implementation.Services.Patient
         }
         public async Task<Response> SubscribeToPlan(long planId, long subplanId)
         {
-
-            try
+            LogInfo($"{"Started task to initialize plan subscription }"}{" - "}{subplanId}{" - "}{DateTime.Now}");
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                LogInfo($"{"Started task to initialize plan subscription }"}{" - "}{planId}{" - "}{DateTime.Now}");
-
-                var plan = _context.SubPlan.FirstOrDefault(x => x.Id == subplanId);
-
-                var payment = new PaymentRequest
+                try
                 {
-                    PaymentRequestId = DateTime.Now.Ticks.ToString(),
-                    UserId = _sessionManager.CurrentLogin.Id,
-                    Amount = plan.Cost,
-                    SubPlanId = subplanId,
-                    PaymentDecription = "Plan Subscription",
-                    CreatedTimeOffset = DateTimeOffset.Now
+                    var user = _sessionManager.CurrentLogin;
 
-                };
-                await _context.AddAsync(payment);
-                if (!await SaveAsync())
-                    return FailedSaveResponse();
-                 
-                LogInfo($"{"task to subscribe to plan was successful "} transactionRef: {payment.PaymentRequestId}{" - "} Amount: {payment.Amount}{" - "}{DateTime.Now}");
-                return SuccessResponse(data: new { TrxRef = payment.PaymentRequestId });
-            }
-            catch (Exception ex)
-            {
+                    var plan = _context.SubPlan.Include(x=> x.Plan).FirstOrDefault(x => x.Id == subplanId);
+                    var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
+                    if (wallet?.Balance < plan.Cost)
+                        return AuxillaryResponse("Insufficient balance", StatusCodes.Status402PaymentRequired);
 
-                return InternalErrorResponse(ex);
+                    wallet.Balance = wallet.Balance - plan.Cost;
+                    _context.Update(wallet);
+
+                    var payment = new PaymentRequest
+                    {
+                        PaymentRequestId = DateTime.Now.Ticks.ToString(),
+                        PaymentType = PaymentType.wallet,
+                        UserId = _sessionManager.CurrentLogin.Id,
+                        Amount = plan.Cost,
+                        SubPlanId = subplanId,
+                        PaymentDecription = "Plan Subscription",
+                        CreatedTimeOffset = DateTimeOffset.Now
+
+                    };
+                    await _context.AddAsync(payment);
+
+                    var subscription = new Subscription
+                    {
+                        UserId = user.Id,
+                        SubPlanId = subplanId,
+                        IsActive = true
+                    };
+                    await _context.AddAsync(subscription);
+
+                    var trans = new Transaction
+                    {
+                        RequestId = payment.Id,
+                        TransactionType = TransactionType.Wallet,
+                        Decription = "Plan Subscription",
+                        UserId = user.Id,
+                        status = "00",
+                        CreatedTimeOffset = DateTimeOffset.UtcNow,
+                    };
+                    await _context.Transactions.AddAsync(trans);
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    await transaction.CommitAsync();
+
+                    var userProfile = _context.UserProfile.FirstOrDefault(x => x.UserId == user.Id);
+                    var mailBuilder = new StringBuilder();
+
+                    mailBuilder.AppendLine("Dear" + " " + userProfile.FirstName + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Your {plan.Title} plan subscription was successful<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+
+                    var emailRequest = new EmailRequest
+                    {
+                        To = user.Email,
+                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                        Subject = "Plan Subscription"
+                    };
+
+                    await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
+
+                    var pushNotifications = new List<PushNotificationDto>();
+                    var patientPushNotification = new PushNotificationDto
+                    {
+                        Title = "Plan Subscription",
+                        Topic = "Plan Subscription",
+                        Message = $"Your {plan.Title} plan subscription was successful<br />",
+                        TrxRef = payment.PaymentRequestId,
+                        userId = userProfile.UserId,
+
+                    };
+                    pushNotifications.Add(patientPushNotification);
+                  
+                    await _notificationService.PushMultipleNotificationAsyn(pushNotifications);
+
+                    LogInfo($"{"task to subscribe to plan was successful "} transactionRef: {payment.PaymentRequestId}{" - "} Amount: {payment.Amount}{" - "}{DateTime.Now}");
+                    return SuccessResponse("Your subscription was successful");
+                }
+                catch (Exception ex)
+                {
+                   await  transaction.RollbackAsync();
+                    return InternalErrorResponse(ex);
+                }
             }
         }
 
@@ -350,16 +414,24 @@ namespace Bounce.Services.Implementation.Services.Patient
             }
         }
 
-        public async Task<Response> UpcomingAppointment()
+
+        public async Task<Response> UpcomingAppointment(string filter)
         {
             try
             {
-                var user = _sessionManager.CurrentLogin;
+                filter = filter.ToLower();
+                if (filter != "completed" && filter != "upcoming")
+                    return AuxillaryResponse("invalid filter value, use can use 'upcoming' or 'completed' as filter value", StatusCodes.Status400BadRequest);
 
-                var query = await (from r in _context.AppointmentRequest
-                                   where r.PatientId == user.Id
-                                   //join a in _context.Appointments on r.Id equals a.AppointmentRequestId
-                                   //where a.Status == AppointStatus.UpComming
+                var user = _sessionManager.CurrentLogin;
+                var request = _context.AppointmentRequest.Where(x => x.PatientId == user.Id);
+                if (filter.Equals("completed"))
+                    request = request.Where(x => x.Status == AppointmentStatus.Completed);
+                else
+                    request = request.Where(x => x.Status != AppointmentStatus.Completed);
+
+
+                var query = await (from r in request
                                    join t in _context.Users on r.TherapistId equals t.Id
                                    join p in _context.TherapistProfiles on t.Id equals p.UserId
 
@@ -369,20 +441,24 @@ namespace Bounce.Services.Implementation.Services.Patient
                                        StartTime = r.StartTimeToString,
                                        EndTime = r.EndTime,
                                        Date = r.StartTime,
+                                       Time = r.StartTime.HasValue ? r.StartTime.Value.ToString("D") + " " + "at " + r.StartTime.Value.ToString("t") : "",
                                        TherapistFirstName = p.FirstName + " " + p.LastName,
                                        TherapistTitle = p.Title,
                                        Discipline = p.Specialization,
                                        Therapist = t.Email,
                                        TherapistId = t.Id,
+                                       ReasonForTherapy = r.ReasonForTherapy,
+                                       AdditionalNote = r.ProblemDecription,
                                        Amount = r.TotalAMount,
                                        ProblemDecription = r.ProblemDecription,
                                        Status = r.Status.ToString(),
                                        IsCompleted = false,
                                        IsDue = r.Status == AppointmentStatus.Due ? true : false,
                                        IsOverdue = r.Status == AppointmentStatus.Overdue ? true : false,
+                                   
 
 
-                                   }).OrderByDescending(x => x.EndTime).ToListAsync();
+                                   }).OrderByDescending(x => x.Date).ToListAsync();
 
                 return SuccessResponse(data: query);
 

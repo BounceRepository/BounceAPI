@@ -39,7 +39,9 @@ namespace Bounce.DataTransferObject.DTO.Therapist
         public string? ConsultationStartTime { get; set; }
         [Required]
         public string? ConsultationEndTime { get; set; }
+        public string EmailAddress { get; set; }
     }
+
     public class TherapistProfileDto : TherapistBaseProfileDto
     {
        

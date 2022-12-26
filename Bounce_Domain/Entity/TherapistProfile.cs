@@ -28,6 +28,7 @@ namespace Bounce_Domain.Entity
         public string? ProfilePicture { get; set; }
 
         public double ServiceCharge { get; set; }
+        public bool PassedAccessment { get; set; }
 
         public long? UserId { get; set; }
         [ForeignKey(nameof(UserId))]
