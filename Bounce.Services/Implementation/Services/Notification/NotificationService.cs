@@ -287,7 +287,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                     MessageRefx = DateTime.Now.Ticks.ToString(),
                     CreatedTimeOffset = model.Time, 
                     Files = model.FilePath,
-                    HasFile = hasFile,
+                    HasFile = model.IsPrescription,
                 };
                 _context.Add(chat);
                 if (!await SaveAsync())
@@ -341,6 +341,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                     Time = x.CreatedTimeOffset,
                     ReceieverId = x.ReceieverId,
                     SenderId = x.SenderId,
+                    IsPrescription = x.HasFile
 
                 }).ToList();
                

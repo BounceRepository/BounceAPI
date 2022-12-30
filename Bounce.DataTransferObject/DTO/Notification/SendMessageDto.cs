@@ -11,7 +11,8 @@ namespace Bounce.DataTransferObject.DTO.Notification
 {
     public class SendMessageDto
     {
-      
+
+        public bool IsPrescription { get; set; }
         [Required]
         public long ReceieverId { get; set; }
         [Required]
@@ -19,7 +20,7 @@ namespace Bounce.DataTransferObject.DTO.Notification
         public IFormFileCollection? Files { get; set; }
         public DateTimeOffset Time { get; set; }
         [JsonIgnore]
-        public string FilePath { get; set; }
+        public string? FilePath { get; set; }
 
     }
 }

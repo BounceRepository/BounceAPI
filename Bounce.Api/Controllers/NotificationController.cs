@@ -1,12 +1,16 @@
 ﻿using Bounce.Api.ChatHub;
 using Bounce.DataTransferObject.DTO.Notification;
+using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce_Application.Persistence.Interfaces.Notification;
+using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
+using Bounce_Domain.Entity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Text;
 
 namespace Bounce.Api.Controllers
 {
@@ -18,12 +22,14 @@ namespace Bounce.Api.Controllers
         private readonly INotificationService _notificationService;
         private readonly IHubContext<BounceChatHub> _chatHubContext;
         private readonly BounceDbContext _context;
+        private readonly FileManager _fileManager;
 
-        public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService, IHubContext<BounceChatHub> chatHubContext, BounceDbContext context) : base(httpContext)
+        public NotificationController(IHttpContextAccessor httpContext, INotificationService notificationService, IHubContext<BounceChatHub> chatHubContext, BounceDbContext context, FileManager fileManager) : base(httpContext)
         {
             _notificationService = notificationService;
             _chatHubContext = chatHubContext;
             _context = context;
+            _fileManager = fileManager;
         }
 
         [HttpPost("PushNotification")]
@@ -52,10 +58,12 @@ namespace Bounce.Api.Controllers
                    
                     var message = new SendMessageDto
                     {
+
                         ReceieverId = model.RevceieverId,
                         Message = model.Message,
-                        Time = DateTime.UtcNow,
-                        FilePath = model.FilePaths 
+                        Time = DateTime.UtcNow.AddHours(1),
+                        FilePath = null,
+                        IsPrescription = false,
 
                     };
                    var response =  await _notificationService.SendMessage(message);
@@ -79,6 +87,77 @@ namespace Bounce.Api.Controllers
             }
           
         }
+        [AllowAnonymous]
+        [HttpPost("SendPrescription")]
+        public async Task<IActionResult> PushPrescription([FromForm] PrescriptionDto model)
+        {
+            try
+            {
+                var receiver = _context.Users.FirstOrDefault(x => x.Id == model.RevceieverId);
+                if (receiver != null)
+                {
+                    var filename = "";
+     
+                    if (model.File != null)
+                    {
+
+                        filename = _fileManager.FileUpload(model.File, "Chat");
+                    }
+                    //var mailBuilder = new StringBuilder();
+
+                    //mailBuilder.AppendLine("DRUG: " + " " + model.Drug + "," + "<br />");
+                    //mailBuilder.AppendLine("<br />");
+                    //mailBuilder.AppendLine("DOSAGE: " + " " + model.Dosage + "," + "<br />");
+                    //mailBuilder.AppendLine("<br />");
+                    //mailBuilder.AppendLine("Prescription: " + " " + model.Prescription + "," + "<br />");
+
+                    var prescript = "DRUG: " + " " + model.Drug + "," + "DOSAGE: " + " " + model.Dosage + "Prescription: " + " " + model.Prescription;
+                    var message = new SendMessageDto
+                    {
+                        ReceieverId = model.RevceieverId,
+                        Message = prescript,
+                        Time = DateTime.UtcNow.AddHours(1),
+                        FilePath = filename,
+                        IsPrescription = true
+
+                    };
+                    var response = await _notificationService.SendMessage(message);
+
+                    if (response.StatusCode == 200)
+                    {
+                        var prescription = new Prescription
+                        {
+                            AppointmentRequestId = model.RevceieverId,
+                            PrescriptionText = prescript,
+                            Dosage = model.Dosage,
+                            Drug = model.Dosage,
+                            DateModified = DateTime.Now,
+                            File = filename
+                        };
+
+                        _context.Add(prescription);
+                        _context.SaveChanges();
+
+                        var data = response.Data as string;
+                        message.FilePath = data ?? "";
+                        await _chatHubContext.Clients.All.SendAsync("OnMessage", message);
+
+                        return Ok(new { Message = "Message sent" });
+                    }
+
+                    return Ok(new { Message = "Message not sent", data = message });
+
+                }
+
+                return BadRequest(new { Message = "user was not found" });
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+
+        }
+
 
         [HttpPost("SendMessage")]
         public async Task<IActionResult> Chat([FromForm] SendMessageDto model) => Response(await _notificationService.SendMessage(model));

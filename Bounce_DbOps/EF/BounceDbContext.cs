@@ -63,6 +63,8 @@ namespace Bounce_DbOps.EF
 		public DbSet<TherapistAccessment> TherapistAccessments { get; set; }
 		public DbSet<Likes> Like { get; set; }
 		public DbSet<Journal> Journals { get; set; }
+		public DbSet<Commision> Commisions { get; set; }
+		public DbSet<Prescription> Prescriptions { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -186,8 +188,7 @@ namespace Bounce_DbOps.EF
                 var context = scope.ServiceProvider.GetRequiredService<SessionManager>();
                return  context.CurrentLogin;
 
-               
-
+            
             }
         
 

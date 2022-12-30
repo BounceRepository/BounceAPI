@@ -24,6 +24,7 @@ namespace Bounce_Domain.Entity
         public string? EmotionalHealthRate { get; set; }
         public string? EatingHabit { get; set; }
         public string? Feelings { get; set; }
+      
         public long UserId { get; set; }
         [ForeignKey(nameof(UserId))]
         [JsonIgnore]

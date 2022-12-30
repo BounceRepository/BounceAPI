@@ -30,6 +30,10 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetTherpaistDashboard")]
         public  IActionResult GetDashboard() => Response( _therapistServices.GetTherapistDashBoard());
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
+        [HttpGet("GetTherpaistShcedule")]
+        public IActionResult GetTherpaistShcedule() => Response(_therapistServices.GetTherapistSchedules());
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("GetTherpaistById")]
 
@@ -56,12 +60,22 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> Subscription([FromBody] TherapistAccountDetailsDto model) => Response(await _therapistServices.CreateUpdateUpdateTherapistAccountDetails(model));
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
+        [HttpGet("GetBankAccountDetails")]
+        public IActionResult GetBankAccountDetails() => Response( _therapistServices.GetTherapistBankDetail());
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
         [HttpGet("GetQuestions")]
         public async Task<IActionResult> Questions() => Response( await _therapistServices.GetQuestions());
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
+        [HttpGet("GetTherapistCommission")]
+        public IActionResult GetTherapistCommission() => Response( _therapistServices.GetTherapistCommision());
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
         [HttpPost("TakeAssesement")]
         public async Task<IActionResult> Assesement([FromBody] AssesmentDto model) => Response(await _therapistServices.ValidateAssement(model));
+
+
         
 
     }

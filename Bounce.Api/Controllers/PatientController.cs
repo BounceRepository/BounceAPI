@@ -26,12 +26,24 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetPatientById")]
         public IActionResult GetPatientById([FromQuery] long patientId) => Response(_patientServices.GetPatienceById(patientId));
 
+       
+        [HttpGet("GetAllPatient")]
+        public IActionResult GetlAlPatient() => Response(_patientServices.GetAllPatient());
+        [AllowAnonymous]
+
+        [HttpGet("GetPatientProfileHistory")]
+        public IActionResult GetPatientProfileHistory([FromQuery] long patientId) => Response(_patientServices.GetPatienceProfileHistory(patientId));
+
+
+        [HttpGet("SearchPatient")]
+        public IActionResult SearchPatient([FromQuery] string search) => Response(_patientServices.SearchPatient(search));
+
 
         [HttpPatch("UpdateBioData")]
         public async Task<IActionResult> UdateProfile([FromForm] UpdateProfileDto model) => Response(await _patientServices.UpdateProfileAsync(model));
 
 
-        [AllowAnonymous]
+ 
         [HttpGet("GetAllTherapists")]
         public async Task<IActionResult> GetAllTherapists() => Response(await _patientServices.GetTherapist());
 
@@ -55,15 +67,7 @@ namespace Bounce.Api.Controllers
         [HttpGet("UpComingSessions")]
         public async  Task<IActionResult> UpcomingSessions([FromQuery] string filter) => Response( await _patientServices.UpcomingAppointment(filter));
 
-        [HttpPost("LogUserfeelings")]
-        public IActionResult LogUserFeelings([FromBody] List<string> feelings) => Response( _patientServices.LogUserFeeling(feelings));
-
-        [HttpGet("GetAllFeelings")]
-        public IActionResult Allfellings() => Response(_patientServices.GetAllFeelings());
-        [HttpGet("GetUserFeelings")]
-        public IActionResult UserFeelings() => Response(_patientServices.GetUserFeelings());
-
-
+       
         [HttpPost("CreateReview")]
         public async Task<IActionResult> Review([FromBody] CreateReviewDto model) => Response(await _patientServices.CreateReview(model));
 
@@ -73,6 +77,14 @@ namespace Bounce.Api.Controllers
 
         [HttpPost("ReScheduleAppointment")]
         public async Task<IActionResult> RescheduleAppointemnt([FromBody] ReScheduleAppointmentDto model) => Response(await _patientServices.ReScheduleAppointtment(model));
+
+
+        [HttpPatch("UpdatePatientMood")]
+        public async Task<IActionResult> UpdateMood([FromBody] UpdateUserModeDto model) => Response(await _patientServices.UpdateUserFellings(model));
+
+        [HttpGet("GetUserMood")]
+        public IActionResult UserFeelings() => Response(_patientServices.GetUserFeelings());
+
 
     }
 }

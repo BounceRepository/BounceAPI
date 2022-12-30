@@ -79,6 +79,11 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
                         response.ProfilePicture = profile.ProfilePicture;
                         response.EmailAddress = user.Email;
+                        var wallet = new Wallet
+                        {
+                            UserId = user.Id
+                        };
+                        _context.Add(wallet);
 
                         if (!await SaveAsync())
                             return FailedSaveResponse(model);
@@ -105,19 +110,20 @@ namespace Bounce.Services.Implementation.Services.Therapist
         {
             try
             {
-                var bankProfile = _context.BankAccountDetails.FirstOrDefault(x => x.TherapistId == model.TherapistId);
+                var user = _sessionManager.CurrentLogin;
+                var bankProfile = _context.BankAccountDetails.FirstOrDefault(x => x.TherapistId == user.Id);
 
                 var entity = _mapper.Map<BankAccountDetails>(model);
                 if (bankProfile == null)
+                {
+                    entity.TherapistId = user.Id;
                     _context.Add(entity);
+                }               
                 else
                 {
                     bankProfile.AccountName = model.AccountName;
                     bankProfile.AccountNumber = model.AccountNumber;
                     bankProfile.BankName = model.BankName;
-                    bankProfile.AccountType = model.AccountType;
-                    bankProfile.LastModifiedBy = model.TherapistId.ToString();
-   
                     _context.Update(bankProfile);
                 }
                 if (!await SaveAsync())
@@ -146,6 +152,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     PhoneNumber = user.TherapistProfile.PhoneNumber,
                     ProfilePicture = user.TherapistProfile.ProfilePicture,
                     MonthlyConsultationCount = consulations.Count(),
+                    TotalPatient = consulations.DistinctBy(x=> x.PatientId).Count()
 
                 };
                 return SuccessResponse(data: data);
@@ -228,20 +235,104 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
         }
 
-        public static string GetEndDate(DateTimeOffset statrtTme)
+        public Response GetTherapistSchedules()
         {
-            if (statrtTme == null)
-                return "";
+            try
+            {
 
-            var time3 = statrtTme.ToString("hh:00 t");
-            var decodeMessage2 = Uri.UnescapeDataString(time3);
-            if (decodeMessage2.Contains("A"))
-                decodeMessage2 = decodeMessage2.Replace("A", "AM");
+                var schelues = new List<SchedulersDto>();
+                var user = _sessionManager.CurrentLogin;
+                var appointments = _context.AppointmentRequest.Where(x => x.TherapistId == user.Id).OrderByDescending(x => x.StartTime).ToList();
+                var patients = _context.UserProfile.ToList();
+                var groupeDate = appointments
+                    .GroupBy(key => key.StartTime.GetValueOrDefault().Date).Select(x=> x.Key.Date);
+                foreach (var item in groupeDate)
+                {
+                    var appointmentRequests = appointments.Where(x => x.StartTime.GetValueOrDefault().Date == item.Date).ToList();
+                    var sheduleItems = (from req in appointmentRequests join pat in patients on req.PatientId equals pat.UserId
+                                select new SchedulersItmesDto
+                                {
+                                    PatientName = pat.FirstName + " " + pat.LastName,
+                                    StartTime = req.StartTimeToString,
+                                    Status = req.Status.ToString(),
+                                    Time = req.StartTime.GetValueOrDefault().DateTime,
+                                }).ToList();
 
-            if (decodeMessage2.Contains("P"))
-                decodeMessage2 = decodeMessage2.Replace("P", "PM");
 
-            return decodeMessage2;
+                    var sche = new SchedulersDto
+                    {
+                        Date = item.Date,
+                        Appointments = sheduleItems
+                    };
+                    schelues.Add(sche);
+
+                }
+                    
+                return SuccessResponse(data: schelues);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
+        public Response GetTherapistCommision()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
+
+                var data = new
+                {
+                    Commission = wallet.Commission,
+                    Rate = wallet.Rate > 0 ? wallet.Rate : 2,
+                };
+
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
+
+
+        public Response GetTherapistBankDetail()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var detail = _context.BankAccountDetails.FirstOrDefault(x => x.TherapistId == user.Id);
+                if(detail == null)
+                {
+                    return AuxillaryResponse("record not found", StatusCodes.Status404NotFound);
+                }
+                var data = new
+                {
+                    AccountName = detail.AccountName,
+                    AccountNumber = detail.AccountNumber,
+                    BankName = detail.BankName,
+
+                };
+
+
+                    
+
+                return SuccessResponse(data: data);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
         }
         public Response GetTherapistConsultaion()
         {
@@ -283,7 +374,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
 
         }
-        public Response GetTherapisById(long id)
+        public  Response GetTherapisById(long id)
         {
             try
             {
@@ -292,19 +383,22 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     return AuxillaryResponse("Therapist not found", 404);
 
                 var profile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == id);
-                if(profile == null)
+                if (profile == null)
                     return AuxillaryResponse("There is no profile for this therapist, kindly update the therapist profile", 404);
 
                 var ratings = _context.Reviews.Where(x => !x.IsDeleted && x.TherapistUserId == id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
-
+                var patientCount = _context.AppointmentRequest.Where(m => m.TherapistId == id && m.IsPaymentCompleted).DistinctByProperty(x => x.PatientId).Count();
+                var wallet =   _context.Wallets.FirstOrDefault(x => x.UserId == id);
                 var response = _mapper.Map<TherapistProfileDetailDto>(profile);
                 response.ReviewCount = ratings.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).Count();
                 response.ReviewRatio = _patientServices.CalculateTherapisRating(user.Id).Ratio;
                 response.ServiceChargePerHoure = 50000;
-                response.NumberOfPatient = 50;
+                response.NumberOfPatient = patientCount;
                 response.EmailAddress = user.Email;
-               
+                response.Commission = wallet.Commission;
+
                 return SuccessResponse(data: response);
+
 
             }
             catch (Exception ex)
@@ -461,20 +555,26 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     TotalQuestion = correctAnswer + wrongAnswer,
                     AnsweredQuestionIds = String.Join('|', questionIds)
                 };
-                var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == user.Id);
-                if(correctAnswer > wrongAnswer)
+
+                var percentage = (assesment.TotalPassed * assesment.TotalScore) / 100;
+
+                if(percentage > 59)
                 {
+                    var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == user.Id);
+
                     userProfile.PassedAccessment = true;
                     _context.Update(userProfile);
+                    await _context.AddAsync(assesment);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse(model);
+
+
+                    return SuccessResponse("Text completed", new { Passed = true });
+
                 }
 
-                
-                await _context.AddAsync(assesment);
-                if (!await SaveAsync())
-                    return FailedSaveResponse(model);
+                return SuccessResponse("Text completed", new { Passed = false });
 
-
-                return SuccessResponse("Text completed", new {Passed = true});
 
 
             }
@@ -483,5 +583,22 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 return InternalErrorResponse(ex);
             }
         }
+
+        public static string GetEndDate(DateTimeOffset statrtTme)
+        {
+            if (statrtTme == null)
+                return "";
+
+            var time3 = statrtTme.ToString("hh:00 t");
+            var decodeMessage2 = Uri.UnescapeDataString(time3);
+            if (decodeMessage2.Contains("A"))
+                decodeMessage2 = decodeMessage2.Replace("A", "AM");
+
+            if (decodeMessage2.Contains("P"))
+                decodeMessage2 = decodeMessage2.Replace("P", "PM");
+
+            return decodeMessage2;
+        }
+
     }
 }

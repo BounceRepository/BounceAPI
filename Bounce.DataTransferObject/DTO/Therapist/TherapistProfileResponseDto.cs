@@ -18,6 +18,8 @@ namespace Bounce.DataTransferObject.DTO.Therapist
    public class TherapistProfileDetailDto : TherapistProfileResponseDto
    {
         public string EmailAddress { get; set; }
-   }
+        public double Commission { get; set; }
+
+    }
 
 }

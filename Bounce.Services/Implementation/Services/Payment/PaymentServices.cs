@@ -527,30 +527,31 @@ namespace Bounce.Services.Implementation.Services.Payment
                     return AuxillaryResponse("Invalid filter value, kindly use 'topup', 'all' or 'topup' ", StatusCodes.Status400BadRequest);
 
                 var user = _sessionManager.CurrentLogin;
-                var transactions = await _context.Transactions.Where(x => x.UserId == user.Id && x.status == "00").ToListAsync();
+                var transactions = (from transaction in _context.Transactions.Where(x => !x.IsDeleted).Where(x => x.UserId == user.Id && x.status == "00")
+                            join request in _context.PaymentRequests on transaction.RequestId equals request.Id
+                            select new
+                            {
+                                TransactionId = request.PaymentRequestId,
+                                Amount = Convert.ToDecimal(request.Amount),
+                                PaymentDescription = transaction.Decription,
+                                Time = transaction.DateCreated,
+                                Type = transaction.TransactionType,
+                                TransactionType = transaction.TransactionType == TransactionType.TopUp ?
+                                AdminConstants.WalletTopUp : AdminConstants.WalletPayment
+                            }).OrderByDescending(x => x.Time).ToList();
+
+
+                //var transactions = await _context.Transactions.Where(x => x.UserId == user.Id && x.status == "00").ToListAsync();
 
                 if (val == "topup")
-                    transactions = transactions.Where(x => x.TransactionType == TransactionType.TopUp).ToList();
+                    transactions = transactions.Where(x => x.Type == TransactionType.TopUp).ToList();
 
                 if (val == "payment" )
-                    transactions = transactions.Where(x => x.TransactionType != TransactionType.TopUp).ToList();
+                    transactions = transactions.Where(x => x.Type != TransactionType.TopUp).ToList();
       
 
-#pragma warning disable CS8601 // Possible null reference assignment.
-                var query = (from t in transactions
-                             join requet in _context.PaymentRequests on t.RequestId equals requet.Id
-                             select new 
-                             {
-                                 TransactionId = requet.PaymentRequestId,
-                                 Amount = Convert.ToDecimal(requet.Amount),
-                                 PaymentDescription = t.Decription,
-                                 Time = t.CompletionTime,
-                                 TransactionType = t.TransactionType == TransactionType.TopUp ?
-                                 AdminConstants.WalletTopUp : AdminConstants.WalletPayment
-                             }).OrderByDescending(x => x.Time).ToList();
-#pragma warning restore CS8601 // Possible null reference assignment.
 
-                return SuccessResponse(data: query);
+                return SuccessResponse(data: transactions);
 
             }
             catch (Exception ex)

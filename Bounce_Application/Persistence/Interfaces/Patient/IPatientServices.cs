@@ -15,17 +15,20 @@ namespace Bounce_Application.Persistence.Interfaces.Patient
         ReviewCalculationDto CalculateTherapisRating(long id);
         Task<Response> CreateReview(CreateReviewDto model);
         Response GetAllFeelings();
+        Response GetAllPatient();
         Response GetAllPlans();
         Task<Response> GetAvialableTimeByTherapistId(long therapistid, DateTime date);
-        Response GetMessages();
+    
         Response GetPatienceById(long id);
+        Response GetPatienceProfileHistory(long id);
         Response GetReviewByTherapistId(long id);
         Task<Response> GetTherapist();
         Response GetUserFeelings();
-        Response LogUserFeeling(List<string> feelings);
         Task<Response> ReScheduleAppointtment(ReScheduleAppointmentDto model);
+        Response SearchPatient(string query);
         Task<Response> SubscribeToPlan(long planId, long subPlanId);
         Task<Response> UpcomingAppointment(string filter);
         Task<Response> UpdateProfileAsync(UpdateProfileDto model);
+        Task<Response> UpdateUserFellings(UpdateUserModeDto model);
     }
 }

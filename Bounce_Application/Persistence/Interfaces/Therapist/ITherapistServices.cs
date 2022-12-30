@@ -17,9 +17,12 @@ namespace Bounce_Application.Persistence.Interfaces.Therapist
         Response GetPatientProfileHistory(long patientId);
         Task<Response> GetQuestions();
         Response GetTherapisById(long id);
+        Response GetTherapistBankDetail();
+        Response GetTherapistCommision();
         Response GetTherapistConsultaion();
         Response GetTherapistConsultaionById(long id);
         Response GetTherapistDashBoard();
+        Response GetTherapistSchedules();
         Task<Response> ValidateAssement(AssesmentDto model);
     }
 }

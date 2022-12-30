@@ -87,6 +87,10 @@ namespace Bounce.Services.Implementation.Services.Patient
                     Gender = model.Gender,
                     Phone = model.Phone,
                     DateCreated = DateTime.Now,
+                    EatingHabit = model.EatingHabit,
+                    PhysicalHealthRate = model.PhysicalHealthRate,
+                    MentalHealthRate = model.MentalHealthRate,
+                    EmotionalHealthRate = model.EmotionalHealthRate,
                     DateModified = DateTime.Now,
                     MeansOfIdentification = model.MeansOfIdentification != null ? _fileManager.FileUpload(model.MeansOfIdentification) : "",
                     LastModifiedBy = DateTime.Now.ToShortDateString(),
@@ -110,7 +114,11 @@ namespace Bounce.Services.Implementation.Services.Patient
                         Gender = model.Gender,
                         Phone = model.Phone,
                         MeansOfIdentification = profile.MeansOfIdentification,
-                        Image = profile.FilePath
+                        Image = profile.FilePath,
+                        EatingHabit = model.EatingHabit,
+                        PhysicalHealthRate = model.PhysicalHealthRate,
+                        MentalHealthRate = model.MentalHealthRate,
+                        EmotionalHealthRate = model.EmotionalHealthRate,
 
                     };
                     return SuccessResponse("Profile Updated", data: data);
@@ -170,6 +178,11 @@ namespace Bounce.Services.Implementation.Services.Patient
                     };
                     await _context.AddAsync(subscription);
 
+                   
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
                     var trans = new Transaction
                     {
                         RequestId = payment.Id,
@@ -179,8 +192,8 @@ namespace Bounce.Services.Implementation.Services.Patient
                         status = "00",
                         CreatedTimeOffset = DateTimeOffset.UtcNow,
                     };
-                    await _context.Transactions.AddAsync(trans);
 
+                    await _context.AddAsync(trans);
                     if (!await SaveAsync())
                         return FailedSaveResponse();
 
@@ -209,7 +222,7 @@ namespace Bounce.Services.Implementation.Services.Patient
                     {
                         Title = "Plan Subscription",
                         Topic = "Plan Subscription",
-                        Message = $"Your {plan.Title} plan subscription was successful<br />",
+                        Message = $"Your {plan.Title} plan subscription was successful",
                         TrxRef = payment.PaymentRequestId,
                         userId = userProfile.UserId,
 
@@ -323,6 +336,10 @@ namespace Bounce.Services.Implementation.Services.Patient
                     
                     await _context.AddAsync(appointement);
 
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
                     var transaction = new Transaction
                     {
                         RequestId = payment.Id,
@@ -430,6 +447,7 @@ namespace Bounce.Services.Implementation.Services.Patient
                 else
                     request = request.Where(x => x.Status != AppointmentStatus.Completed);
 
+                var ssss = request.ToList();
 
                 var query = await (from r in request
                                    join t in _context.Users on r.TherapistId equals t.Id
@@ -541,37 +559,6 @@ namespace Bounce.Services.Implementation.Services.Patient
                 return InternalErrorResponse(ex);
             }
         }
-        public Response LogUserFeeling(List<string> feelings)
-        {
-            try
-            {
-                if(feelings == null)
-                    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "feelings can not ne null" };
-
-                var user = _sessionManager.CurrentLogin;
-
-                if (!user.HasProfile)
-                    return new Response { StatusCode = StatusCodes.Status400BadRequest, Message = "profile has not been updated" };
-                var userProfile = _context.UserProfile.FirstOrDefault(x => x.Id == user.ProfileId);
-                userProfile.Feelings = String.Join("|", feelings);
-                _context.Update(userProfile);  
-                _context.Update(user);
-                if(_context.SaveChanges() > 0)
-                {
-                    return SuccessResponse();
-                }
-                else
-                {
-                    return FailedSaveResponse();
-                }
-           
-
-            }
-            catch (Exception ex)
-            {
-                return InternalErrorResponse(ex);
-            }
-        }
         public Response GetAllFeelings()
         {
             try
@@ -602,6 +589,38 @@ namespace Bounce.Services.Implementation.Services.Patient
             {
                 return InternalErrorResponse(ex);
             }
+        }
+        public async Task<Response> UpdateUserFellings(UpdateUserModeDto model)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var profile = _context.UserProfile.FirstOrDefault(x => x.UserId == user.Id);
+
+                if (profile != null)
+                {
+                    profile.Feelings = String.Join('|', model.Mood);
+                    _context.Update(profile);
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse(model);
+                    return SuccessResponse();
+                }
+                else
+                {
+                    return AuxillaryResponse("mood can not be null", StatusCodes.Status400BadRequest);
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+
+
         }
 
         public Response GetAllPlans()
@@ -638,41 +657,7 @@ namespace Bounce.Services.Implementation.Services.Patient
             }
         }
 
-        public Response GetMessages()
-        {
-
-            try
-            {
-                var user = _sessionManager.CurrentLogin;
-                var sendMessages = _context.Chats.Where(x=> x.SenderId == user.Id).Select(x => new
-                {
-                    ChatId = x.Id,
-                    Message = x.Message,
-                    Time = x.DateCreated,
-                    MessageType = "Send",
-                    ReceieverId = x.ReceieverId,
-                    ReceieverUserName = x.Receiever.UserName
-
-                });
-                var receivedMessages = _context.Chats.Where(x => x.ReceieverId == user.Id).Select(x => new
-                {
-                    ChatId = x.Id,
-                    Message = x.Message,
-                    Time = x.DateCreated,
-                    MessageType = "Recieved",
-                    SenderId = x.SenderId,
-                    SenderUserName = x.Sender.UserName
-
-                });
-                var message = sendMessages.Concat(sendMessages).OrderByDescending(x => x.Time).ToList();
-                return SuccessResponse(data: message);
-
-            }
-            catch (Exception ex)
-            {
-                return InternalErrorResponse(ex);
-            }
-        }
+ 
         public async Task<Response> CreateReview(CreateReviewDto model)
         {
             try
@@ -762,6 +747,70 @@ namespace Bounce.Services.Implementation.Services.Patient
             }
         }
 
+
+        public Response GetAllPatient()
+        {
+            try
+            {
+                var data = (from user in _context.Users.Where(x => x.Discriminator == UserType.Patient)
+                            join patientProfile in _context.UserProfile on user.Id equals patientProfile.UserId
+                            select new
+                            {
+
+                                Id = user.Id,
+                                UserName = user.UserName,
+                                FirstName = patientProfile.FirstName,
+                                LastName = patientProfile.LastName,
+                                Email = user.Email,
+                                ProfilePicture = patientProfile.FilePath,
+                                Gender = patientProfile.Gender,
+                                PhoneNumber = patientProfile.Phone,
+                                DateOfBirth = patientProfile.DateOfBirth.ToShortDateString(),
+                            }).ToList();
+
+                
+                return SuccessResponse(data: data);
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+        public Response SearchPatient(string query)
+        {
+            try
+            {
+                var data = (from user in _context.Users.Where(x => x.Discriminator == UserType.Patient)
+                            join patientProfile in _context.UserProfile.Where(x=> x.FirstName.Contains(query) || x.LastName.Contains(query) || x.Gender.Contains(query)
+                            || x.EatingHabit.Contains(query) || x.Feelings.Contains(query) || x.PhysicalHealthRate.Contains(query))
+                            
+                            on user.Id equals patientProfile.UserId
+                            select new
+                            {
+
+                                Id = user.Id,
+                                UserName = user.UserName,
+                                FirstName = patientProfile.FirstName,
+                                LastName = patientProfile.LastName,
+                                Email = user.Email,
+                                ProfilePicture = patientProfile.FilePath,
+                                Gender = patientProfile.Gender,
+                                PhoneNumber = patientProfile.Phone,
+                                DateOfBirth = patientProfile.DateOfBirth.ToShortDateString(),
+                            }).ToList();
+
+
+                return SuccessResponse(data: data);
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+
+
         public Response GetPatienceById (long id)
         {
             try
@@ -795,6 +844,56 @@ namespace Bounce.Services.Implementation.Services.Patient
                 return InternalErrorResponse(ex);
             }
         }
+
+        public Response GetPatienceProfileHistory(long id)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(x => x.Id == id && x.Discriminator == UserType.Patient);
+                if (user == null)
+                    return AuxillaryResponse("User does not exist", StatusCodes.Status404NotFound);
+
+                var patientProfile = _context.UserProfile.FirstOrDefault(x => x.UserId == id);
+                if (patientProfile == null)
+                    return AuxillaryResponse("User does not have not profile", StatusCodes.Status404NotFound);
+
+                var consultaions = _context.AppointmentRequest.Where(x => x.PatientId == id).ToList(); ;
+                var data = new
+                {
+                    Id = id,
+                    UserName = user.UserName,
+                    FirstName = patientProfile?.FirstName,
+                    LastName = patientProfile?.LastName,
+                    Email = user.Email,
+                    ProfilePicture = patientProfile?.FilePath,
+                    Gender = patientProfile?.Gender,
+                    PhoneNumber = patientProfile?.Phone,
+                    DateOfBirth = patientProfile?.DateOfBirth.ToString("M"),
+                    PhysicalHealth = patientProfile.PhysicalHealthRate,
+                    MentalHealth = patientProfile?.MentalHealthRate,
+                    EmotionalHealth = patientProfile.EmotionalHealthRate,
+                    EatenHabit = patientProfile.EatingHabit,
+                    Complains = consultaions.Select(x=> new
+                    {
+                        ReasonForTherapy = x.ReasonForTherapy,
+                        ProblemDecription = x.ProblemDecription
+                    }),
+                    Presscriptions = consultaions.Select(m=> new 
+                    {
+                        Title = "Stress",
+                        Medication = "5mg of Xanax Daily"
+                    })
+
+                };
+                return SuccessResponse(data: data);
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+
 
 
         public ReviewCalculationDto CalculateTherapisRating(long id)
@@ -893,6 +992,7 @@ namespace Bounce.Services.Implementation.Services.Patient
             }
             return availabeleTimes;
         }
+
 
     }
 }
