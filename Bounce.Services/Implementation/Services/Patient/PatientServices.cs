@@ -857,7 +857,16 @@ namespace Bounce.Services.Implementation.Services.Patient
                 if (patientProfile == null)
                     return AuxillaryResponse("User does not have not profile", StatusCodes.Status404NotFound);
 
-                var consultaions = _context.AppointmentRequest.Where(x => x.PatientId == id).ToList(); ;
+                var consultaions = _context.AppointmentRequest.Where(x => x.PatientId == id).ToList();
+                var prescription = (from t in consultaions
+                                    join p in _context.Prescriptions on t.Id equals
+                                    p.AppointmentRequestId
+                                    select new
+                                    {
+                                        Title = t.ReasonForTherapy,
+                                        Medication = p.PrescriptionText
+
+                                    });
                 var data = new
                 {
                     Id = id,
@@ -878,10 +887,10 @@ namespace Bounce.Services.Implementation.Services.Patient
                         ReasonForTherapy = x.ReasonForTherapy,
                         ProblemDecription = x.ProblemDecription
                     }),
-                    Presscriptions = consultaions.Select(m=> new 
+                    Prescriptions = prescription.Select(m=> new 
                     {
-                        Title = "Stress",
-                        Medication = "5mg of Xanax Daily"
+                        Title = m.Title,
+                        Medication = m.Medication
                     })
 
                 };

@@ -11,6 +11,7 @@ namespace Bounce_Domain.Entity
     {
         public double Amount { get; set; }
 
+        public string TransactionRef { get; set; }
         public string Decription { get; set; }
         public long TherapistId { get; set; }
 

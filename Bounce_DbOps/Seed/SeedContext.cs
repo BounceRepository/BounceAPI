@@ -171,6 +171,8 @@ namespace Microsoft.EntityFrameworkCore
                 modelBuilder.Entity<FeedGroup>().HasData(new FeedGroup { Id = 6, Name = "Sexuality" });
                 modelBuilder.Entity<FeedGroup>().HasData(new FeedGroup { Id = 7, Name = "Parenting" });
 
+                modelBuilder.Entity<PoolAccount>().HasData(new PoolAccount { Id = 1, Balance = 0 });
+
 
             }
 

@@ -18,6 +18,7 @@ namespace Bounce_Application.Persistence.Interfaces.Payment
         Task<Response> InitailizePaymentAsync(PaymentRequestDto model);
         Task<Response> PayWithWallet(string TxRef);
         Task<Response> Requery(string TxRef);
+        Task<Response> TherapistCommisionPayment(TherapistComimssionDto model);
         Task<Response> TransactionByFilter(string filter);
         Task<Response> TransactionHistory();
   

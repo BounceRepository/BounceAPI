@@ -8,6 +8,10 @@ namespace Bounce_Domain.Enum
 {
     public enum TransactionType
     {
-        Wallet,Other, TopUp, Payment
+        Wallet,Other, TopUp, Payment, commission
+    }
+
+    public enum PoolTransactionType
+    {    commission, Consultation
     }
 }

@@ -23,6 +23,7 @@ namespace Bounce_DbOps.EF.Infrastructure
 				.SetBasePath(basePath)
 				.AddJsonFile("appsettings.json", true, true)
 				.AddJsonFile("key.json", true, true)
+				.AddJsonFile("bankList.json", true, true)
 				.AddJsonFile("appsettings.Local.json", true, true)
 				.AddJsonFile($"appsettings.{environmentName}.json", true, true)
 				.AddEnvironmentVariables()

@@ -81,16 +81,9 @@ namespace Bounce.Api.Controllers
 
         
         }
-        //[AllowAnonymous]
+        [HttpPost("TherapistCommissionPayment")]
+        public async Task<IActionResult> TherapistCommissionPayment([FromBody] TherapistComimssionDto model) => Response(await _paymentServices.TherapistCommisionPayment(model));
 
-
-        //[HttpGet("ConfirmTransaction")]
-        //public async Task<IActionResult> TransactionComfirmation([FromQuery] string q )
-        //{
-
-        //    return Ok(q);
-        //    //=> Response(await _paymentServices.GetWalletBallance());
-        //}
     }
 }
 

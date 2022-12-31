@@ -320,10 +320,6 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     BankName = detail.BankName,
 
                 };
-
-
-                    
-
                 return SuccessResponse(data: data);
 
             }
@@ -334,6 +330,33 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
 
         }
+
+
+        public Response GetCommissions()
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                var commission = _context.Commisions.Where(x => x.TherapistId == user.Id)
+                    .Select(x => new
+                    {
+                        PaymentId = x.TransactionRef,
+                        Amount = x.Amount,
+                        Description = x.Decription,
+                        Date = x.DateCreated.ToString("f")
+                    });
+                
+                return SuccessResponse(data: commission);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+
+
+        }
+
         public Response GetTherapistConsultaion()
         {
             try

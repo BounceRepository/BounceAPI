@@ -582,5 +582,135 @@ namespace Bounce.Services.Implementation.Services.Payment
                 return InternalErrorResponse(ex);
             }
         }
+        public async Task<Response> TherapistCommisionPayment(TherapistComimssionDto model)
+        {
+            using(var trans = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var poolAccount = _context.PoolAccount.FirstOrDefault();
+                    //if(model.Amount > poolAccount.Balance)
+                    //    return AuxillaryResponse("insufficient balance", StatusCodes.Status400BadRequest);
+
+                    poolAccount.Balance -= model.Amount;
+                    _context.Update(poolAccount);
+
+                    var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == model.TherapistId);
+                    wallet.Commission += model.Amount;
+                    _context.Update(wallet);
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    var user = _sessionManager.CurrentLogin;
+                    var commission = new Commision
+                    {
+                        TherapistId = model.TherapistId,
+                        Amount = model.Amount,
+                        TransactionRef = "COM" + DateTime.Now.Ticks.ToString(),
+                        CreatedTimeOffset = DateTimeOffset.UtcNow,
+                        Decription = model.Description,
+
+                    };
+                    _context.Add(commission);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    var paymentRequest = new PaymentRequest
+                    {
+                        UserId = model.TherapistId,
+                        Amount = model.Amount,
+                        PaymentRequestId = commission.TransactionRef,
+                        CreatedTimeOffset = DateTimeOffset.UtcNow,
+                        PaymentDecription = model.Description,
+                        PaymentType = PaymentType.Commission,
+
+                    };
+                    _context.Add(paymentRequest);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    var transaction = new Transaction
+                    {
+                        RequestId = paymentRequest.Id,
+                        TransactionType = TransactionType.commission,
+                        Decription = model.Description,
+                        UserId = user.Id,
+                        status = "00",
+                        CreatedTimeOffset = DateTimeOffset.UtcNow,
+                    };
+
+                    _context.Add(transaction);
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    var poolTransaction = new PoolTransaction
+                    {
+                        Amount = model.Amount,
+                        TransactionRef = commission.TransactionRef,
+                        TransactionType = PoolTransactionType.commission,
+                        Decsription = model.Description,
+                        TransactionInitiatedByUserId = user.Id,
+                        TransactionCompletedByUserId = user.Id,
+                        Status = "00",
+                        PoolType = "DEBIT",
+                        CreatedTimeOffset = DateTimeOffset.UtcNow,
+                        Time = DateTime.UtcNow
+                    };
+
+              
+                    _context.Add(poolTransaction);
+         
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    await trans.CommitAsync();
+
+
+                    var therapistProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == model.TherapistId);
+                    var therapist = await _context.Users.FirstOrDefaultAsync(x => x.Id == model.TherapistId);
+
+                    var pushNotifications = new List<PushNotificationDto>();
+                    var patientPushNotification = new PushNotificationDto
+                    {
+                        Title = "Commission payment",
+                        Topic = "Commission payment",
+                        Message = $"Commission of {model.Amount} has been credited to your account",
+                        TrxRef = commission.TransactionRef,
+                        userId = model.TherapistId,
+
+                    };
+                    pushNotifications.Add(patientPushNotification);
+
+                    await _notificationService.PushMultipleNotificationAsyn(pushNotifications);
+
+
+                    var mailBuilder = new StringBuilder();
+                    mailBuilder.AppendLine("Dear" + " " + therapistProfile.FirstName + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Commission of {model.Amount} has been credited to your account.<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+
+                    var emailRequest = new EmailRequest
+                    {
+                        To = therapist.Email,
+                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                        Subject = "Commission payment"
+                    };
+
+                    await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
+
+
+                    return SuccessResponse();
+
+                }
+                catch (Exception ex)
+                {
+                    await trans.RollbackAsync();
+                    return InternalErrorResponse(ex);
+                }
+            }
+        }
     }
 }

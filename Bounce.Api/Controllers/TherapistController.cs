@@ -68,15 +68,21 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> Questions() => Response( await _therapistServices.GetQuestions());
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
-        [HttpGet("GetTherapistCommission")]
-        public IActionResult GetTherapistCommission() => Response( _therapistServices.GetTherapistCommision());
+        [HttpGet("GetTherapistCommissionBalance")]
+        public IActionResult GetTherapistCommissionBalance() => Response( _therapistServices.GetTherapistCommision());
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
+        [HttpGet("GetTherapistPayment")]
+        public IActionResult GetTherapistCommission() => Response(_therapistServices.GetCommissions());
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
         [HttpPost("TakeAssesement")]
         public async Task<IActionResult> Assesement([FromBody] AssesmentDto model) => Response(await _therapistServices.ValidateAssement(model));
 
+     
 
-        
+
+
 
     }
 }
