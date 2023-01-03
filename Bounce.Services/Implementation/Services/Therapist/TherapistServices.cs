@@ -368,6 +368,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
                             join patient in _context.UserProfile on consultation.PatientId equals patient.UserId
                             select new
                             {
+                                AppointmentRequestId = consultation.Id,
                                 PatientName = patient.FirstName + " " + patient.LastName,
                                 PatientId = patient.UserId,
                                 PatientNamePicure = patient.FilePath,

@@ -62,6 +62,9 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     options.Password.RequireDigit = false;
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedEmail = true;
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
+    options.Lockout.MaxFailedAccessAttempts = 3;
 }).AddEntityFrameworkStores<BounceDbContext>()
     .AddDefaultTokenProviders();
 
