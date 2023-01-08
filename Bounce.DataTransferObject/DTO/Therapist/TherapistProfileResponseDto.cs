@@ -13,12 +13,14 @@ namespace Bounce.DataTransferObject.DTO.Therapist
         public int NumberOfPatient { get; set; }
         public int ReviewCount { get; set; }
         public decimal ReviewRatio { get; set; }
+        public string TherapistNumber { get; set; }
     }
 
    public class TherapistProfileDetailDto : TherapistProfileResponseDto
    {
         public string EmailAddress { get; set; }
         public double Commission { get; set; }
+        public long TherapistId { get; set; }
 
     }
 

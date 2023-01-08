@@ -13,8 +13,6 @@ namespace Bounce.DataTransferObject.DTO.Therapist
       
         public string AccountName { get; set; }
         [Required]
-        [StringLength(10, ErrorMessage = "Account number must be 11 digits")]
-        [MinLength(10, ErrorMessage = "Account number must be 11 digits")]
         public string AccountNumber { get; set; }
         [Required]
         public string BankName { get; set; }

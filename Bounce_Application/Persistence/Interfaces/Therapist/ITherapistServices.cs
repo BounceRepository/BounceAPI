@@ -14,6 +14,7 @@ namespace Bounce_Application.Persistence.Interfaces.Therapist
         Task<Response> BankDetailsUpsert(BankAccountDetailDto model);
         Task<Response> CreateTherapistProfile(TherapistProfileDto model);
         Task<Response> CreateUpdateUpdateTherapistAccountDetails(TherapistAccountDetailsDto model);
+        Response GetAllTherapist();
         Response GetCommissions();
         Response GetPatientProfileHistory(long patientId);
         Task<Response> GetQuestions();

@@ -2,6 +2,7 @@
 using AutoMapper.Internal;
 using Bounce.DataTransferObject.DTO.Notification;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
+using Bounce_Application.DTO;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.Persistence.Interfaces.Notification;
 using Bounce_Application.SeriLog;
@@ -328,6 +329,103 @@ namespace Bounce.Services.Implementation.Services.Notification
             }
         }
 
+
+        public async Task<Response> StartStopConsulation(bool IsStart, long appointRequestId)
+        {
+            try
+            {
+                var user = _sessionManager.CurrentLogin;
+                ApplicationUser receiver = default;
+                var appointment = _context.AppointmentRequest.FirstOrDefault(x => x.Id == appointRequestId);
+                if (appointment == null)
+                    return AuxillaryResponse("record not found", StatusCodes.Status404NotFound);
+                long receiverId = default;
+                var name = "";
+
+                if(user.Discriminator == Bounce_Domain.Enum.UserType.Patient)
+                {
+                    var therapist = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == appointment.TherapistId);
+                    name = therapist.Title + " " + therapist.FirstName;
+                    receiver = _userManager.Users.FirstOrDefault(x => x.Id == appointment.TherapistId);
+                }
+                else
+                {
+                    var patient = _context.UserProfile.FirstOrDefault(x => x.UserId == appointment.PatientId);
+                    name = patient.FirstName;
+                    receiver = _userManager.Users.FirstOrDefault(x => x.Id == appointment.PatientId);
+                }
+
+                var pushNotifications = new List<PushNotificationDto>();
+                var mailBuilder = new StringBuilder();
+                if (IsStart)
+                {
+                    appointment.Status = Bounce_Domain.Enum.AppointmentStatus.OnGoing;
+                    _context.Update(appointment);
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+                    mailBuilder.AppendLine("Dear" + " " + name + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"You have an active consultation session, kindly login to your app to join the session .<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+                    var patientPushNotification = new PushNotificationDto
+                    {
+                        Title = "Consultation",
+                        Topic = "Consultation",
+                        Message = $"You have an active consultation session, kindly login to your app to join the session ",
+                        TrxRef = appointment.TrxRef,
+                        userId = receiver.Id,
+
+                    };
+                    pushNotifications.Add(patientPushNotification);
+                }
+                else
+                {
+                    appointment.Status = Bounce_Domain.Enum.AppointmentStatus.Completed;
+                    _context.Update(appointment);
+
+                    if (!await SaveAsync())
+                        return FailedSaveResponse();
+
+                    mailBuilder.AppendLine("Dear" + " " + name + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Your Consultation has ended.<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+                    var patientPushNotification = new PushNotificationDto
+                    {
+                        Title = "Consultation",
+                        Topic = "Consultation",
+                        Message = $"Your Consultation has ended",
+                        TrxRef = appointment.TrxRef,
+                        userId = receiver.Id,
+
+                    };
+                    pushNotifications.Add(patientPushNotification);
+                }
+
+                var emailRequest = new EmailRequest
+                {
+                    To = user.Email,
+                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                    Subject = "Consultaion Session Booking"
+                };
+
+                await PushMultipleNotificationAsyn(pushNotifications);
+                await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
+
+                return SuccessResponse();
+
+            }
+            catch (Exception ex)
+            {
+
+                return InternalErrorResponse(ex);
+            }
+        }
+
+
         public Response GetMessagesByUserId(long rceieverId)
         {
            try
@@ -341,6 +439,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                     Time = x.CreatedTimeOffset,
                     ReceieverId = x.ReceieverId,
                     SenderId = x.SenderId,
+                    File = string.IsNullOrEmpty(x.Files) ? null : x.Files,
                     IsPrescription = x.HasFile
 
                 }).ToList();

@@ -89,35 +89,21 @@ namespace Bounce.Api.Controllers
         }
         [AllowAnonymous]
         [HttpPost("SendPrescription")]
-        public async Task<IActionResult> PushPrescription([FromForm] PrescriptionDto model)
+        public async Task<IActionResult> PushPrescription([FromBody] PrescriptionDto model)
         {
             try
             {
                 var receiver = _context.Users.FirstOrDefault(x => x.Id == model.RevceieverId);
                 if (receiver != null)
                 {
-                    var filename = "";
-     
-                    if (model.File != null)
-                    {
-
-                        filename = _fileManager.FileUpload(model.File, "Chat");
-                    }
-                    //var mailBuilder = new StringBuilder();
-
-                    //mailBuilder.AppendLine("DRUG: " + " " + model.Drug + "," + "<br />");
-                    //mailBuilder.AppendLine("<br />");
-                    //mailBuilder.AppendLine("DOSAGE: " + " " + model.Dosage + "," + "<br />");
-                    //mailBuilder.AppendLine("<br />");
-                    //mailBuilder.AppendLine("Prescription: " + " " + model.Prescription + "," + "<br />");
-
+                    
                     var prescript = "DRUG: " + " " + model.Drug + "," + "DOSAGE: " + " " + model.Dosage + "Prescription: " + " " + model.Prescription;
                     var message = new SendMessageDto
                     {
                         ReceieverId = model.RevceieverId,
                         Message = prescript,
                         Time = DateTime.UtcNow.AddHours(1),
-                        FilePath = filename,
+                        FilePath = model.File,
                         IsPrescription = true
 
                     };
@@ -127,12 +113,12 @@ namespace Bounce.Api.Controllers
                     {
                         var prescription = new Prescription
                         {
-                            AppointmentRequestId = model.RevceieverId,
+                            AppointmentRequestId = model.AppointmentId,
                             PrescriptionText = prescript,
                             Dosage = model.Dosage,
                             Drug = model.Dosage,
                             DateModified = DateTime.Now,
-                            File = filename
+                            File = model.File
                         };
 
                         _context.Add(prescription);
@@ -198,6 +184,9 @@ namespace Bounce.Api.Controllers
 
         [HttpGet("GetReplyByCommentId")]
         public IActionResult GetREplies([FromQuery] long commentId) => Response(_notificationService.GetRepliesByCommentId(commentId));
+
+        [HttpPatch("StartStopConsultation")]
+        public async Task<IActionResult> StartStopSession([FromBody] UpdateSessionStatus model) => Response(await _notificationService.StartStopConsulation(model.IsStart, model.AppointmentRequestId));
 
 
 

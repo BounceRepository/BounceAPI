@@ -860,11 +860,17 @@ namespace Bounce.Services.Implementation.Services.Patient
                 var consultaions = _context.AppointmentRequest.Where(x => x.PatientId == id).ToList();
                 var prescription = (from t in consultaions
                                     join p in _context.Prescriptions on t.Id equals
-                                    p.AppointmentRequestId
+                                    p.AppointmentRequestId 
+                                    join therapist in _context.TherapistProfiles on t.TherapistId equals therapist.UserId
                                     select new
                                     {
                                         Title = t.ReasonForTherapy,
-                                        Medication = p.PrescriptionText
+                                        Medication = p.PrescriptionText,
+                                        Time = p.DateCreated,
+                                        Therapist = therapist.Title + " " + therapist.FirstName + " " + therapist.LastName,
+                                        Dosage = p.Dosage,
+                                        Drug = p.Drug
+
 
                                     });
                 var data = new
@@ -885,12 +891,17 @@ namespace Bounce.Services.Implementation.Services.Patient
                     Complains = consultaions.Select(x=> new
                     {
                         ReasonForTherapy = x.ReasonForTherapy,
-                        ProblemDecription = x.ProblemDecription
+                        ProblemDecription = x.ProblemDecription,
+                        Date = x.DateCreated,
                     }),
-                    Prescriptions = prescription.Select(m=> new 
+                    Prescriptions = prescription.Select(x=> new 
                     {
-                        Title = m.Title,
-                        Medication = m.Medication
+                        Title = x.Title,
+                        Drug = x.Drug,
+                        Dosage = x.Dosage,
+                        Medication = x.Medication,
+                        Date = x.Time,
+                        Therapist = x.Therapist
                     })
 
                 };

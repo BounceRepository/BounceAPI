@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Bounce.DataTransferObject.DTO;
 using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Therapist;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
@@ -8,6 +9,7 @@ using Bounce_Application.SeriLog;
 using Bounce_Application.Utilies;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
+using Bounce_Domain.Enum;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -137,6 +139,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
             }
         }
 
+      
         public Response GetTherapistDashBoard()
         {
             try
@@ -311,13 +314,13 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 var detail = _context.BankAccountDetails.FirstOrDefault(x => x.TherapistId == user.Id);
                 if(detail == null)
                 {
-                    return AuxillaryResponse("record not found", StatusCodes.Status404NotFound);
+                    return SuccessResponse(data: null);
                 }
                 var data = new
                 {
-                    AccountName = detail.AccountName,
-                    AccountNumber = detail.AccountNumber,
-                    BankName = detail.BankName,
+                    AccountName = detail.AccountName.DecryptString(),
+                    AccountNumber = detail.AccountNumber.DecryptString(),
+                    BankName = detail.BankName.DecryptString(),
 
                 };
                 return SuccessResponse(data: data);
@@ -398,6 +401,63 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
 
         }
+
+        public Response GetAllTherapist()
+        {
+            try
+            {
+
+                var users = _userManager.Users.Where(x => x.Discriminator == UserType.Therapist).ToList();
+                var profiles = _context.TherapistProfiles.Where(x => !x.IsDeleted).ToList();
+                var reviews = _context.Reviews.Where(x => !x.IsDeleted).ToList();
+                var appointmentRequest = _context.AppointmentRequest.ToList();
+                var wallets = _context.Wallets.ToList();
+                var revews = _context.Reviews.Where(x => !x.IsDeleted).ToList();
+
+                if (users == null)
+                    return SuccessResponse(data: null);
+
+                var therapists = new List<TherapistProfileDetailDto>();
+                foreach (var user in users)
+                {
+
+                    revews = revews.Where(x=>x.TherapistUserId == user.Id && x.RateCount > 0)
+                    .OrderByDescending(x => x.DateCreated).ToList();
+                    var profile = profiles.FirstOrDefault(x => x.UserId == user.Id);
+                    if(profile != null)
+                    {
+                        var ratings = reviews.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).OrderByDescending(x => x.DateCreated).ToList();
+                        var patientCount = appointmentRequest.Where(m => m.TherapistId == user.Id && m.IsPaymentCompleted).DistinctByProperty(x => x.PatientId).Count();
+                        var wallet = wallets.FirstOrDefault(x => x.UserId == user.Id);
+                        var response = _mapper.Map<TherapistProfileDetailDto>(profile);
+                        response.ReviewCount = ratings.Where(x => x.TherapistUserId == user.Id && x.RateCount > 0).Count();
+                        response.ReviewRatio = CalculateTherapisRating(user.Id, revews).Ratio;
+                        response.ServiceChargePerHoure = 50000;
+                        response.NumberOfPatient = patientCount;
+                        response.EmailAddress = user.Email;
+                        response.Commission = wallet.Commission;
+                        response.TherapistNumber = user.PatientId ?? "";
+                        response.TherapistId = user.Id;
+
+                        therapists.Add(response);
+                    }
+
+                }
+
+
+
+
+
+                return SuccessResponse(data: therapists);
+
+            }
+            catch (Exception ex)
+            {
+                return InternalErrorResponse(ex);
+            }
+        }
+
+
         public  Response GetTherapisById(long id)
         {
             try
@@ -420,6 +480,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 response.NumberOfPatient = patientCount;
                 response.EmailAddress = user.Email;
                 response.Commission = wallet.Commission;
+                response.TherapistNumber = user.PatientId ?? "";
 
                 return SuccessResponse(data: response);
 
@@ -477,32 +538,34 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 var user = _sessionManager.CurrentLogin;
                 var questions = new List<TherapistAccesmentQuestion>();
                 var existingQuestionIds = _context.TherapistAccessments.Where( x=> !x.IsDeleted && x.TherapistId == user.Id).Select(x=> x.AnsweredQuestionIds).ToList();
-                if(existingQuestionIds.Any())
-                {   
-                    if(existingQuestionIds.Count() == 3)
-                    {
-                        return AuxillaryResponse("You have exceeded your assessment limit", StatusCodes.Status400BadRequest);
-                    }
-                    var ids = new List<long>();
-                    foreach (var item in existingQuestionIds)
-                    {
-                        ids.AddRange(item.Split('|').Select(long.Parse).ToList());
-                    };
-                     questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).Where(m=> ids.Contains(m.Id)).ToListAsync();
+                //if(existingQuestionIds.Any())
+                //{   
+                //    if(existingQuestionIds.Count() == 10)
+                //    {
+                //        return AuxillaryResponse("You have exceeded your assessment limit", StatusCodes.Status400BadRequest);
+                //    }
+                //    var ids = new List<long>();
+                //    foreach (var item in existingQuestionIds)
+                //    {
+                //        ids.AddRange(item.Split('|').Select(long.Parse).ToList());
+                //    };
+                //     questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).Where(m=> ids.Contains(m.Id)).ToListAsync();
 
-                }
-                else
-                {
-                    questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).ToListAsync();
-                }
-             
+                //}
+                //else
+                //{
+                //    questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).ToListAsync();
+                //}
+
+                questions = await _context.TherapistAccesmentQuestions.Where(x => !x.IsDeleted).ToListAsync();
+            
                 var newQuestion = new List<QuestionDTO>();
                 if (questions.Any())
                 {
                    
                     var indexers = new List<int>();
                     var counter = 1;
-                    var questionCount = 2;
+                    var questionCount = 6;
                     while (counter > 0)
                     {
                         Random rnd = new Random();
@@ -563,7 +626,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     var question = questions.FirstOrDefault(x => x.Id == resut.QuestionId);
                     if (question != null)
                     {
-                        if (resut.Answer == question.CorrectAnswer)
+                        if (resut.Answer.ToLower() == question.CorrectAnswer.ToLower())
                             correctAnswer++;
                         else
                             wrongAnswer++;
@@ -580,9 +643,9 @@ namespace Bounce.Services.Implementation.Services.Therapist
                     AnsweredQuestionIds = String.Join('|', questionIds)
                 };
 
-                var percentage = (assesment.TotalPassed * assesment.TotalScore) / 100;
+                //var percentage = (assesment.TotalPassed * assesment.TotalScore) / 100;
 
-                if(percentage > 59)
+                if(assesment.TotalPassed > wrongAnswer)
                 {
                     var userProfile = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == user.Id);
 
@@ -623,6 +686,39 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
             return decodeMessage2;
         }
+
+        public ReviewCalculationDto CalculateTherapisRating(long id, List<TherapistReview> revews)
+        {
+           
+
+            var oneStarRating = revews.Where(x => x.RateCount == 1).Sum(x => x.RateCount);
+            var twoStarRating = revews.Where(x => x.RateCount == 2).Sum(x => x.RateCount);
+            var threeStarRating = revews.Where(x => x.RateCount == 3).Sum(x => x.RateCount);
+            var fourStarRating = revews.Where(x => x.RateCount == 4).Sum(x => x.RateCount);
+            var fiveStarRating = revews.Where(x => x.RateCount == 5).Sum(x => x.RateCount);
+
+            var total = oneStarRating + twoStarRating + threeStarRating + fourStarRating + fiveStarRating;
+            var oneStarPercent = oneStarRating > 0 ? (100 * oneStarRating) / total : 0;
+            var twoStarPercent = twoStarRating > 0 ? (100 * twoStarRating) / total : 0;
+            var threeStarPercent = threeStarRating > 0 ? (100 * threeStarRating) / total : 0;
+            var fourStarPercent = fourStarRating > 0 ? (100 * fourStarRating) / total : 0;
+            var fiveStarPercent = fiveStarRating > 0 ? (100 * fiveStarRating) / total : 0;
+
+            var reviewRatio = (decimal.Parse(total.ToString()) > 0 ? decimal.Parse(total.ToString()) / decimal.Parse(revews.Count().ToString()) : 0);
+
+            return new ReviewCalculationDto
+            {
+                Reviews = revews,
+                TotalRating = total,
+                OneStarPercent = oneStarPercent,
+                TwoStarPercent = twoStarPercent,
+                ThreeStarPercent = threeStarPercent,
+                FourStarPercent = fourStarPercent,
+                Ratio = Math.Round(reviewRatio, 1),
+
+            };
+        }
+
 
     }
 }

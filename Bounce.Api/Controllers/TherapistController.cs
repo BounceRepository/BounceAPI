@@ -34,11 +34,16 @@ namespace Bounce.Api.Controllers
         [HttpGet("GetTherpaistShcedule")]
         public IActionResult GetTherpaistShcedule() => Response(_therapistServices.GetTherapistSchedules());
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+      
         [HttpGet("GetTherpaistById")]
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public IActionResult GetTherpaistById([FromQuery] long id) => Response(_therapistServices.GetTherapisById(id));
+
+        [HttpGet("GetAllTherapist")]
+        [AllowAnonymous]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public IActionResult GetAllTherpaist() => Response(_therapistServices.GetAllTherapist());
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
         [HttpGet("GetConsultaions")]      
