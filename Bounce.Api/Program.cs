@@ -50,6 +50,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var flutterSettindSection = configuration.GetSection("FlutterWaveSetting");
 var appSettindSection = configuration.GetSection("AppSettings");
+var agoraSettindSection = configuration.GetSection("AgoraSetting");
 
 
 builder.Services.AddDbContext<BounceDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("BounceDatabase")));
@@ -71,6 +72,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<FlutterWaveSetting>(flutterSettindSection);
 builder.Services.Configure<AppSettings>(appSettindSection);
+builder.Services.Configure<AgoraSetting>(agoraSettindSection);
 builder.Services.AddSession();
 builder.Services.AddApiVersioning(o =>
 {

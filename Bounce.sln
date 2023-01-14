@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bounce.UnitTest", "Bounce.U
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bounce.Job", "Bounce.Job\Bounce.Job.csproj", "{D8058A95-8283-4210-98A7-71F87A904563}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgoraIO", "AgoraKit\Src\csharp\src\AgoraIO\AgoraIO.csproj", "{BD53E5F8-CA84-44DD-8E7B-1EAD9D67553D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{D8058A95-8283-4210-98A7-71F87A904563}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8058A95-8283-4210-98A7-71F87A904563}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8058A95-8283-4210-98A7-71F87A904563}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD53E5F8-CA84-44DD-8E7B-1EAD9D67553D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD53E5F8-CA84-44DD-8E7B-1EAD9D67553D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD53E5F8-CA84-44DD-8E7B-1EAD9D67553D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD53E5F8-CA84-44DD-8E7B-1EAD9D67553D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +85,7 @@ Global
 		{3A9EF5DC-F838-4B1A-9539-272A6A9DEFE0} = {338227CF-A097-4B34-B974-3FAEE5BD0E59}
 		{A5AC8E8A-1786-4063-B085-2FB5585D7AD5} = {338227CF-A097-4B34-B974-3FAEE5BD0E59}
 		{D8058A95-8283-4210-98A7-71F87A904563} = {7F442448-AAAE-4E9A-B512-7CD93D46CFC5}
+		{BD53E5F8-CA84-44DD-8E7B-1EAD9D67553D} = {7F442448-AAAE-4E9A-B512-7CD93D46CFC5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F47EEA34-BF8F-4C07-94D7-C2A3AD7C1018}

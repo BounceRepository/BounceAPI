@@ -497,6 +497,14 @@ namespace Bounce.Services.Implementation.Services.Patient
                     return AuxillaryResponse("session not found", StatusCodes.Status404NotFound);
 
 
+                if (session.Status == AppointmentStatus.Completed)
+                    return AuxillaryResponse("session has been completed", StatusCodes.Status400BadRequest);
+
+
+                if (session.StartTime.Value.LocalDateTime <= DateTime.Now)
+                    return AuxillaryResponse("you can not re-schedule session at this moment try again later", StatusCodes.Status400BadRequest);
+
+
 
                 var time = model.StartTime.ConvertToHour(model.Date);
                 session.DateModified = DateTime.Now;

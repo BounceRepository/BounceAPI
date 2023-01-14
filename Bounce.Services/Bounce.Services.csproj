@@ -15,7 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="agora_rtc_sdk" Version="3.7.2.245" />
     <PackageReference Include="AutoMapper" Version="12.0.0" />
+    <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="FirebaseAdmin" Version="2.3.0" />
     <PackageReference Include="Flutterwave.Ravepay.Net" Version="1.0.6-beta" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.Json" Version="7.0.0" />
@@ -27,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AgoraKit\Src\csharp\src\AgoraIO\AgoraIO.csproj" />
     <ProjectReference Include="..\Bounce_Application\Bounce_Application.csproj" />
     <ProjectReference Include="..\Bounce_DbOps\Bounce_DbOps.csproj" />
   </ItemGroup>
