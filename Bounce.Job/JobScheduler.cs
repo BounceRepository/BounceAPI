@@ -65,116 +65,89 @@ namespace Bounce.Job
                                }).ToList();
             var pushNotifications = new List<PushNotificationDto>();
 
-            foreach (var appointment in appoinments)
+            var overDueSessions = appoinments.Where(x => x.SectionTime > DateTime.Now.AddHours(1) && x.AppointMent.Status != AppointmentStatus.Completed).ToList();
+            foreach (var appointment in overDueSessions)
             {
-                if(appointment.SectionTime < DateTime.Now.AddMinutes(20))
+                appointment.AppointMent.Status = AppointmentStatus.Overdue;
+                appointment.AppointMent.DateModified = DateTime.Now;
+                _context.Update(appointment.AppointMent);
+                await _context.SaveChangesAsync();
+                var mailBuilder = new StringBuilder();
+
+                mailBuilder.AppendLine("Dear" + " " + appointment.PatientName + "," + "<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"Kindly note that your session with {appointment.TherapistName} has expired.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"You can reshedule the session.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine("Regards:<br />");
+
+                var patientEmailRequest = new EmailRequest
                 {
-                    appointment.AppointMent.Status = AppointmentStatus.Overdue;
-                    appointment.AppointMent.DateModified = DateTime.Now;
-                    _context.Update(appointment.AppointMent);
-                    await _context.SaveChangesAsync();
-                    var mailBuilder = new StringBuilder();
+                    To = appointment.PatientEmail,
+                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Expiry"),
+                    Subject = "Email Confirmation"
+                };
+                await _EmailService.SendMail(patientEmailRequest);
 
-                    mailBuilder.AppendLine("Dear" + " " + appointment.PatientName + "," + "<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"Kindly note that your session with {appointment.TherapistName} has expired.<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"You can reshedule the session.<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine("Regards:<br />");
+                mailBuilder.Clear();
 
-                    var patientEmailRequest = new EmailRequest
-                    {
-                        To = appointment.PatientEmail,
-                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Expiry"),
-                        Subject = "Email Confirmation"
-                    };
-                    await _EmailService.SendMail(patientEmailRequest);
+                mailBuilder.AppendLine("Dear" + " " + appointment.TherapistName + "," + "<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"Kindly note that your session with {appointment.PatientName} has expired.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"KIndly state the reason why the session did not hold.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine("Regards:<br />");
 
-                    mailBuilder.Clear();
-
-                    mailBuilder.AppendLine("Dear" + " " + appointment.TherapistName + "," + "<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"Kindly note that your session with {appointment.PatientName} has expired.<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"KIndly state the reason why the session did not hold.<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine("Regards:<br />");
-
-                    var therapisEmailRequest = new EmailRequest
-                    {
-                        To = appointment.TherapistEmail,
-                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Expiry"),
-                        Subject = "Email Confirmation"
-                    };
-
-                }
-                if ((appointment.SectionTime - DateTime.Now).TotalMinutes < 15 && (appointment.SectionTime - DateTime.Now).TotalMinutes  > 1)
+                var therapisEmailRequest = new EmailRequest
                 {
-                    var timeRemaining = (appointment.SectionTime - DateTime.Now).TotalMinutes;
-                    
-                    var mailBuilder = new StringBuilder();
+                    To = appointment.TherapistEmail,
+                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Expiry"),
+                    Subject = "Email Confirmation"
+                };
+            }
 
-                    mailBuilder.AppendLine("Dear" + " " + appointment.PatientName + "," + "<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"Kindly note that your session with {appointment.TherapistName} will start in {timeRemaining} munites time.<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"KIndly get your self ready .<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine("Regards:<br />");
+            var upcommings = appoinments.Where(x => (x.SectionTime - DateTime.Now).TotalMinutes < 15  && x.AppointMent.Status == AppointmentStatus.Upcomming).ToList();
+            foreach (var appointment in upcommings)
+            {
+                var timeRemaining = (appointment.SectionTime - DateTime.Now).TotalMinutes;
 
-                    var patientEmailRequest = new EmailRequest
-                    {
-                        To = appointment.PatientEmail,
-                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Notification"),
-                        Subject = "Email Confirmation"
-                    };
-                    await _EmailService.SendMail(patientEmailRequest);
+                var mailBuilder = new StringBuilder();
 
-                    mailBuilder.Clear();
+                mailBuilder.AppendLine("Dear" + " " + appointment.PatientName + "," + "<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"Kindly note that your session with {appointment.TherapistName} will start in {timeRemaining} munites time.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"KIndly get your self ready .<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine("Regards:<br />");
 
-                    mailBuilder.AppendLine("Dear" + " " + appointment.TherapistName + "," + "<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"Kindly note that your session with {appointment.PatientName} will start in {timeRemaining} munites time.<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine($"KIndly get your self ready .<br />");
-                    mailBuilder.AppendLine("<br />");
-                    mailBuilder.AppendLine("Regards:<br />");
+                var patientEmailRequest = new EmailRequest
+                {
+                    To = appointment.PatientEmail,
+                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Notification"),
+                    Subject = "Email Confirmation"
+                };
+                await _EmailService.SendMail(patientEmailRequest);
 
-                    var therapisEmailRequest = new EmailRequest
-                    {
-                        To = appointment.TherapistEmail,
-                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Notification"),
-                        Subject = "Email Confirmation"
-                    };
+                mailBuilder.Clear();
 
-           
-                    //var patientPushNotification = new PushNotificationDto
-                    //{
-                    //    Title = "Appointment with ",
-                    //    Topic = "Wallet transaction",
-                    //    Message = $"Your have an active session {userProfile.FirstName + " " + userProfile.LastName} by {appointement.StartTime} ",
-                    //    TrxRef = appointement.TrxRef,
-                    //    userId = userProfile.UserId,
+                mailBuilder.AppendLine("Dear" + " " + appointment.TherapistName + "," + "<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"Kindly note that your session with {appointment.PatientName} will start in {timeRemaining} munites time.<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine($"KIndly get your self ready .<br />");
+                mailBuilder.AppendLine("<br />");
+                mailBuilder.AppendLine("Regards:<br />");
 
-                    //};
-                    //pushNotifications.Add(patientPushNotification);
-                    //var TherapistPushNotification = new PushNotificationDto
-                    //{
-                    //    Title = "Session Booking",
-                    //    Topic = "Apponitment Notification",
-                    //    Message = $"Your session booking with {therapist?.Title + " " + therapist.FirstName + " " + therapist.LastName} was was scuccessful with ",
-                    //    TrxRef = appointement.TrxRef,
-                    //    userId = therapistUser.Id
+                var therapisEmailRequest = new EmailRequest
+                {
+                    To = appointment.TherapistEmail,
+                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath, "Session Notification"),
+                    Subject = "Email Confirmation"
+                };
 
-                    //};
-                    //pushNotifications.Add(TherapistPushNotification);
-
-
-
-                }
-
-               
             }
             return Task.FromResult(true).Result;
         }

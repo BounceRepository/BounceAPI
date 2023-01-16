@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="agora_rtc_sdk" Version="3.7.2.245" />
     <PackageReference Include="AutoMapper" Version="12.0.0" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="FirebaseAdmin" Version="2.3.0" />

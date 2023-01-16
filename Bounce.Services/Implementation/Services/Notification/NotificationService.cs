@@ -1,5 +1,4 @@
 ﻿
-using agora.rtc;
 using AgoraIO.Services;
 using AutoMapper;
 using AutoMapper.Internal;
@@ -39,15 +38,14 @@ namespace Bounce.Services.Implementation.Services.Notification
         private readonly IEmalService _EmailService;
         private readonly FileManager _fileManager;
         private readonly AdminLogger _adminLogger;
-        private readonly IAgoraRtcChannel _agoraRtcChannel;
-        private readonly IAgoraRtcEngine _agorEngine;
+
         private readonly AgoraSetting _agoraSetting;
 
 
         public string rootPath { get; set; }
 
         public NotificationService(BounceDbContext context, IMapper mapper, SessionManager sessionManager, UserManager<ApplicationUser> userManager, IHostingEnvironment hostingEnvironment, IEmalService emailService, FileManager fileManager, AdminLogger adminLogger, 
-            IAgoraRtcChannel agoraRtcChannel, IAgoraRtcEngine agorEngine, IOptions<AgoraSetting> agoraSetting) : base(context)
+             IOptions<AgoraSetting> agoraSetting) : base(context)
         {
             _mapper = mapper;
             _sessionManager = sessionManager;
@@ -58,8 +56,6 @@ namespace Bounce.Services.Implementation.Services.Notification
             rootPath = _hostingEnvironment.ContentRootPath;
             _fileManager = fileManager;
             _adminLogger = adminLogger;
-            _agoraRtcChannel = agoraRtcChannel;
-            _agorEngine = agorEngine;
             _agoraSetting = agoraSetting.Value;
         }
 
@@ -347,84 +343,7 @@ namespace Bounce.Services.Implementation.Services.Notification
         }
 
 
-        public async Task<Response> StartConsulation(long appointRequestId)
-        {
-            try
-            {
-                //var user = _sessionManager.CurrentLogin;
-                var user = _context.Users.FirstOrDefault(x=> x.Id == 5);
-                ApplicationUser receiver = default;
-                var appointment = _context.AppointmentRequest.FirstOrDefault(x => x.Id == appointRequestId);
-                if (appointment == null)
-                    return AuxillaryResponse("record not found", StatusCodes.Status404NotFound);
-
-                if (appointment.StartTime.Value.DateTime < DateTime.Now)
-                    return AuxillaryResponse("session is not due", StatusCodes.Status400BadRequest);
-
-                if (appointment.StartTime.Value.DateTime > DateTime.Now)
-                    return AuxillaryResponse("session is  over due", StatusCodes.Status400BadRequest);
-
-                long receiverId = default;
-                var dr = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == appointment.TherapistId);
-                var name = "";
-
-                if (user.Discriminator == Bounce_Domain.Enum.UserType.Patient)
-                {
-                    var therapist = _context.TherapistProfiles.FirstOrDefault(x => x.UserId == appointment.TherapistId);
-                    name = therapist.Title + " " + therapist.FirstName;
-                    receiver = _userManager.Users.FirstOrDefault(x => x.Id == appointment.TherapistId);
-                }
-                else
-                {
-                    var patient = _context.UserProfile.FirstOrDefault(x => x.UserId == appointment.PatientId);
-                    name = patient.FirstName;
-                    receiver = _userManager.Users.FirstOrDefault(x => x.Id == appointment.PatientId);
-                }
-
-                var channelToken = GenerateAlgoraChannelToken($"Session with {dr.Title} {dr.FirstName}", appointRequestId);
-
-                var pushNotifications = new List<PushNotificationDto>();
-                var mailBuilder = new StringBuilder();
-                appointment.Status = Bounce_Domain.Enum.AppointmentStatus.OnGoing;
-                _context.Update(appointment);
-
-                if (!await SaveAsync())
-                    return FailedSaveResponse();
-                mailBuilder.AppendLine("Dear" + " " + name + "," + "<br />");
-                mailBuilder.AppendLine("<br />");
-                mailBuilder.AppendLine($"You have an active consultation session, kindly login to your app to join the session .<br />");
-                mailBuilder.AppendLine("<br />");
-                mailBuilder.AppendLine("Regards:<br />");
-                var patientPushNotification = new PushNotificationDto
-                {
-                    Title = "Consultation",
-                    Topic = "Consultation",
-                    Message = $"You have an active consultation session, kindly login to your app to join the session ",
-                    TrxRef = appointment.TrxRef,
-                    userId = receiver.Id,
-
-                };
-                pushNotifications.Add(patientPushNotification);
-
-                var emailRequest = new EmailRequest
-                {
-                    To = user.Email,
-                    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
-                    Subject = $"Consultaion with {dr.Title}  " + dr.FirstName
-                };
-
-                await PushMultipleNotificationAsyn(pushNotifications);
-                await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
-
-                return SuccessResponse(data: new {channelToken = channelToken });
-
-            }
-            catch (Exception ex)
-            {
-
-                return InternalErrorResponse(ex);
-            }
-        }
+    
 
         public async Task<Response> StartStopConsulation(bool IsStart, long appointRequestId)
         {
@@ -603,7 +522,6 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var sdsd = GenerateAlgoraChannelToken("session", 2);
                 var feedGroups = _context.FeedGroups.Where(x => !x.IsDeleted)
                     .Select(x => new
                     {

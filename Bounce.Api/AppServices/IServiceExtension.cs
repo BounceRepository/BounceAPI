@@ -9,6 +9,7 @@ using Bounce.Services.Implementation.Services;
 using Bounce.Services.Implementation.Services.Admin;
 using Bounce.Services.Implementation.Services.Articles;
 using Bounce.Services.Implementation.Services.Auth;
+using Bounce.Services.Implementation.Services.Communication;
 using Bounce.Services.Implementation.Services.FilesManager;
 using Bounce.Services.Implementation.Services.Hepler;
 using Bounce.Services.Implementation.Services.Journal;
@@ -22,6 +23,7 @@ using Bounce_Application.Persistence.Interfaces.Admin;
 using Bounce_Application.Persistence.Interfaces.Articles;
 using Bounce_Application.Persistence.Interfaces.Auth;
 using Bounce_Application.Persistence.Interfaces.Auth.Jwt;
+using Bounce_Application.Persistence.Interfaces.Communication;
 using Bounce_Application.Persistence.Interfaces.FilesManager;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.Persistence.Interfaces.Journal;
@@ -65,7 +67,9 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<INotificationService, NotificationService>(); 
             builder.Services.AddScoped<IJournalServices, JournalServices>();
             builder.Services.AddScoped<IFileManagerServices, FileManagerServices>();
+            builder.Services.AddScoped<ICommunicationServices, CommunicationServices>();
             
+
             //Job JobScheduler
             builder.Services.AddScoped<IJobScheduler, JobScheduler>();
             builder.Services.AddScoped<BaseJobScheduler>();

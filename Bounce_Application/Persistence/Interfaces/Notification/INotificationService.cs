@@ -30,7 +30,6 @@ namespace Bounce_Application.Persistence.Interfaces.Notification
         Task<Response> ReadNotification();
         Task<Response> ReplyComent(PushReplyDto model);
         Task<Response> SendMessage(SendMessageDto model);
-        Task<Response> StartConsulation(long appointRequestId);
         Task<Response> StartStopConsulation(bool IsStart, long appointRequestId);
         Task<Response> UpdateNotificationToken(string notificationToken);
     }
