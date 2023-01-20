@@ -462,7 +462,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
         {
             try
             {
-                var user = _context.Users.FirstOrDefault(x => x.Id == id);
+                var user = _context.Users.FirstOrDefault(x => x.Id == id && x.Discriminator == UserType.Therapist);
                 if (user == null)
                     return AuxillaryResponse("Therapist not found", 404);
 
@@ -481,6 +481,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 response.EmailAddress = user.Email;
                 response.Commission = wallet.Commission;
                 response.TherapistNumber = user.PatientId ?? "";
+                response.TherapistId = id;
 
                 return SuccessResponse(data: response);
 
