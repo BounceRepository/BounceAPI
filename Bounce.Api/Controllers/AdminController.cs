@@ -16,7 +16,7 @@ namespace Bounce.Api.Controllers
     public class AdminController : BaseController
     {
         private readonly IAdminServices adminServices;
-        public AdminController(IHttpContextAccessor httpContext, IAdminServices adminServices) : base(httpContext)
+        public AdminController(IHttpContextAccessor httpContext, IAdminServices adminServices) : base(httpContext)  
         {
             this.adminServices = adminServices;
         }

@@ -360,12 +360,23 @@ namespace Bounce.Services.Implementation.Services.Therapist
 
         }
 
-        public Response GetTherapistConsultaion()
+        public Response GetTherapistConsultaion(string filter)
         {
             try
             {
+                var consultations = _context.AppointmentRequest.ToList();
+
+                if (filter.ToLower() == "completed")
+                {
+                    consultations = consultations.Where(x => x.Status == AppointmentStatus.Completed).ToList();
+                }
+                else
+                {
+                    consultations = consultations.Where(x => x.Status != AppointmentStatus.Completed).ToList();
+                }
+
                 var user = _sessionManager.CurrentLogin;
-                var data = (from consultation in _context.AppointmentRequest
+                var data = (from consultation in consultations
                             where consultation.TherapistId == user.Id && !consultation.IsDeleted
                             //&& consultation.IsPaymentCompleted
                             join patient in _context.UserProfile on consultation.PatientId equals patient.UserId
@@ -411,6 +422,7 @@ namespace Bounce.Services.Implementation.Services.Therapist
                 var profiles = _context.TherapistProfiles.Where(x => !x.IsDeleted).ToList();
                 var reviews = _context.Reviews.Where(x => !x.IsDeleted).ToList();
                 var appointmentRequest = _context.AppointmentRequest.ToList();
+          
                 var wallets = _context.Wallets.ToList();
                 var revews = _context.Reviews.Where(x => !x.IsDeleted).ToList();
 

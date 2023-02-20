@@ -29,5 +29,13 @@ namespace Bounce.Api.Controllers
 
         [HttpPatch("GetChannelKey")]
         public async Task<IActionResult> Key([FromQuery] long appointRequestId) => Response( _communicationServices.GetChannelDetail(appointRequestId));
+
+        [AllowAnonymous]
+        [HttpPatch("GenerateToken")]
+        public async Task<IActionResult> GenerateToken() => Response(await _communicationServices.GenerateChannelToken());
+
+
+
+
     }
 }

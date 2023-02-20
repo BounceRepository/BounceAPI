@@ -9,6 +9,7 @@ namespace Bounce_Application.Persistence.Interfaces.Communication
 {
     public interface ICommunicationServices
     {
+        Task<Response> GenerateChannelToken();
         Response GetChannelDetail(long appointRequestId);
         Task<Response> StartConsulation(long appointRequestId);
         Task<Response> StopConsulation(long appointRequestId);

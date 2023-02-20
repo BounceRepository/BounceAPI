@@ -1,6 +1,7 @@
 
 using Bounce.Api.ChatHub;
 using Bounce.Api.Filter;
+using Bounce.Api.PipeLine;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Job;
 using Bounce.Services.Implementation.Cryptography;
@@ -185,7 +186,12 @@ builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuer
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+//builder.Services.AddControllers(config =>
+//{
+//    config.Filters.Add(typeof(CustomAuthorizeAttribute));
+//});
+    
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -255,7 +261,9 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSwagger();
 app.UseSwaggerUI();
+//app.UseIPWhitelist();
 app.UseAuthentication();
+//app.UseJwtTokenMiddleware();
 app.UseAuthorization();
 //app.UseStaticFiles();
 app.UseSession();

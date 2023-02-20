@@ -27,5 +27,13 @@ namespace Bounce_Domain.Entity
         public string? MessageRefx { get; set; }
         public string? Aux { get; set; }
 
+        ////prescription
+        public long? AppointmentRequestId { get; set; }
+
+        public string? Drug { get; set; }
+        public string? Dosage { get; set; }
+
+        public string? PrescriptionText { get; set; }
+
     }
 }

@@ -47,6 +47,10 @@ namespace Bounce.Api.Controllers
 			
 		}
 
+
+        [HttpPost("Sample")]
+        public async Task<IActionResult> Login( [FromBody] string email) => Response(await registrationServivce.EmailConfirmationStatus(email));
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel loginModel) => Response(await registrationServivce.Login(loginModel));
 

@@ -104,7 +104,11 @@ namespace Bounce.Api.Controllers
                         Message = prescript,
                         Time = DateTime.UtcNow.AddHours(1),
                         FilePath = model.File,
-                        IsPrescription = true
+                        IsPrescription = true,
+                        AppointmentRequestId = model.AppointmentId,
+                        PrescriptionText = model.Prescription,
+                        Dosage = model.Dosage,
+                        Drug = model.Drug,
 
                     };
                     var response = await _notificationService.SendMessage(message);
@@ -114,9 +118,9 @@ namespace Bounce.Api.Controllers
                         var prescription = new Prescription
                         {
                             AppointmentRequestId = model.AppointmentId,
-                            PrescriptionText = prescript,
+                            PrescriptionText = model.Prescription,
                             Dosage = model.Dosage,
-                            Drug = model.Dosage,
+                            Drug = model.Drug,
                             DateModified = DateTime.Now,
                             File = model.File
                         };

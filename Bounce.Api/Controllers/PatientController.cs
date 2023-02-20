@@ -53,7 +53,7 @@ namespace Bounce.Api.Controllers
         public IActionResult GetAllPlans() => Response( _patientServices.GetAllPlans());
 
         [HttpPost("SubscribeToPlan")]
-        public async Task<IActionResult> PlanSub([FromBody] PlanScubscriptionDto model) => Response(await _patientServices.SubscribeToPlan(model.PlanId, model.PlanId));
+        public async Task<IActionResult> PlanSub([FromBody] PlanScubscriptionDto model) => Response(await _patientServices.SubscribeToPlan(model.PlanId, model.SubPlanId));
 
 
         [HttpGet("GetAvaialbleBookingTime")]
@@ -84,6 +84,17 @@ namespace Bounce.Api.Controllers
 
         [HttpGet("GetUserMood")]
         public IActionResult UserFeelings() => Response(_patientServices.GetUserFeelings());
+
+       
+        public class GetTransaction
+        {
+            public string Referenceid { get; set; }
+            public int RequestType { get; set; }
+            public string Translocation { get; set; }
+            public string NUBAN { get; set; }
+            public DateTime StartDate { get; set; }
+            public string EndDate { get; set; }
+        }
 
 
     }

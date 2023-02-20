@@ -47,7 +47,7 @@ namespace Bounce.Api.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]
         [HttpGet("GetConsultaions")]      
-        public IActionResult Consultaions() => Response(_therapistServices.GetTherapistConsultaion());
+        public IActionResult Consultaions([FromQuery] string filter) => Response(_therapistServices.GetTherapistConsultaion(filter));
 
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = UserRoles.Therapist)]

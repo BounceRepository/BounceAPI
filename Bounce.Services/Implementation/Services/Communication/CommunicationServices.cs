@@ -52,6 +52,13 @@ namespace Bounce.Services.Implementation.Services.Communication
             rootPath = _hostingEnvironment.ContentRootPath;
             _notificationService = notificationService;
         }
+
+        public async Task<Response> GenerateChannelToken()
+        {
+           var token =  GenerateAlgoraChannelToken("Session", 12);
+
+            return SuccessResponse(data: new { channelToken = token, channeName =  "Session"});
+        }
         public async Task<Response> StartConsulation(long appointRequestId)
         {
             try

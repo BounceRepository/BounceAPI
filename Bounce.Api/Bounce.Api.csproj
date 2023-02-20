@@ -76,6 +76,7 @@
     <ProjectReference Include="..\Bounce.DataTransferObject\Bounce.DataTransferObject.csproj" />
     <ProjectReference Include="..\Bounce.Job\Bounce.Job.csproj" />
     <ProjectReference Include="..\Bounce.Services\Bounce.Services.csproj" />
+    <ProjectReference Include="..\Bounce_Application\Bounce_Application.csproj" />
     <ProjectReference Include="..\Bounce_DbOps\Bounce_DbOps.csproj" />
   </ItemGroup>
 

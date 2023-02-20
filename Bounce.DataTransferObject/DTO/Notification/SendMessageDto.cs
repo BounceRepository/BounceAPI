@@ -21,6 +21,9 @@ namespace Bounce.DataTransferObject.DTO.Notification
         public DateTimeOffset Time { get; set; }
         [JsonIgnore]
         public string? FilePath { get; set; }
-
+        public long? AppointmentRequestId { get; set; }
+        public string? PrescriptionText { get; set; }
+        public string? Dosage { get; set; }
+        public string? Drug { get; set; }
     }
 }

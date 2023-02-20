@@ -69,6 +69,8 @@ namespace Bounce_DbOps.EF
 		public DbSet<PoolAccount> PoolAccount { get; set; }
 		public DbSet<AlgoraChannel> Channels { get; set; }
 
+		//public DbSet<SignInLog>  signInLogs { get; set; }
+
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{

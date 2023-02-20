@@ -292,7 +292,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                 //{
                 //    filename = model.FilePath;
                 //}
-
+                var chatId = Guid.NewGuid();
                 var chat = new Chat
                 {
                     SenderId = user.Id,
@@ -302,6 +302,10 @@ namespace Bounce.Services.Implementation.Services.Notification
                     CreatedTimeOffset = model.Time, 
                     Files = model.FilePath,
                     HasFile = model.IsPrescription,
+                    PrescriptionText = model.PrescriptionText,
+                    Dosage = model.Dosage,
+                    Drug = model.Drug,
+
                 };
                 _context.Add(chat);
                 if (!await SaveAsync())
@@ -446,7 +450,7 @@ namespace Bounce.Services.Implementation.Services.Notification
            try
             {
                 var user = _sessionManager.CurrentLogin;
-                var data = _context.Chats.Where(x => !x.IsDeleted).Where(x=> x.SenderId == user.Id && x.ReceieverId == rceieverId)
+                var data = _context.Chats.Where(x => !x.IsDeleted).Where(x=> (x.SenderId == user.Id && x.ReceieverId == rceieverId)  || ( x.ReceieverId == user.Id && x.SenderId == rceieverId))
                 .Select(x => new 
                 {
                     ChatId = x.Id,
@@ -455,7 +459,11 @@ namespace Bounce.Services.Implementation.Services.Notification
                     ReceieverId = x.ReceieverId,
                     SenderId = x.SenderId,
                     File = string.IsNullOrEmpty(x.Files) ? null : x.Files,
-                    IsPrescription = x.HasFile
+                    IsPrescription = x.HasFile,
+                    Prescription = x.PrescriptionText,
+                    Dosage = x.Dosage,
+                    Drugs = x.Drug
+
 
                 }).ToList();
                
@@ -623,7 +631,7 @@ namespace Bounce.Services.Implementation.Services.Notification
                                  Time = x.CreatedTimeOffset,
                                  CommentCount = x.Comments.Count(),
                                  PicturePath = p.FilePath
-                             }); ;
+                             });
 
 
 

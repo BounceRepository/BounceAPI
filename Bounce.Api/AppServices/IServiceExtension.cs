@@ -1,6 +1,7 @@
 ﻿
 using Bounce.Api.ChatHub;
 using Bounce.Api.Filter;
+using Bounce.Api.PipeLine;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Job;
 using Bounce.Services.Implementation.Cryptography;
@@ -78,8 +79,10 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<BaseServices>();
             builder.Services.AddSingleton<AdminLogger>();
             builder.Services.AddSingleton<FileManager>();
-         
-            
+            builder.Services.Configure<IPWhitelistOptions>(builder.Configuration.GetSection("IPWhitelistOptions"));
+
+
+
 
 
         }

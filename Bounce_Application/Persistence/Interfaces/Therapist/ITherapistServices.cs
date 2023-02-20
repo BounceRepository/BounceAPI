@@ -21,7 +21,7 @@ namespace Bounce_Application.Persistence.Interfaces.Therapist
         Response GetTherapisById(long id);
         Response GetTherapistBankDetail();
         Response GetTherapistCommision();
-        Response GetTherapistConsultaion();
+        Response GetTherapistConsultaion(string filter);
         Response GetTherapistConsultaionById(long id);
         Response GetTherapistDashBoard();
         Response GetTherapistSchedules();
