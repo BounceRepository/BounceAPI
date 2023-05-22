@@ -459,7 +459,7 @@ namespace Bounce.Services.Implementation.Services.Payment
 
                 mailBuilder.AppendLine("Dear" + " " + user.UserName + "," + "<br />");
                 mailBuilder.AppendLine("<br />");
-                mailBuilder.AppendLine($"Your wallet to up of {request.Amount} Naira was sunccessful.<br />");
+                mailBuilder.AppendLine($"Your wallet to up of {request.Amount} Naira was Successful.<br />");
                 mailBuilder.AppendLine("<br />");
                 mailBuilder.AppendLine("Regards:<br />");
  

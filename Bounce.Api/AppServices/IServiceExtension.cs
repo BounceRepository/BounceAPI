@@ -42,6 +42,8 @@ using MessagePack;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -53,6 +55,7 @@ namespace Microsoft.AspNetCore.Builder
 {
     public static class IServiceExtension
     {
+
         public static void ApplicationServices(this WebApplicationBuilder builder)
         {
            
@@ -69,7 +72,8 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<IJournalServices, JournalServices>();
             builder.Services.AddScoped<IFileManagerServices, FileManagerServices>();
             builder.Services.AddScoped<ICommunicationServices, CommunicationServices>();
-            
+            builder.Services.AddDistributedMemoryCache();
+
 
             //Job JobScheduler
             builder.Services.AddScoped<IJobScheduler, JobScheduler>();
@@ -80,7 +84,31 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddSingleton<AdminLogger>();
             builder.Services.AddSingleton<FileManager>();
             builder.Services.Configure<IPWhitelistOptions>(builder.Configuration.GetSection("IPWhitelistOptions"));
+            builder.Services.AddControllers()
+            .ConfigureApiBehaviorOptions(opt =>
+            {
+                opt.InvalidModelStateResponseFactory = context =>
+                {
+                    var responseObj = new
+                    {
+                        server = "ThrivX API",
+                        path = context.HttpContext.Request.Path.ToString(),
+                        method = context.HttpContext.Request.Method,
+                        controller = (context.ActionDescriptor as ControllerActionDescriptor)?.ControllerName,
+                        action = (context.ActionDescriptor as ControllerActionDescriptor)?.ActionName,
+                        errors = context.ModelState.Keys.Select(k =>
+                        {
+                            return new
+                            {
+                                field = k,
+                                Messages = context.ModelState[k]?.Errors.Select(e => e.ErrorMessage)
+                            };
+                        })
+                    };
 
+                    return new BadRequestObjectResult(responseObj);
+                };
+            });
 
 
 

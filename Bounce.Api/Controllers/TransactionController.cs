@@ -41,7 +41,22 @@ namespace Bounce.Api.Controllers
         public async Task<IActionResult> PaymentRequery([FromQuery] string TxRef) => Response( await _paymentServices.Requery(TxRef));
 
         [HttpPost("WalletTop")]
-        public async Task<IActionResult> WalletTop([FromBody] WalletToUpDto model) => Response(await _paymentServices.WalletTop(model));
+        public async Task<IActionResult> WalletTop([FromBody] WalletToUpDto model, CancellationToken cancellationToken)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return BadRequest( new
+                {
+                    success = false,
+                    Message = "request was cancelled",
+                });
+            }
+
+            return Response(await _paymentServices.WalletTop(model));
+        }
+            
+          
         [HttpPost("ComfirmTopUp")]
         public async Task<IActionResult> ComfirmTopUp([FromQuery] string TxRef) => Response(await _paymentServices.ComfirmWalletTop(TxRef));
 

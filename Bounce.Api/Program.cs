@@ -1,6 +1,7 @@
 
 using Bounce.Api.ChatHub;
 using Bounce.Api.Filter;
+using Bounce.Api.HealthCheck;
 using Bounce.Api.PipeLine;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Job;
@@ -33,9 +34,11 @@ using Bounce_Applucation.DTO.Auth;
 using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Hangfire;
+using HealthChecks.UI.Client;
 using MessagePack;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -184,25 +187,16 @@ builder.Services.AddAuthentication(options =>
 builder.Services.Configure<JwtIssuerOptions>(configuration.GetSection("JwtIssuerOptions"));
 
 
-// Add services to the container.
-
-//builder.Services.AddControllers(config =>
-//{
-//    config.Filters.Add(typeof(CustomAuthorizeAttribute));
-//});
-    
-
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
 builder.Services.Configure<SmtpConfiguration>(configuration.GetSection("SmtpConfiguration"));
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(
+    options.AddPolicy("ThriveXCore",
         builder =>
         {
             builder.AllowAnyOrigin()
@@ -216,10 +210,10 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddSignalR();
+builder.HealthServices();
 
 var app = builder.Build();
 using var scope = app.Services.CreateScope();
-
 
 
 try
@@ -267,6 +261,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 //app.UseStaticFiles();
 app.UseSession();
+app.UseCors("ThriveXCore");
+app.UseHsts();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+
+});
+app.MapHealthChecks("/health/cors", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).RequireCors("ThriveXCore");
+app.MapHealthChecksUI();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllerRoute(
@@ -299,7 +305,7 @@ app.UseCors();
 app.MapControllers();
 var _jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
 app.AddCronJob(_jobScheduler);
-//app.MapHub<BounceChatHub>("/chat");
+
 
 
 app.Run();
