@@ -18,6 +18,9 @@ using Bounce.Services.Implementation.Services.Notification;
 using Bounce.Services.Implementation.Services.Patient;
 using Bounce.Services.Implementation.Services.Payment;
 using Bounce.Services.Implementation.Services.Therapist;
+using Bounce.Services.MessageBusService;
+using Bounce.Services.MessageBusServices;
+using Bounce.Services.MessageBusServices.Subscriber.Wallet;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Admin;
@@ -83,6 +86,11 @@ namespace Microsoft.AspNetCore.Builder
             builder.Services.AddScoped<BaseServices>();
             builder.Services.AddSingleton<AdminLogger>();
             builder.Services.AddSingleton<FileManager>();
+            //builder.Services.AddSingleton<EventPublisher>();
+            //builder.Services.AddSingleton<EventListener>();
+            builder.Services.AddSingleton<Worker>();
+            builder.Services.AddSingleton<WalletTopSubscriber>();
+            builder.Services.AddSingleton<IMessageBus, MessageBus>();
             builder.Services.Configure<IPWhitelistOptions>(builder.Configuration.GetSection("IPWhitelistOptions"));
             builder.Services.AddControllers()
             .ConfigureApiBehaviorOptions(opt =>
@@ -109,6 +117,7 @@ namespace Microsoft.AspNetCore.Builder
                     return new BadRequestObjectResult(responseObj);
                 };
             });
+          
 
 
 

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="EmailSender\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bounce.Services\Bounce.Services.csproj" />
+    <ProjectReference Include="..\Bounce_DbOps\Bounce_DbOps.csproj" />
+    <ProjectReference Include="..\Bounce_Domain\Bounce_Domain.csproj" />
+  </ItemGroup>
+
+</Project>

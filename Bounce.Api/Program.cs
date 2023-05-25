@@ -295,6 +295,8 @@ var options = new BackgroundJobServerOptions
 
 var server = new BackgroundJobServer(options);
 app.UseHangfireServer(/*options*/);
+app.UseRequestLogging();
+app.UseIPWhitelist();
 app.UseCors();
 //app.UseStaticFiles(new StaticFileOptions()
 //{

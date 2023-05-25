@@ -652,7 +652,6 @@ namespace Bounce.Services.Implementation.Services.Auth
             {
 
                 var loginUser = _userManager.Users.Where(t => t.Discriminator == Bounce_Domain.Enum.UserType.Patient)
-                    .Where(x => x.Discriminator == Bounce_Domain.Enum.UserType.Patient)
                     .FirstOrDefault(x => x.UserName == loginModel.Username ||
                     x.PatientId == loginModel.Username || x.Email == loginModel.Username);
 

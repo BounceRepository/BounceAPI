@@ -19,5 +19,8 @@ namespace Bounce_Domain.Entity
         public string? status { get; set; }
         public string? PaymentResponse { get; set; }
         public DateTime CompletionTime { get; set; }
+        public decimal Amount { get; set; }
+        public string TransactionRef { get; set; }
+        public string PaymentRef => DateTime.Now.Ticks.ToString();
     }
 }
