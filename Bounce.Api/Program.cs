@@ -5,6 +5,7 @@ using Bounce.Api.HealthCheck;
 using Bounce.Api.PipeLine;
 using Bounce.Bounce_Application.Settings;
 using Bounce.Job;
+using Bounce.Services.AppServices;
 using Bounce.Services.Implementation.Cryptography;
 using Bounce.Services.Implementation.Jwt;
 using Bounce.Services.Implementation.Services;
@@ -16,6 +17,7 @@ using Bounce.Services.Implementation.Services.Notification;
 using Bounce.Services.Implementation.Services.Patient;
 using Bounce.Services.Implementation.Services.Payment;
 using Bounce.Services.Implementation.Services.Therapist;
+using Bounce.Api.Notification.Wallet;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Admin;
@@ -35,6 +37,7 @@ using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Hangfire;
 using HealthChecks.UI.Client;
+using MassTransit;
 using MessagePack;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -83,28 +86,20 @@ builder.Services.AddApiVersioning(o =>
     o.AssumeDefaultVersionWhenUnspecified = true;
     o.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
     o.ReportApiVersions = true;
-    //o.ApiVersionReader = ApiVersionReader.Combine(
-    //    new QueryStringApiVersionReader("api-version"),
-    //    new HeaderApiVersionReader("X-Version"),
-    //    new MediaTypeApiVersionReader("ver"));
-
+    
 });
-//builder.Services.AddVersionedApiExplorer(
-//    options =>
-//    {
-//        options.GroupNameFormat = "'v'VVV";
-//        options.SubstituteApiVersionInUrl = true;
-//    });
-/*AddMessagePackProtocol();*/
-//builder.Services.AddSignalR();
-//.AddMessagePackProtocol(options =>
-//{
-//    options.SerializerOptions = MessagePackSerializerOptions.Standard
-//        .WithResolver(MessagePack.Resolvers.StandardResolver.Instance)
-//        .WithSecurity(MessagePackSecurity.UntrustedData);
-//});
+builder.Services.AddMassTransit(config =>
+{
+    config.AddConsumer<WalletMessageConsumer>();
+
+    config.UsingInMemory((context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 builder.ApplicationServices();
+builder.AppServices();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -283,8 +278,6 @@ app.UseEndpoints(endpoints =>
     endpoints.MapHub<BounceChatHub>("/chat");
 });
 
-
-
 var options = new BackgroundJobServerOptions
 {
     ServerName = String.Format(
@@ -294,20 +287,14 @@ var options = new BackgroundJobServerOptions
 };
 
 var server = new BackgroundJobServer(options);
-app.UseHangfireServer(/*options*/);
+app.UseHangfireServer();
 app.UseRequestLogging();
 app.UseIPWhitelist();
 app.UseCors();
-//app.UseStaticFiles(new StaticFileOptions()
-//{
-//    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Resources")),
-//    RequestPath = new PathString("/Resources")
-//});
-//app.UseMiddleware<EncryptionMiddleware>();
+app.PipelineServices();
+var busControl = app.Services.GetRequiredService<IBusControl>();
+await busControl.StartAsync();
 app.MapControllers();
 var _jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
 app.AddCronJob(_jobScheduler);
-
-
-
 app.Run();

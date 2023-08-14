@@ -7,9 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Events\**" />
-    <EmbeddedResource Remove="Events\**" />
-    <None Remove="Events\**" />
+    <Compile Remove="Handlers\**" />
+    <Compile Remove="MessageBusServices\**" />
+    <EmbeddedResource Remove="Handlers\**" />
+    <EmbeddedResource Remove="MessageBusServices\**" />
+    <None Remove="Handlers\**" />
+    <None Remove="MessageBusServices\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,14 +20,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Handlers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.0" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="FirebaseAdmin" Version="2.3.0" />
     <PackageReference Include="Flutterwave.Ravepay.Net" Version="1.0.6-beta" />
+    <PackageReference Include="HangFire" Version="1.7.31" />
+    <PackageReference Include="MassTransit" Version="8.0.16" />
+    <PackageReference Include="MediatR" Version="12.0.1" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.Json" Version="7.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="7.0.0" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />

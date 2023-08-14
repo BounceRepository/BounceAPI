@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bounce.Services.MessageBusServices
+namespace Bounce.Services.Notification.Wallet
 {
-    public class WalletEvent : MessageEvent
+    public class WalletMessage
     {
+        public string TrnxRef { get; set; }
     }
 }

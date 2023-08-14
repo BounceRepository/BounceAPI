@@ -5,7 +5,7 @@ using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Payment;
 using Bounce.DataTransferObject.Helpers;
 using Bounce.DataTransferObject.Helpers.BaseResponse;
-using Bounce.Services.MessageBusServices;
+using Bounce.Services.MessageBus.Wallet;
 using Bounce_Application.DTO;
 using Bounce_Application.Persistence.Interfaces.Helper;
 using Bounce_Application.Persistence.Interfaces.Notification;
@@ -16,6 +16,7 @@ using Bounce_DbOps.EF;
 using Bounce_Domain.Entity;
 using Bounce_Domain.Enum;
 using Flutterwave.Ravepay.Net;
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -41,12 +43,16 @@ namespace Bounce.Services.Implementation.Services.Payment
         private readonly INotificationService _notificationService;
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IEmalService _EmailService;
-        private readonly IMessageBus _messageBus;
+        private static Container container;
+         private readonly MassTransit.IBusControl _busControl;
+
+
+
 
         public string rootPath { get; set; }
 
         public PaymentServices(BounceDbContext context, IOptions<FlutterWaveSetting> flutterWave, SessionManager sessionManager, IMapper mapper,
-            INotificationService notificationService, IHostingEnvironment hostingEnvironment, IEmalService emailService, IMessageBus messageBus) : base(context)
+            INotificationService notificationService, IHostingEnvironment hostingEnvironment, IEmalService emailService, MassTransit.IBusControl busControl) : base(context)
         {
             _flutterWaveSettings = flutterWave.Value;
             _sessionManager = sessionManager;
@@ -55,7 +61,7 @@ namespace Bounce.Services.Implementation.Services.Payment
             _hostingEnvironment = hostingEnvironment;
             _EmailService = emailService;
             rootPath = _hostingEnvironment.ContentRootPath;
-            _messageBus = messageBus;
+            _busControl = busControl;
         }
 
 
@@ -398,6 +404,7 @@ namespace Bounce.Services.Implementation.Services.Payment
             }
         }
 
+
         public async Task<Response> ComfirmWalletTop(string TrxRef)
         {
             using (var db_transaction = await _context.Database.BeginTransactionAsync())
@@ -407,91 +414,100 @@ namespace Bounce.Services.Implementation.Services.Payment
                     var user = _sessionManager.CurrentLogin;
                     var request = _context.WalletRequests.Where(x => x.Refxn == TrxRef).FirstOrDefault();
 
-                    //if (request == null)
-                    //    return AuxillaryResponse("transaction not found", StatusCodes.Status400BadRequest);
 
-                    //if (request.IsCompleted == "TRUE")
-                    //    return AuxillaryResponse("this transaction has been completed", StatusCodes.Status400BadRequest);
+                    if (request == null)
+                        return AuxillaryResponse("transaction not found", StatusCodes.Status400BadRequest);
 
-
-                   await _messageBus.Publish(new WalletEvent { Message = TrxRef });
+                    if (request.IsCompleted == "TRUE")
+                        return AuxillaryResponse("this transaction has been completed", StatusCodes.Status400BadRequest);
 
 
-
-                    //var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
-                    //wallet.Balance += request.Amount;
-                    //wallet.LastModifiedBy = user.Email;
-                    //wallet.DateModified = DateTime.Now;
-                    //_context.Update(wallet);
-                    //await SaveAsync();
-
-
-                    //request.IsCompleted = "TRUE";
-                    //request.DateModified = DateTime.Now;
-                    //_context.Update(request);
-                    //await SaveAsync();
+                    var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
+                    wallet.Balance += request.Amount;
+                    wallet.LastModifiedBy = user.Email;
+                    wallet.DateModified = DateTime.Now;
+                    _context.Update(wallet);
+                    await SaveAsync();
 
 
-                    //var paymentRequest = _context.PaymentRequests.FirstOrDefault(x => x.PaymentRequestId == request.Refxn);
-                    //paymentRequest.Completed = true;
-                    //paymentRequest.DateModified = DateTime.Now;
-                    //_context.Update(paymentRequest);
-                    //await SaveAsync();
+                    request.IsCompleted = "TRUE";
+                    request.DateModified = DateTime.Now;
+                    _context.Update(request);
+                    await SaveAsync();
 
-                    //var transaction = new Transaction
-                    //{
-                    //    RequestId = paymentRequest.Id,
-                    //    TransactionType = TransactionType.TopUp,
-                    //    Decription = "Wallet Top Up",
-                    //    status = "00",
-                    //    CompletionTime = DateTime.Now,
-                    //    DateCreated = DateTime.Now,
-                    //    UserId = user.Id,
-                    //    TransactionRef = TrxRef,
-                    //    Amount = (decimal)request.Amount
 
-                    //};
-                    //_context.Add(transaction);
-                    //_context.SaveChanges();
+                    var paymentRequest = _context.PaymentRequests.FirstOrDefault(x => x.PaymentRequestId == request.Refxn);
+                    paymentRequest.Completed = true;
+                    paymentRequest.DateModified = DateTime.Now;
+                    _context.Update(paymentRequest);
+                    await SaveAsync();
 
-                    //var pushNotification = new PushNotificationDto
-                    //{
-                    //    Title = "Top-Up",
-                    //    Topic = "Wallet transaction",
-                    //    Message = "Your wallet top up was scuccessful",
-                    //    TrxRef = TrxRef
+                    var transaction = new Transaction
+                    {
+                        RequestId = paymentRequest.Id,
+                        TransactionType = TransactionType.TopUp,
+                        Decription = "Wallet Top Up",
+                        status = "00",
+                        CompletionTime = DateTime.Now,
+                        DateCreated = DateTime.Now,
+                        UserId = user.Id,
+                        TransactionRef = TrxRef,
+                        Amount = (decimal)request.Amount
 
-                    //};
-                    //var notification = new NotificationModel
-                    //{
-                    //    UserId = user.Id,
-                    //    Title = pushNotification.Title,
-                    //    Message = pushNotification.Message,
-                    //    NotificationRef = TrxRef
+                    };
+                    _context.Add(transaction);
+                    _context.SaveChanges();
 
-                    //};
+                    var pushNotification = new PushNotificationDto
+                    {
+                        Title = "Top-Up",
+                        Topic = "Wallet transaction",
+                        Message = "Your wallet top up was scuccessful",
+                        TrxRef = TrxRef,
+                        User = user
 
-                    //_context.Add(notification);
-                    //await SaveAsync();
 
-                    //await db_transaction.CommitAsync();
+                    };
+                    var notification = new NotificationModel
+                    {
+                        UserId = user.Id,
+                        Title = pushNotification.Title,
+                        Message = pushNotification.Message,
+                        NotificationRef = TrxRef,
+                        IsNewNotication = true,
+                        CreatedTimeOffset = DateTimeOffset.UtcNow
 
-                    //var mailBuilder = new StringBuilder();
-                    //mailBuilder.AppendLine("Dear" + " " + user.UserName + "," + "<br />");
-                    //mailBuilder.AppendLine("<br />");
-                    //mailBuilder.AppendLine($"Your wallet to up of {request.Amount} Naira was Successful.<br />");
-                    //mailBuilder.AppendLine("<br />");
-                    //mailBuilder.AppendLine("Regards:<br />");
+                    };
 
-                    //var emailRequest = new EmailRequest
-                    //{
-                    //    To = user.Email,
-                    //    Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
-                    //    Subject = "Wallet Top up"
-                    //};
+                    _context.Add(notification);
+                    await SaveAsync();
 
-                    //await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
-                    //await _notificationService.PushNotification(pushNotification);
+                    await db_transaction.CommitAsync();
+
+                    var mailBuilder = new StringBuilder();
+                    mailBuilder.AppendLine("Dear" + " " + user.UserName + "," + "<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine($"Your wallet top up of {request.Amount} Naira was Successful.<br />");
+                    mailBuilder.AppendLine("<br />");
+                    mailBuilder.AppendLine("Regards:<br />");
+
+                    var emailRequest = new EmailRequest
+                    {
+                        To = user.Email,
+                        Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
+                        Subject = "Wallet Top up"
+                    };
+                    Task emailTask = Task.Run(async () =>
+                    {
+                        await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
+                    });
+
+                    Task notificationTask = Task.Run(async () =>
+                    {
+                        await _notificationService.PushNotification(pushNotification).ConfigureAwait(false);
+                    });
+
+                     Task.WhenAll(emailTask, notificationTask);
 
                     return SuccessResponse("Top confirmation was successful");
 
@@ -504,155 +520,6 @@ namespace Bounce.Services.Implementation.Services.Payment
                 }
             }
         }
-
-
-
-        //public async Task<Response> ComfirmWalletTop(string TrxRef)
-        //{
-        //    using(var db_transaction = await _context.Database.BeginTransactionAsync())
-        //    {
-        //        try
-        //        {
-        //            var user = _sessionManager.CurrentLogin;
-        //            var request = _context.WalletRequests.Where(x => x.Refxn == TrxRef).FirstOrDefault();
-
-        //            if (request == null)
-        //                return AuxillaryResponse("transaction not found", StatusCodes.Status400BadRequest);
-
-        //            if (request.IsCompleted == "TRUE")
-        //                return AuxillaryResponse("this transaction has been completed", StatusCodes.Status400BadRequest);
-
-
-
-
-        //            //MessageBus messageBus = new MessageBus();
-
-        //            //Publisher publisher = new Publisher(messageBus);
-        //            //Subscriber subscriber1 = new Subscriber(messageBus);
-        //            //Subscriber2 subscriber2 = new Subscriber2(messageBus);
-
-
-        //            //publisher.CreatePerson();
-
-        //            //var transactionStatus =  await Requery(TrxRef, request.Amount);
-
-        //            //var walletEvent = new WalletTopEventArgs
-        //            //{
-        //            //    UserId = user.Id,
-        //            //    Email = user.Email,
-        //            //    Username = user.UserName,
-        //            //    Request = request,
-        //            //    Status = StatusCodes.Status200OK,
-        //            //    TranxRef = TrxRef
-        //            //};
-
-        //            ////eventPublisher.RaiseEvent(walletEvent);
-        //            // Task.Run(() => eventPublisher.RaiseEvent(walletEvent));
-
-        //            //return SuccessResponse("Top-up request has been submitted");
-
-
-        //            //if (transactionStatus.StatusCode != StatusCodes.Status200OK)
-        //            //{
-        //            //    request.IsCompleted = "FALSE";
-        //            //    request.DateModified = DateTime.Now;
-        //            //    transaction.status = "01";
-
-        //            //    _context.Update(request);
-        //            //    _context.Add(transaction);
-        //            //    _context.SaveChanges();
-        //            //    return AuxillaryResponse("Transaction failed,", StatusCodes.Status412PreconditionFailed);
-        //            //}
-
-
-
-
-        //            var wallet = _context.Wallets.FirstOrDefault(x => x.UserId == user.Id);
-        //            wallet.Balance += request.Amount;
-        //            wallet.LastModifiedBy = user.Email;
-        //            wallet.DateModified = DateTime.Now;
-        //            _context.Update(wallet);
-        //            await SaveAsync();
-
-
-        //            request.IsCompleted = "TRUE";
-        //            request.DateModified = DateTime.Now;
-        //            _context.Update(request);
-        //            await SaveAsync();
-
-
-        //            var paymentRequest = _context.PaymentRequests.FirstOrDefault(x => x.PaymentRequestId == request.Refxn);
-        //            paymentRequest.Completed = true;
-        //            paymentRequest.DateModified = DateTime.Now;
-        //            _context.Update(paymentRequest);
-        //            await SaveAsync();
-
-        //            var transaction = new Transaction
-        //            {
-        //                RequestId = paymentRequest.Id,
-        //                TransactionType = TransactionType.TopUp,
-        //                Decription = "Wallet Top Up",
-        //                status = "00",
-        //                CompletionTime = DateTime.Now,
-        //                DateCreated = DateTime.Now,
-        //                UserId = user.Id,
-        //                TransactionRef = TrxRef,
-        //                Amount = (decimal)request.Amount
-
-        //            };
-        //            _context.Add(transaction);
-        //            _context.SaveChanges();
-
-        //            var pushNotification = new PushNotificationDto
-        //            {
-        //                Title = "Top-Up",
-        //                Topic = "Wallet transaction",
-        //                Message = "Your wallet top up was scuccessful",
-        //                TrxRef = TrxRef
-
-        //            };
-        //            var notification = new NotificationModel
-        //            {
-        //                UserId = user.Id,
-        //                Title = pushNotification.Title,
-        //                Message = pushNotification.Message,
-        //                NotificationRef = TrxRef
-
-        //            };             
-
-        //            _context.Add(notification);
-        //            await SaveAsync();
-
-        //            await db_transaction.CommitAsync();
-
-        //            var mailBuilder = new StringBuilder();
-        //            mailBuilder.AppendLine("Dear" + " " + user.UserName + "," + "<br />");
-        //            mailBuilder.AppendLine("<br />");
-        //            mailBuilder.AppendLine($"Your wallet to up of {request.Amount} Naira was Successful.<br />");
-        //            mailBuilder.AppendLine("<br />");
-        //            mailBuilder.AppendLine("Regards:<br />");
-
-        //            var emailRequest = new EmailRequest
-        //            {
-        //                To = user.Email,
-        //                Body = EmailFormatter.FormatGenericEmail(mailBuilder.ToString(), rootPath),
-        //                Subject = "Wallet Top up"
-        //            };
-
-        //            await _EmailService.SendMail(emailRequest).ConfigureAwait(false);
-        //            await _notificationService.PushNotification(pushNotification);
-
-        //            return SuccessResponse("Top confirmation was successful");
-
-
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            await db_transaction.RollbackAsync();
-        //            return InternalErrorResponse(ex);
-        //        }
-        //    }
-        //}
 
 
         //public async RaiseVene()

@@ -11,5 +11,6 @@ namespace Bounce.Job
         Task<bool> CheckDueAppointments();
         Task<bool> CheckFreeTrialAsync();
         Task<bool> ResendFaileMessages();
+        //Task<bool> CheckExpiredSession(); 
     }
 }

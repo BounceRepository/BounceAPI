@@ -9,8 +9,8 @@ namespace Bounce.DataTransferObject.DTO.Notification
 {
     public class PushNotificationDto
     {
-       
-       
+
+        public object User { get; set; }
         public string Message { get; set; }
         public string Title { get; set; }
         public string Topic { get; set; }

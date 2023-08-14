@@ -57,6 +57,8 @@
     <PackageReference Include="FirebaseAdmin" Version="2.3.0" />
     <PackageReference Include="Hangfire" Version="1.7.31" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.7.31" />
+    <PackageReference Include="MassTransit" Version="8.0.16" />
+    <PackageReference Include="MediatR" Version="12.0.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.2.9" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.4" />

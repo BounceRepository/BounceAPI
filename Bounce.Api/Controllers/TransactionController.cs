@@ -1,7 +1,9 @@
-﻿using Bounce.DataTransferObject.DTO.Patient;
+﻿using Bounce.Api.Notification.Wallet;
+using Bounce.DataTransferObject.DTO.Patient;
 using Bounce.DataTransferObject.DTO.Payment;
 using Bounce_Application.Persistence.Interfaces.Patient;
 using Bounce_Application.Persistence.Interfaces.Payment;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,13 +22,15 @@ namespace Bounce.Api.Controllers
     {
         private readonly IPaymentServices _paymentServices;
         private readonly IWebHostEnvironment hostEnvironment;
+        private readonly IBusControl _busControl;
 
 
-        public TransactionController(IHttpContextAccessor httpContext, IPaymentServices paymentServices, IWebHostEnvironment hostEnvironment) : base(httpContext)
+        public TransactionController(IHttpContextAccessor httpContext, IPaymentServices paymentServices, IWebHostEnvironment hostEnvironment, IBusControl busControl) : base(httpContext)
         {
 
             _paymentServices = paymentServices;
             this.hostEnvironment = hostEnvironment;
+            _busControl = busControl;
         }
 
 
@@ -55,10 +59,14 @@ namespace Bounce.Api.Controllers
 
             return Response(await _paymentServices.WalletTop(model));
         }
-            
-          
+
+
         [HttpPost("ComfirmTopUp")]
-        public async Task<IActionResult> ComfirmTopUp([FromQuery] string TxRef) => Response(await _paymentServices.ComfirmWalletTop(TxRef));
+        public async Task<IActionResult> ComfirmTopUp([FromQuery] string TxRef)
+        {
+            await _busControl.Publish(new WalletMessage { TrnxRef = TxRef, _paymentServices = _paymentServices });
+            return Response(await _paymentServices.ComfirmWalletTop(TxRef));
+        }
 
         [HttpGet("WalletTransactionHistory")]
         public async Task<IActionResult> WalletUpHistory() => Response(await _paymentServices.TransactionByFilter("all"));

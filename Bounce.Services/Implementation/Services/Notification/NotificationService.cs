@@ -132,21 +132,21 @@ namespace Bounce.Services.Implementation.Services.Notification
         {
             try
             {
-                var user = _sessionManager.CurrentLogin;
+                var user = model.User as ApplicationUser;
                 var defaultApp = FirebaseApp.Create(new AppOptions()
                 {
                     Credential = GoogleCredential.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "key.json")),
                 });
-                var notification = new NotificationModel()
-                {
-                    UserId = user.Id,
-                    Title = model.Title,
-                    Message = model.Message,
-                    IsNewNotication = true,
-                    CreatedTimeOffset = DateTimeOffset.UtcNow
-                };
-                _context.Add(notification);
-                await _context.SaveChangesAsync();
+                //var notification = new NotificationModel()
+                //{
+                //    UserId = user.Id,
+                //    Title = model.Title,
+                //    Message = model.Message,
+                //    IsNewNotication = true,
+                //    CreatedTimeOffset = DateTimeOffset.UtcNow
+                //};
+                //_context.Add(notification);
+                //await _context.SaveChangesAsync();
 
                 var message = new Message()
                 {

@@ -136,10 +136,10 @@ namespace Bounce.Services.Implementation.Services.Patient
                return InternalErrorResponse(ex);
             }
 
-
-
-
         }
+
+
+
         public async Task<Response> SubscribeToPlan(long planId, long subplanId)
         {
             LogInfo($"{"Started task to initialize plan subscription }"}{" - "}{subplanId}{" - "}{DateTime.Now}");
@@ -191,6 +191,9 @@ namespace Bounce.Services.Implementation.Services.Patient
                         UserId = user.Id,
                         status = "00",
                         CreatedTimeOffset = DateTimeOffset.UtcNow,
+                        TransactionRef = payment.PaymentRequestId,
+                        Amount = (decimal)plan.Cost
+ 
                     };
 
                     await _context.AddAsync(trans);

@@ -18,9 +18,6 @@ using Bounce.Services.Implementation.Services.Notification;
 using Bounce.Services.Implementation.Services.Patient;
 using Bounce.Services.Implementation.Services.Payment;
 using Bounce.Services.Implementation.Services.Therapist;
-using Bounce.Services.MessageBusService;
-using Bounce.Services.MessageBusServices;
-using Bounce.Services.MessageBusServices.Subscriber.Wallet;
 using Bounce_Application.Cryptography.Hash;
 using Bounce_Application.DTO.ServiceModel;
 using Bounce_Application.Persistence.Interfaces.Admin;
@@ -52,6 +49,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Diagnostics.Tracing;
 using System.Security.Claims;
 using System.Text;
 namespace Microsoft.AspNetCore.Builder
@@ -81,16 +79,16 @@ namespace Microsoft.AspNetCore.Builder
             //Job JobScheduler
             builder.Services.AddScoped<IJobScheduler, JobScheduler>();
             builder.Services.AddScoped<BaseJobScheduler>();
+
             //builder.Services.AddSingleton<IHubContext<BounceChatHub>>();
             builder.Services.AddScoped<SessionManager>();
             builder.Services.AddScoped<BaseServices>();
             builder.Services.AddSingleton<AdminLogger>();
             builder.Services.AddSingleton<FileManager>();
-            //builder.Services.AddSingleton<EventPublisher>();
-            //builder.Services.AddSingleton<EventListener>();
-            builder.Services.AddSingleton<Worker>();
-            builder.Services.AddSingleton<WalletTopSubscriber>();
-            builder.Services.AddSingleton<IMessageBus, MessageBus>();
+            //builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
+
+
+
             builder.Services.Configure<IPWhitelistOptions>(builder.Configuration.GetSection("IPWhitelistOptions"));
             builder.Services.AddControllers()
             .ConfigureApiBehaviorOptions(opt =>
